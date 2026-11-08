@@ -4,93 +4,149 @@
 
 <PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Federativa</PageTitle>
 
-<div class="scout-container" style="max-width: 960px; margin: 2rem auto; font-family: var(--font-stack);">
-    @* Cabecera Scout con los colores del grupo activo *@
-    <div style="background: @(ActivePanoleta.BaseColorHex); color: @HeaderTextColor; padding: 2.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border-bottom: 5px solid @(ActivePanoleta.BorderColorHex);">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
+    <!-- Hero Banner del Grupo Activo -->
+    <MudPaper Elevation="2" Class="pa-6 pa-md-8 rounded-lg mb-6" Style="@($"background: {ActivePanoleta.BaseColorHex}; color: {HeaderTextColor}; border-bottom: 5px solid {ActivePanoleta.BorderColorHex};")">
+        <div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
             <div>
-                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.2rem 0.65rem; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Style="background: rgba(255,255,255,0.2); color: inherit; font-weight: 700; text-transform: uppercase;">
                     Scouts de Castilla-La Mancha · SCLM
-                </span>
-                <h1 style="margin: 0.4rem 0 0.2rem 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
+                </MudChip>
+                <MudText Typo="Typo.h3" Class="mt-2" Style="font-weight: 800; letter-spacing: -0.02em;">
                     @(Tenant.IsResolved ? Tenant.GroupName : "Portal Asociativo SCLM")
-                </h1>
-                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">
-                    Subdominio activo: <code style="background: rgba(0,0,0,0.25); color: #fff; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); font-family: var(--font-mono);">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
+                </MudText>
+                <MudText Typo="Typo.body1" Style="opacity: 0.9;" Class="mt-1">
+                    Subdominio: <code style="background: rgba(0,0,0,0.25); color: #fff; padding: 0.15rem 0.45rem; border-radius: 4px; font-family: monospace;">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
                     · Censo Oficial: <strong>@(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "-")</strong>
-                </p>
+                </MudText>
             </div>
-            
-            @* Miniatura de la pañoleta scout paramétrica *@
-            <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.3);">
-                <div style="font-size: 0.6875rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: 0.04em; opacity: 0.95;">Pañoleta Oficial</div>
-                <PanoletaSvg Config="ActivePanoleta" Width="80" Height="64" />
-            </div>
-        </div>
-    </div>
 
-    @* Acceso directo al Muestrario de Diseño & Identidad Corporativa *@
-    <div class="scout-card" style="margin-top: 1.5rem; border-left: 5px solid var(--sclm-purple-base);">
-        <div class="scout-card-body scout-flex-between">
+            <!-- Miniatura de Pañoleta Vectorial -->
+            <MudPaper Elevation="0" Class="pa-3 text-center rounded-lg" Style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); min-width: 140px;">
+                <MudText Typo="Typo.caption" Style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
+                    Pañoleta Oficial
+                </MudText>
+                <PanoletaSvg Config="ActivePanoleta" Width="76" Height="60" />
+            </MudPaper>
+        </div>
+    </MudPaper>
+
+    <!-- Banner Acceso a MudBlazor UI Kit -->
+    <MudCard Elevation="1" Outlined="true" Class="mb-6 rounded-lg" Style="border-left: 6px solid var(--sclm-purple-base, #4A148C);">
+        <MudCardContent Class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4 pa-6">
             <div>
-                <span class="scout-badge scout-badge-neutral" style="margin-bottom: 0.35rem;">Normativa SCLM-DIR-DIS-01</span>
-                <h3 class="scout-title-md" style="margin: 0.2rem 0;">Manual de Identidad y Sistema de Diseño (UI Kit)</h3>
-                <p class="scout-text-muted" style="margin: 0; font-size: 0.875rem;">
-                    Consulta las directrices normativas, los tokens de diseño por grupo, el código cromático de ramas y los componentes de interfaz accesibles.
-                </p>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Class="mb-2">
+                    MudBlazor 9 Integrado
+                </MudChip>
+                <MudText Typo="Typo.h5" Style="font-weight: 700;">
+                    Manual de Identidad y Sistema de Diseño Visual
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    Explora el catálogo interactivo de componentes Material Design, validación WCAG 2.2 AA en tiempo real y el patrón de expediente familiar.
+                </MudText>
             </div>
-            <a href="diseno?tenant=@Tenant.TenantSlug" class="scout-btn scout-btn-primary" style="background: var(--sclm-purple-base); border-color: var(--sclm-purple-dark);">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       Size="Size.Large"
+                       Href="diseno"
+                       StartIcon="@Icons.Material.Filled.AutoAwesome">
                 Ver Sistema de Diseño
-            </a>
-        </div>
-    </div>
+            </MudButton>
+        </MudCardContent>
+    </MudCard>
 
-    @* Selector de Grupos para probar en local *@
-    <div style="margin-top: 1.5rem; background: #ffffff; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-xs);">
-        <h3 style="margin-top: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b;">Simulación de Contexto Organizativo (Tenant)</h3>
-        <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
-            El middleware de resolución detecta automáticamente el subdominio de la petición o el parámetro de consulta. Selecciona un grupo para verificar el aislamiento y la reactividad cromática:
-        </p>
-        <div style="display: flex; gap: 0.85rem; flex-wrap: wrap;">
-            <a href="?tenant=lestonnac" class="scout-btn scout-btn-sm @(Tenant.TenantSlug != "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
+    <!-- Simulación de Tenant (Subdominios) -->
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6 rounded-lg mb-6" Style="background: #FFFFFF;">
+        <MudText Typo="Typo.h6" Style="font-weight: 700;" Class="mb-1">
+            Simulador de Contexto Multitenant
+        </MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+            El middleware de resolución detecta automáticamente el subdominio o parámetro. Haz clic para cambiar el tenant y comprobar la reactividad inmediata del tema:
+        </MudText>
+
+        <div class="d-flex flex-wrap gap-3">
+            <MudButton Variant="@(Tenant.TenantSlug != "sanvicente" ? Variant.Filled : Variant.Outlined)" 
+                       Color="Color.Primary" 
+                       Href="?tenant=lestonnac"
+                       StartIcon="@Icons.Material.Filled.Forest">
                 Lestonnac 330 (?tenant=lestonnac)
-            </a>
-            <a href="?tenant=sanvicente" class="scout-btn scout-btn-sm @(Tenant.TenantSlug == "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
+            </MudButton>
+            <MudButton Variant="@(Tenant.TenantSlug == "sanvicente" ? Variant.Filled : Variant.Outlined)" 
+                       Color="Color.Primary" 
+                       Href="?tenant=sanvicente"
+                       StartIcon="@Icons.Material.Filled.WaterDrop">
                 San Vicente 412 (?tenant=sanvicente)
-            </a>
+            </MudButton>
         </div>
-    </div>
+    </MudPaper>
 
-    @* Estado de la Arquitectura y Aislamiento *@
-    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
-        <div class="scout-card">
-            <div class="scout-card-body">
-                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Aislamiento Multitenant EF Core 10</div>
-                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
-                    Filtro global activo en consultas relacionales: <code>OrganizationId = @Tenant.CurrentTenantId</code>.
-                </p>
-            </div>
-        </div>
+    <!-- Pilares de la Arquitectura -->
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Shield" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Aislamiento Multitenant</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">EF Core 10 PostgreSQL</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Global Query Filter activo por contrato en todas las entidades:
+                        <code class="mud-chip mud-chip-size-small mt-1 d-inline-block">OrganizationId = @Tenant.CurrentTenantId</code>
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-        <div class="scout-card">
-            <div class="scout-card-body">
-                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Accesibilidad WCAG 2.2 Nivel AA</div>
-                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
-                    Ratio de contraste sobre color base: <strong>@ContrastRatio.ToString("F2"):1</strong> (requisito normativo: $\ge 4.5:1$).
-                </p>
-            </div>
-        </div>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Success" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.Visibility" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Accesibilidad WCAG 2.2</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Motor en Servidor</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Ratio de luminancia relativa verificado: <strong>@ContrastRatio.ToString("F2"):1</strong>. Asignación automática de texto accesible.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
 
-        <div class="scout-card">
-            <div class="scout-card-body">
-                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Vertical Slice Architecture</div>
-                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
-                    Monolito modular con slices funcionales autocontenidos en <code>Features/</code> sin acoplamiento artificial.
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
+        <MudItem xs="12" md="4">
+            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary" Variant="Variant.Outlined">
+                            <MudIcon Icon="@Icons.Material.Filled.PieChart" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Vertical Slice Architecture</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">ADR12 Aprobada</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">
+                        Casos de uso agrupados por capacidad en <code>Features/</code> sin capas horizontales artificiales.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private PanoletaConfig ActivePanoleta => Tenant.TenantSlug switch

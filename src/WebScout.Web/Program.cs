@@ -1,3 +1,4 @@
+using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -6,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Registrar MudBlazor y componentes UI
+builder.Services.AddMudServices();
 
 // Registrar Tenancy multitenant y Persistencia EF Core
 builder.Services.AddScoutTenancy(builder.Configuration);
