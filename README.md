@@ -70,7 +70,7 @@ El proyecto cuenta con 19 Pruebas de Aceptación formales:
 - `PA11` - Resiliencia de cola de avisos ante caída de servidor SMTP.
 - `PA18` - Verificación de no cruce de datos entre diferentes grupos scouts.
 
-Para consultar el estado actual del desarrollo y las decisiones aprobadas, revisar [Estado del proyecto](Web_Scout_Documentacion_Inicio_v0_1/docs/estado-proyecto.md).
+Para consultar el estado actual del desarrollo y las decisiones aprobadas, revisar [Estado del proyecto](docs/estado-proyecto.md).
 
 ---
 

@@ -34,7 +34,7 @@ Este documento establece las instrucciones operativas obligatorias para cualquie
 
 1. **No usar `EF InMemory`** para validar integridad referencial, concurrencia o aislamiento entre organizaciones. Emplear PostgreSQL real (disponible en `docker-compose.dev.yml`).
 2. **Evidencia:** Un HTTP 200 no demuestra aceptación funcional completa. Se debe verificar la regla de negocio y el caso negativo (acceso denegado a otra organización o usuario no autorizado).
-3. **Actualización Documental:** Al completar hitos o resolver decisiones, actualizar [Estado del proyecto](Web_Scout_Documentacion_Inicio_v0_1/docs/estado-proyecto.md).
+3. **Actualización Documental:** Al completar hitos o resolver decisiones, actualizar [Estado del proyecto](docs/estado-proyecto.md).
 
 ---
 

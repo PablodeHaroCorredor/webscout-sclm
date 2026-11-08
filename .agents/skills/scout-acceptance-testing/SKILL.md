@@ -55,7 +55,7 @@ dotnet test tests/WebScout.IntegrationTests --filter "FullyQualifiedName~TenantI
 
 ## Registro de Evidencia
 
-Tras la ejecución de cualquier batería de pruebas, documentar los resultados en `Web_Scout_Documentacion_Inicio_v0_1/docs/estado-proyecto.md`:
+Tras la ejecución de cualquier batería de pruebas, documentar los resultados en `docs/estado-proyecto.md`:
 - Commit SHA probado.
 - Entorno (Local Docker, Staging, etc.).
 - Batería ejecutada (PA01-PA19 o subconjunto).
