@@ -17,7 +17,6 @@ public class TenantDataIsolationTests : IDisposable
 
     public TenantDataIsolationTests()
     {
-        // Usar conexión SQLite en memoria viva durante todo el test
         _connection = new SqliteConnection("DataSource=:memory:");
         _connection.Open();
 
@@ -25,7 +24,6 @@ public class TenantDataIsolationTests : IDisposable
             .UseSqlite(_connection)
             .Options;
 
-        // Crear el esquema inicial con un contexto sin tenant
         var initContext = new TenantContext();
         using var db = new WebScoutDbContext(_options, initContext);
         db.Database.EnsureCreated();
@@ -40,18 +38,18 @@ public class TenantDataIsolationTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var activity = new ScoutActivity
+            var activity = new ActividadScout
             {
-                Title = "Campamento de San Jorge",
-                Location = "Sierra de Alcaraz"
+                Titulo = "Campamento de San Jorge",
+                Lugar = "Sierra de Alcaraz"
             };
 
             // Act
-            db.Activities.Add(activity);
+            db.Actividades.Add(activity);
             await db.SaveChangesAsync();
 
-            // Assert: OrganizationId debe ser estampada automáticamente
-            Assert.Equal(OrgLestonnac, activity.OrganizationId);
+            // Assert: OrganizacionId debe ser estampada automáticamente
+            Assert.Equal(OrgLestonnac, activity.OrganizacionId);
         }
     }
 
@@ -62,13 +60,12 @@ public class TenantDataIsolationTests : IDisposable
         var tenantContext = new TenantContext();
 
         using var db = new WebScoutDbContext(_options, tenantContext);
-        var activity = new ScoutActivity
+        var activity = new ActividadScout
         {
-            Title = "Salida no autorizada",
-            Location = "Lugar desconocido"
+            Titulo = "Salida no autorizada",
+            Lugar = "Lugar desconocido"
         };
-
-        db.Activities.Add(activity);
+        db.Actividades.Add(activity);
 
         // Act & Assert: Debe bloquear la persistencia
         await Assert.ThrowsAsync<InvalidOperationException>(() => db.SaveChangesAsync());
@@ -83,10 +80,10 @@ public class TenantDataIsolationTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, ctxLestonnac))
         {
-            db.Activities.Add(new ScoutActivity
+            db.Actividades.Add(new ActividadScout
             {
-                Title = "Acampada de Tropa L330",
-                Location = "Ruidera"
+                Titulo = "Acampada de Tropa L330",
+                Lugar = "Ruidera"
             });
             await db.SaveChangesAsync();
         }
@@ -97,10 +94,10 @@ public class TenantDataIsolationTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, ctxSanVicente))
         {
-            db.Activities.Add(new ScoutActivity
+            db.Actividades.Add(new ActividadScout
             {
-                Title = "Paso de Secciones SV412",
-                Location = "Toledo"
+                Titulo = "Paso de Secciones SV412",
+                Lugar = "Toledo"
             });
             await db.SaveChangesAsync();
         }
@@ -108,27 +105,27 @@ public class TenantDataIsolationTests : IDisposable
         // 3. Verificación de aislamiento estricto: Lestonnac NUNCA ve a San Vicente
         using (var db = new WebScoutDbContext(_options, ctxLestonnac))
         {
-            var activities = await db.Activities.ToListAsync();
+            var activities = await db.Actividades.ToListAsync();
 
             Assert.Single(activities);
-            Assert.Equal("Acampada de Tropa L330", activities[0].Title);
-            Assert.Equal(OrgLestonnac, activities[0].OrganizationId);
+            Assert.Equal("Acampada de Tropa L330", activities[0].Titulo);
+            Assert.Equal(OrgLestonnac, activities[0].OrganizacionId);
         }
 
         // 4. Verificación de aislamiento estricto: San Vicente NUNCA ve a Lestonnac
         using (var db = new WebScoutDbContext(_options, ctxSanVicente))
         {
-            var activities = await db.Activities.ToListAsync();
+            var activities = await db.Actividades.ToListAsync();
 
             Assert.Single(activities);
-            Assert.Equal("Paso de Secciones SV412", activities[0].Title);
-            Assert.Equal(OrgSanVicente, activities[0].OrganizationId);
+            Assert.Equal("Paso de Secciones SV412", activities[0].Titulo);
+            Assert.Equal(OrgSanVicente, activities[0].OrganizacionId);
         }
 
         // 5. Verificación administrativa federativa (IgnoreQueryFilters)
         using (var db = new WebScoutDbContext(_options, ctxLestonnac))
         {
-            var allActivitiesFederated = await db.Activities.IgnoreQueryFilters().ToListAsync();
+            var allActivitiesFederated = await db.Actividades.IgnoreQueryFilters().ToListAsync();
             Assert.Equal(2, allActivitiesFederated.Count);
         }
     }

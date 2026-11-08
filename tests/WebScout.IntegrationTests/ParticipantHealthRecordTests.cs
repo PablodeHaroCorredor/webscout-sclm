@@ -30,130 +30,130 @@ public class ParticipantHealthRecordTests : IDisposable
         db.Database.EnsureCreated();
     }
 
-    private static ScoutUser CreateGuardian(Guid id, Guid organizationId, string name, string email)
+    private static UsuarioScout CrearTutor(Guid id, Guid organizacionId, string nombre, string email)
     {
-        return new ScoutUser
+        return new UsuarioScout
         {
             Id = id,
-            OrganizationId = organizationId,
-            FullName = name,
+            OrganizacionId = organizacionId,
+            NombreCompleto = nombre,
             UserName = email,
             NormalizedUserName = email.ToUpperInvariant(),
             Email = email,
             NormalizedEmail = email.ToUpperInvariant(),
-            CreatedAtUtc = DateTime.UtcNow
+            FechaCreacionUtc = DateTime.UtcNow
         };
     }
 
     [Fact]
-    public void CalculateAge_ShouldCalculateExactAgeAccurately()
+    public void CalcularEdad_DebeCalcularEdadExactaSegunDiaCivil()
     {
         // Arrange
-        var reference = new DateOnly(2026, 11, 8);
-        var participant1 = new ScoutParticipant
+        var referencia = new DateOnly(2026, 11, 8);
+        var educando1 = new Educando
         {
-            FirstName = "Lucía",
-            LastName = "García",
-            BirthDate = new DateOnly(2017, 4, 15) // Ya cumplió 9 años
+            Nombre = "Lucía",
+            Apellidos = "García",
+            FechaNacimiento = new DateOnly(2017, 4, 15) // Ya cumplió 9 años
         };
-        var participant2 = new ScoutParticipant
+        var educando2 = new Educando
         {
-            FirstName = "Carlos",
-            LastName = "García",
-            BirthDate = new DateOnly(2017, 12, 1) // Todavía tiene 8 años a 8 de noviembre
+            Nombre = "Carlos",
+            Apellidos = "García",
+            FechaNacimiento = new DateOnly(2017, 12, 1) // Todavía tiene 8 años a 8 de noviembre
         };
 
         // Act & Assert
-        Assert.Equal(9, participant1.CalculateAge(reference));
-        Assert.Equal(8, participant2.CalculateAge(reference));
+        Assert.Equal(9, educando1.CalcularEdad(referencia));
+        Assert.Equal(8, educando2.CalcularEdad(referencia));
     }
 
     [Fact]
-    public async Task Insert_ParticipantAndHealthRecord_ShouldAutomaticallyStampOrganizationId()
+    public async Task Insert_EducandoYFichaMedica_DebeEstamparOrganizacionIdAutomaticamente()
     {
         // Arrange
         var tenantContext = new TenantContext();
         tenantContext.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
 
-        var guardianId = Guid.NewGuid();
+        var tutorId = Guid.NewGuid();
 
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var guardian = CreateGuardian(guardianId, OrgLestonnac, "María Pérez", "maria@test.com");
-            db.Users.Add(guardian);
+            var tutor = CrearTutor(tutorId, OrgLestonnac, "María Pérez", "maria@test.com");
+            db.Users.Add(tutor);
             await db.SaveChangesAsync();
 
-            var participant = new ScoutParticipant
+            var educando = new Educando
             {
-                LegalGuardianId = guardianId,
-                FirstName = "Lucía",
-                LastName = "García Pérez",
-                BirthDate = new DateOnly(2017, 4, 15),
-                CurrentBranch = ScoutBranch.Manada,
-                HealthRecord = new ParticipantHealthRecord
+                TutorLegalId = tutorId,
+                Nombre = "Lucía",
+                Apellidos = "García Pérez",
+                FechaNacimiento = new DateOnly(2017, 4, 15),
+                RamaActual = RamaScout.Manada,
+                FichaMedica = new FichaMedica
                 {
-                    HealthInsuranceNumber = "CIP-CLM-98234123",
-                    FoodAllergies = "Frutos secos",
-                    DietaryRequirements = "Celíaca",
-                    CanSwim = true,
-                    PrimaryEmergencyPhone = "+34 600 111 222"
+                    NumeroSeguridadSocial = "CIP-CLM-98234123",
+                    AlergiasAlimentarias = "Frutos secos",
+                    RegimenAlimenticio = "Celíaca",
+                    SabeNadar = true,
+                    TelefonoEmergenciaPrincipal = "+34 600 111 222"
                 }
             };
 
             // Act
-            db.Participants.Add(participant);
+            db.Educandos.Add(educando);
             await db.SaveChangesAsync();
 
             // Assert
-            Assert.Equal(OrgLestonnac, participant.OrganizationId);
-            Assert.NotNull(participant.HealthRecord);
-            Assert.Equal(OrgLestonnac, participant.HealthRecord.OrganizationId);
-            Assert.Equal(participant.Id, participant.HealthRecord.ParticipantId);
+            Assert.Equal(OrgLestonnac, educando.OrganizacionId);
+            Assert.NotNull(educando.FichaMedica);
+            Assert.Equal(OrgLestonnac, educando.FichaMedica.OrganizacionId);
+            Assert.Equal(educando.Id, educando.FichaMedica.EducandoId);
         }
     }
 
     [Fact]
-    public async Task QueryFilter_ShouldStrictlyIsolateParticipantsAndHealthRecordsBetweenTenants()
+    public async Task QueryFilter_DebeAislarEstrictamenteEducandosYFichasEntreGruposScout()
     {
         // 1. Sembrar datos en Lestonnac 330
         var lestonnacContext = new TenantContext();
         lestonnacContext.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
 
-        var guardianLestonnac = Guid.NewGuid();
+        var tutorLestonnac = Guid.NewGuid();
 
         using (var db = new WebScoutDbContext(_options, lestonnacContext))
         {
-            var guardian = CreateGuardian(guardianLestonnac, OrgLestonnac, "María Pérez", "maria@lestonnac.com");
-            db.Users.Add(guardian);
+            var tutor = CrearTutor(tutorLestonnac, OrgLestonnac, "María Pérez", "maria@lestonnac.com");
+            db.Users.Add(tutor);
 
-            db.Participants.AddRange(
-                new ScoutParticipant
+            db.Educandos.AddRange(
+                new Educando
                 {
-                    LegalGuardianId = guardianLestonnac,
-                    FirstName = "Lucía",
-                    LastName = "García Pérez",
-                    BirthDate = new DateOnly(2017, 4, 15),
-                    CurrentBranch = ScoutBranch.Manada,
-                    HealthRecord = new ParticipantHealthRecord
+                    TutorLegalId = tutorLestonnac,
+                    Nombre = "Lucía",
+                    Apellidos = "García Pérez",
+                    FechaNacimiento = new DateOnly(2017, 4, 15),
+                    RamaActual = RamaScout.Manada,
+                    FichaMedica = new FichaMedica
                     {
-                        HealthInsuranceNumber = "CIP-CLM-98234123",
-                        FoodAllergies = "Cacahuetes",
-                        DietaryRequirements = "Celíaca",
-                        PrimaryEmergencyPhone = "+34 600 111 222"
+                        NumeroSeguridadSocial = "CIP-CLM-98234123",
+                        AlergiasAlimentarias = "Cacahuetes",
+                        RegimenAlimenticio = "Celíaca",
+                        TelefonoEmergenciaPrincipal = "+34 600 111 222"
                     }
                 },
-                new ScoutParticipant
+                new Educando
                 {
-                    LegalGuardianId = guardianLestonnac,
-                    FirstName = "Marcos",
-                    LastName = "García Pérez",
-                    BirthDate = new DateOnly(2014, 9, 20),
-                    CurrentBranch = ScoutBranch.Tropa,
-                    HealthRecord = new ParticipantHealthRecord
+                    TutorLegalId = tutorLestonnac,
+                    Nombre = "Marcos",
+                    Apellidos = "García Pérez",
+                    FechaNacimiento = new DateOnly(2014, 9, 20),
+                    RamaActual = RamaScout.Tropa,
+                    FichaMedica = new FichaMedica
                     {
-                        HealthInsuranceNumber = "CIP-CLM-77123990",
-                        ChronicConditions = "Asma",
-                        PrimaryEmergencyPhone = "+34 600 111 222"
+                        NumeroSeguridadSocial = "CIP-CLM-77123990",
+                        EnfermedadesCronicas = "Asma",
+                        TelefonoEmergenciaPrincipal = "+34 600 111 222"
                     }
                 }
             );
@@ -164,26 +164,26 @@ public class ParticipantHealthRecordTests : IDisposable
         var sanVicenteContext = new TenantContext();
         sanVicenteContext.SetTenant(OrgSanVicente, "sanvicente", "San Vicente 412", 412);
 
-        var guardianSanVicente = Guid.NewGuid();
+        var tutorSanVicente = Guid.NewGuid();
 
         using (var db = new WebScoutDbContext(_options, sanVicenteContext))
         {
-            var guardian = CreateGuardian(guardianSanVicente, OrgSanVicente, "Laura Ruiz", "laura@sanvicente.com");
-            db.Users.Add(guardian);
+            var tutor = CrearTutor(tutorSanVicente, OrgSanVicente, "Laura Ruiz", "laura@sanvicente.com");
+            db.Users.Add(tutor);
 
-            db.Participants.Add(
-                new ScoutParticipant
+            db.Educandos.Add(
+                new Educando
                 {
-                    LegalGuardianId = guardianSanVicente,
-                    FirstName = "Hugo",
-                    LastName = "López Ruiz",
-                    BirthDate = new DateOnly(2019, 2, 10),
-                    CurrentBranch = ScoutBranch.Castores,
-                    HealthRecord = new ParticipantHealthRecord
+                    TutorLegalId = tutorSanVicente,
+                    Nombre = "Hugo",
+                    Apellidos = "López Ruiz",
+                    FechaNacimiento = new DateOnly(2019, 2, 10),
+                    RamaActual = RamaScout.Castores,
+                    FichaMedica = new FichaMedica
                     {
-                        HealthInsuranceNumber = "CIP-CLM-44321098",
-                        FoodAllergies = "Huevo",
-                        PrimaryEmergencyPhone = "+34 611 222 333"
+                        NumeroSeguridadSocial = "CIP-CLM-44321098",
+                        AlergiasAlimentarias = "Huevo",
+                        TelefonoEmergenciaPrincipal = "+34 611 222 333"
                     }
                 }
             );
@@ -193,142 +193,142 @@ public class ParticipantHealthRecordTests : IDisposable
         // 3. Verificar consulta desde el contexto de Lestonnac
         using (var db = new WebScoutDbContext(_options, lestonnacContext))
         {
-            var participants = await db.Participants.Include(p => p.HealthRecord).ToListAsync();
-            Assert.Equal(2, participants.Count);
-            Assert.All(participants, p => Assert.Equal(OrgLestonnac, p.OrganizationId));
-            Assert.Contains(participants, p => p.FirstName == "Lucía");
-            Assert.Contains(participants, p => p.FirstName == "Marcos");
-            Assert.DoesNotContain(participants, p => p.FirstName == "Hugo");
+            var educandos = await db.Educandos.Include(p => p.FichaMedica).ToListAsync();
+            Assert.Equal(2, educandos.Count);
+            Assert.All(educandos, p => Assert.Equal(OrgLestonnac, p.OrganizacionId));
+            Assert.Contains(educandos, p => p.Nombre == "Lucía");
+            Assert.Contains(educandos, p => p.Nombre == "Marcos");
+            Assert.DoesNotContain(educandos, p => p.Nombre == "Hugo");
 
-            var healthRecords = await db.HealthRecords.ToListAsync();
-            Assert.Equal(2, healthRecords.Count);
-            Assert.All(healthRecords, h => Assert.Equal(OrgLestonnac, h.OrganizationId));
+            var fichas = await db.FichasMedicas.ToListAsync();
+            Assert.Equal(2, fichas.Count);
+            Assert.All(fichas, h => Assert.Equal(OrgLestonnac, h.OrganizacionId));
         }
 
         // 4. Verificar consulta desde el contexto de San Vicente
         using (var db = new WebScoutDbContext(_options, sanVicenteContext))
         {
-            var participants = await db.Participants.Include(p => p.HealthRecord).ToListAsync();
-            Assert.Single(participants);
-            Assert.Equal("Hugo", participants[0].FirstName);
-            Assert.Equal(OrgSanVicente, participants[0].OrganizationId);
-            Assert.Equal(ScoutBranch.Castores, participants[0].CurrentBranch);
+            var educandos = await db.Educandos.Include(p => p.FichaMedica).ToListAsync();
+            Assert.Single(educandos);
+            Assert.Equal("Hugo", educandos[0].Nombre);
+            Assert.Equal(OrgSanVicente, educandos[0].OrganizacionId);
+            Assert.Equal(RamaScout.Castores, educandos[0].RamaActual);
         }
     }
 
     [Fact]
-    public async Task KitchenAllergyReport_ShouldFilterNominalAllergensAccurately()
+    public async Task InformeCocina_DebeFiltrarAlergenosNominalesCorrectamente()
     {
         // Arrange: Tenant Lestonnac con 2 educandos
         var tenantContext = new TenantContext();
         tenantContext.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
 
-        var guardianId = Guid.NewGuid();
+        var tutorId = Guid.NewGuid();
 
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var guardian = CreateGuardian(guardianId, OrgLestonnac, "María Pérez", "maria@test.com");
-            db.Users.Add(guardian);
+            var tutor = CrearTutor(tutorId, OrgLestonnac, "María Pérez", "maria@test.com");
+            db.Users.Add(tutor);
 
-            db.Participants.AddRange(
-                new ScoutParticipant
+            db.Educandos.AddRange(
+                new Educando
                 {
-                    LegalGuardianId = guardianId,
-                    FirstName = "Lucía",
-                    LastName = "García Pérez",
-                    BirthDate = new DateOnly(2017, 4, 15),
-                    CurrentBranch = ScoutBranch.Manada,
-                    HealthRecord = new ParticipantHealthRecord
+                    TutorLegalId = tutorId,
+                    Nombre = "Lucía",
+                    Apellidos = "García Pérez",
+                    FechaNacimiento = new DateOnly(2017, 4, 15),
+                    RamaActual = RamaScout.Manada,
+                    FichaMedica = new FichaMedica
                     {
-                        HealthInsuranceNumber = "CIP-1",
-                        FoodAllergies = "Cacahuetes",
-                        DietaryRequirements = "Celíaca",
-                        PrimaryEmergencyPhone = "+34 600 111 222"
+                        NumeroSeguridadSocial = "CIP-1",
+                        AlergiasAlimentarias = "Cacahuetes",
+                        RegimenAlimenticio = "Celíaca",
+                        TelefonoEmergenciaPrincipal = "+34 600 111 222"
                     }
                 },
-                new ScoutParticipant
+                new Educando
                 {
-                    LegalGuardianId = guardianId,
-                    FirstName = "Pablo",
-                    LastName = "Navarro",
-                    BirthDate = new DateOnly(2017, 6, 1),
-                    CurrentBranch = ScoutBranch.Manada,
-                    HealthRecord = new ParticipantHealthRecord
+                    TutorLegalId = tutorId,
+                    Nombre = "Pablo",
+                    Apellidos = "Navarro",
+                    FechaNacimiento = new DateOnly(2017, 6, 1),
+                    RamaActual = RamaScout.Manada,
+                    FichaMedica = new FichaMedica
                     {
-                        HealthInsuranceNumber = "CIP-2",
-                        FoodAllergies = null,
-                        DietaryRequirements = null,
-                        PrimaryEmergencyPhone = "+34 600 222 333"
+                        NumeroSeguridadSocial = "CIP-2",
+                        AlergiasAlimentarias = null,
+                        RegimenAlimenticio = null,
+                        TelefonoEmergenciaPrincipal = "+34 600 222 333"
                     }
                 }
             );
             await db.SaveChangesAsync();
 
             // Act: Simular la consulta del informe de cocina para Manada
-            var kitchenReport = await db.Participants
-                .Include(p => p.HealthRecord)
-                .Where(p => p.CurrentBranch == ScoutBranch.Manada &&
-                           (p.HealthRecord!.FoodAllergies != null || p.HealthRecord.DietaryRequirements != null))
+            var informeCocina = await db.Educandos
+                .Include(p => p.FichaMedica)
+                .Where(p => p.RamaActual == RamaScout.Manada &&
+                           (p.FichaMedica!.AlergiasAlimentarias != null || p.FichaMedica.RegimenAlimenticio != null))
                 .ToListAsync();
 
             // Assert
-            Assert.Single(kitchenReport);
-            Assert.Equal("Lucía", kitchenReport[0].FirstName);
-            Assert.Equal("Celíaca", kitchenReport[0].HealthRecord?.DietaryRequirements);
-            Assert.Equal("Cacahuetes", kitchenReport[0].HealthRecord?.FoodAllergies);
+            Assert.Single(informeCocina);
+            Assert.Equal("Lucía", informeCocina[0].Nombre);
+            Assert.Equal("Celíaca", informeCocina[0].FichaMedica?.RegimenAlimenticio);
+            Assert.Equal("Cacahuetes", informeCocina[0].FichaMedica?.AlergiasAlimentarias);
         }
     }
 
     [Fact]
-    public async Task Delete_Participant_ShouldCascadeDeleteAssociatedHealthRecord()
+    public async Task Delete_Educando_DebeEliminarEnCascadaFichaMedicaAsociada()
     {
         // Arrange
         var tenantContext = new TenantContext();
         tenantContext.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
 
-        var guardianId = Guid.NewGuid();
-        Guid participantId;
-        Guid healthRecordId;
+        var tutorId = Guid.NewGuid();
+        Guid educandoId;
+        Guid fichaMedicaId;
 
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var guardian = CreateGuardian(guardianId, OrgLestonnac, "María Pérez", "maria@test.com");
-            db.Users.Add(guardian);
+            var tutor = CrearTutor(tutorId, OrgLestonnac, "María Pérez", "maria@test.com");
+            db.Users.Add(tutor);
 
-            var participant = new ScoutParticipant
+            var educando = new Educando
             {
-                LegalGuardianId = guardianId,
-                FirstName = "Lucía",
-                LastName = "García",
-                BirthDate = new DateOnly(2017, 4, 15),
-                HealthRecord = new ParticipantHealthRecord
+                TutorLegalId = tutorId,
+                Nombre = "Lucía",
+                Apellidos = "García",
+                FechaNacimiento = new DateOnly(2017, 4, 15),
+                FichaMedica = new FichaMedica
                 {
-                    HealthInsuranceNumber = "CIP-1",
-                    PrimaryEmergencyPhone = "+34 600 111 222"
+                    NumeroSeguridadSocial = "CIP-1",
+                    TelefonoEmergenciaPrincipal = "+34 600 111 222"
                 }
             };
 
-            db.Participants.Add(participant);
+            db.Educandos.Add(educando);
             await db.SaveChangesAsync();
 
-            participantId = participant.Id;
-            healthRecordId = participant.HealthRecord.Id;
+            educandoId = educando.Id;
+            fichaMedicaId = educando.FichaMedica.Id;
         }
 
         // Act: Eliminar el educando
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var p = await db.Participants.FindAsync(participantId);
+            var p = await db.Educandos.FindAsync(educandoId);
             Assert.NotNull(p);
-            db.Participants.Remove(p);
+            db.Educandos.Remove(p);
             await db.SaveChangesAsync();
         }
 
         // Assert: La ficha médica asociada debe haber desaparecido por cascada
         using (var db = new WebScoutDbContext(_options, tenantContext))
         {
-            var healthRecord = await db.HealthRecords.FindAsync(healthRecordId);
-            Assert.Null(healthRecord);
+            var ficha = await db.FichasMedicas.FindAsync(fichaMedicaId);
+            Assert.Null(ficha);
         }
     }
 

@@ -20,15 +20,15 @@ public static class IdentityEndpoints
             [FromForm] string email,
             [FromForm] string password,
             [FromForm] string? returnUrl,
-            SignInManager<ScoutUser> signInManager,
-            UserManager<ScoutUser> userManager,
+            SignInManager<UsuarioScout> signInManager,
+            UserManager<UsuarioScout> userManager,
             ITenantContext tenantContext) =>
         {
             var normalizedEmail = email.ToUpperInvariant();
             var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.OrganizationId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
+                .FirstOrDefaultAsync(u => u.OrganizacionId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
 
-            if (user == null || !user.IsActive)
+            if (user == null || !user.Activo)
             {
                 return Results.Redirect($"/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
             }
@@ -36,7 +36,7 @@ public static class IdentityEndpoints
             var result = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                user.LastLoginAtUtc = DateTime.UtcNow;
+                user.UltimoAccesoUtc = DateTime.UtcNow;
                 await userManager.UpdateAsync(user);
                 return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
             }
@@ -48,13 +48,13 @@ public static class IdentityEndpoints
         group.MapGet("/quick-login", async (
             [FromQuery] string email,
             [FromQuery] string? returnUrl,
-            SignInManager<ScoutUser> signInManager,
-            UserManager<ScoutUser> userManager,
+            SignInManager<UsuarioScout> signInManager,
+            UserManager<UsuarioScout> userManager,
             ITenantContext tenantContext) =>
         {
             var normalizedEmail = email.ToUpperInvariant();
             var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.OrganizationId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
+                .FirstOrDefaultAsync(u => u.OrganizacionId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
 
             if (user == null)
             {
@@ -62,23 +62,22 @@ public static class IdentityEndpoints
                 user = await userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
             }
 
-            if (user != null && user.IsActive)
+            if (user != null && user.Activo)
             {
                 await signInManager.SignInAsync(user, isPersistent: true);
-                user.LastLoginAtUtc = DateTime.UtcNow;
+                user.UltimoAccesoUtc = DateTime.UtcNow;
                 await userManager.UpdateAsync(user);
             }
 
             return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
         });
 
-        // Cierre de sesión
+        // Cierre de sesión seguro
         group.MapGet("/logout", async (
-            SignInManager<ScoutUser> signInManager,
-            [FromQuery] string? returnUrl) =>
+            SignInManager<UsuarioScout> signInManager) =>
         {
             await signInManager.SignOutAsync();
-            return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
+            return Results.Redirect("/");
         });
 
         return app;

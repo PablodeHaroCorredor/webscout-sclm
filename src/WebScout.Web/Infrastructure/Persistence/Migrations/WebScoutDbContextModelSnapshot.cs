@@ -125,69 +125,76 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("WebScout.Web.Common.Domain.ScoutActivity", b =>
+            modelBuilder.Entity("WebScout.Web.Common.Domain.ActividadScout", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
+                    b.Property<string>("Descripcion")
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime>("FechaCreacionUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("boolean");
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Location")
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaLimiteInscripcion")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IbanCuentaBancaria")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Lugar")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<Guid>("OrganizationId")
+                    b.Property<Guid>("OrganizacionId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
+                    b.Property<int>("PrecioEnCentimos")
+                        .HasColumnType("integer");
 
-                    b.Property<bool>("RequiresPaymentReceipt")
+                    b.Property<bool>("Publicada")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Title")
+                    b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrganizationId", "StartDate");
+                    b.HasIndex("OrganizacionId", "FechaInicio");
 
-                    b.ToTable("Activities");
+                    b.ToTable("Actividades", (string)null);
                 });
 
-            modelBuilder.Entity("WebScout.Web.Common.Domain.ScoutTenant", b =>
+            modelBuilder.Entity("WebScout.Web.Common.Domain.GrupoScout", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmailContacto")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<DateTime>("CreatedAtUtc")
+                    b.Property<DateTime>("FechaCreacionUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CustomDomain")
-                        .HasColumnType("text");
 
                     b.Property<int>("GroupNumber")
                         .HasColumnType("integer");
@@ -195,13 +202,23 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Lema")
+                        .HasColumnType("text");
+
                     b.Property<string>("Motto")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
+
+                    b.Property<int>("NumeroGrupo")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -213,10 +230,10 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Tenants");
+                    b.ToTable("GruposScout", (string)null);
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.ScoutRole", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.RolScout", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -243,7 +260,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.ScoutUser", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.UsuarioScout", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -252,15 +269,12 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AssignedBranch")
-                        .HasColumnType("integer");
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Dni")
                         .HasMaxLength(20)
@@ -273,15 +287,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("LastLoginAtUtc")
+                    b.Property<DateTime>("FechaCreacionUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("LockoutEnabled")
@@ -289,6 +295,11 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -298,7 +309,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid>("OrganizationId")
+                    b.Property<Guid>("OrganizacionId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("PasswordHash")
@@ -310,11 +321,17 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("RamaAsignada")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UltimoAccesoUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -329,157 +346,157 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.HasIndex("OrganizationId", "NormalizedEmail");
+                    b.HasIndex("OrganizacionId", "NormalizedEmail");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.ParticipantHealthRecord", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ActiveMedication")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AdditionalObservations")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("CanSwim")
+                    b.Property<bool>("Activo")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ChronicConditions")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DietaryRequirements")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EnvironmentalAllergies")
-                        .HasColumnType("text");
-
-                    b.Property<string>("FoodAllergies")
-                        .HasColumnType("text");
-
-                    b.Property<string>("HealthInsuranceEntity")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("HealthInsuranceNumber")
+                    b.Property<string>("Apellidos")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTime>("LastUpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("LastUpdatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("MedicalAllergies")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ParticipantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PrimaryEmergencyContactName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("PrimaryEmergencyPhone")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("SecondaryEmergencyContactName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("SecondaryEmergencyPhone")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("VaccinationObservations")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("VaccinationsUpToDate")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParticipantId")
-                        .IsUnique();
-
-                    b.HasIndex("OrganizationId", "ParticipantId")
-                        .IsUnique();
-
-                    b.ToTable("HealthRecords");
-                });
-
-            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.ScoutParticipant", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("BirthDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CurrentBranch")
-                        .HasColumnType("integer");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Dni")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("FirstName")
+                    b.Property<DateTime?>("FechaActualizacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaCreacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("FechaNacimiento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Gender")
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RamaActual")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sexo")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.Property<Guid>("LegalGuardianId")
+                    b.Property<Guid>("TutorLegalId")
                         .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LegalGuardianId");
+                    b.HasIndex("TutorLegalId");
 
-                    b.HasIndex("OrganizationId", "CurrentBranch");
+                    b.HasIndex("OrganizacionId", "Activo");
 
-                    b.HasIndex("OrganizationId", "IsActive");
+                    b.HasIndex("OrganizacionId", "RamaActual");
 
-                    b.HasIndex("OrganizationId", "LegalGuardianId");
+                    b.HasIndex("OrganizacionId", "TutorLegalId");
 
-                    b.ToTable("Participants");
+                    b.ToTable("Educandos", (string)null);
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.FichaMedica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ActualizadoPorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AlergiasAlimentarias")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AlergiasAmbientales")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AlergiasMedicamentosas")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EducandoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EnfermedadesCronicas")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntidadAseguradora")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("MedicacionActiva")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NombreContactoEmergenciaPrincipal")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NombreContactoEmergenciaSecundario")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NumeroSeguridadSocial")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ObservacionesAdicionales")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ObservacionesVacunacion")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RegimenAlimenticio")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("SabeNadar")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TelefonoEmergenciaPrincipal")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("TelefonoEmergenciaSecundario")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("UltimaActualizacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("VacunacionAlDia")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EducandoId")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizacionId", "EducandoId")
+                        .IsUnique();
+
+                    b.ToTable("FichasMedicas", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutRole", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.RolScout", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -488,7 +505,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutUser", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -497,7 +514,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutUser", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -506,13 +523,13 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutRole", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.RolScout", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutUser", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -521,18 +538,18 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutUser", null)
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebScout.Web.Common.Domain.ScoutTenant", b =>
+            modelBuilder.Entity("WebScout.Web.Common.Domain.GrupoScout", b =>
                 {
-                    b.OwnsOne("WebScout.Web.Common.Domain.PaletteConfig", "Palette", b1 =>
+                    b.OwnsOne("WebScout.Web.Common.Domain.PaletteConfig", "Paleta", b1 =>
                         {
-                            b1.Property<Guid>("ScoutTenantId")
+                            b1.Property<Guid>("GrupoScoutId")
                                 .HasColumnType("uuid");
 
                             b1.Property<string>("AccentHex")
@@ -559,17 +576,17 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                                 .IsRequired()
                                 .HasColumnType("text");
 
-                            b1.HasKey("ScoutTenantId");
+                            b1.HasKey("GrupoScoutId");
 
-                            b1.ToTable("Tenants");
+                            b1.ToTable("GruposScout");
 
                             b1.WithOwner()
-                                .HasForeignKey("ScoutTenantId");
+                                .HasForeignKey("GrupoScoutId");
                         });
 
                     b.OwnsOne("WebScout.Web.Common.Domain.PanoletaConfig", "Panoleta", b1 =>
                         {
-                            b1.Property<Guid>("ScoutTenantId")
+                            b1.Property<Guid>("GrupoScoutId")
                                 .HasColumnType("uuid");
 
                             b1.Property<string>("BaseColorHex")
@@ -592,51 +609,51 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                             b1.Property<string>("ShieldUrl")
                                 .HasColumnType("text");
 
-                            b1.HasKey("ScoutTenantId");
+                            b1.HasKey("GrupoScoutId");
 
-                            b1.ToTable("Tenants");
+                            b1.ToTable("GruposScout");
 
                             b1.WithOwner()
-                                .HasForeignKey("ScoutTenantId");
+                                .HasForeignKey("GrupoScoutId");
                         });
 
-                    b.Navigation("Palette")
+                    b.Navigation("Paleta")
                         .IsRequired();
 
                     b.Navigation("Panoleta")
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.ParticipantHealthRecord", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
                 {
-                    b.HasOne("WebScout.Web.Features.Participants.Domain.ScoutParticipant", "Participant")
-                        .WithOne("HealthRecord")
-                        .HasForeignKey("WebScout.Web.Features.Participants.Domain.ParticipantHealthRecord", "ParticipantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Participant");
-                });
-
-            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.ScoutParticipant", b =>
-                {
-                    b.HasOne("WebScout.Web.Features.Identity.Domain.ScoutUser", "LegalGuardian")
-                        .WithMany("Children")
-                        .HasForeignKey("LegalGuardianId")
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", "TutorLegal")
+                        .WithMany("Educandos")
+                        .HasForeignKey("TutorLegalId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("LegalGuardian");
+                    b.Navigation("TutorLegal");
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.ScoutUser", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.FichaMedica", b =>
                 {
-                    b.Navigation("Children");
+                    b.HasOne("WebScout.Web.Features.Participants.Domain.Educando", "Educando")
+                        .WithOne("FichaMedica")
+                        .HasForeignKey("WebScout.Web.Features.Participants.Domain.FichaMedica", "EducandoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Educando");
                 });
 
-            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.ScoutParticipant", b =>
+            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.UsuarioScout", b =>
                 {
-                    b.Navigation("HealthRecord");
+                    b.Navigation("Educandos");
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
+                {
+                    b.Navigation("FichaMedica");
                 });
 #pragma warning restore 612, 618
         }

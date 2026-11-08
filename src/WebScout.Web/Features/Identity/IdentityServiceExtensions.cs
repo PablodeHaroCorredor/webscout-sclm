@@ -9,14 +9,14 @@ public static class IdentityServiceExtensions
 {
     public static IServiceCollection AddScoutIdentity(this IServiceCollection services)
     {
-        services.AddIdentity<ScoutUser, ScoutRole>(options =>
+        services.AddIdentity<UsuarioScout, RolScout>(options =>
         {
             options.Password.RequireDigit = false;
             options.Password.RequiredLength = 6;
             options.Password.RequireNonAlphanumeric = false;
             options.Password.RequireUppercase = false;
             options.Password.RequireLowercase = false;
-            options.User.RequireUniqueEmail = false; // El índice único es compuesto: (OrganizationId, NormalizedEmail)
+            options.User.RequireUniqueEmail = false; // El índice único es compuesto: (OrganizacionId, NormalizedEmail)
             options.SignIn.RequireConfirmedAccount = false;
         })
         .AddEntityFrameworkStores<WebScoutDbContext>()

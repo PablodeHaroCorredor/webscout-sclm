@@ -1,4 +1,4 @@
-@inject IParticipantService ParticipantService
+@inject IServicioEducandos ServicioEducandos
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -10,33 +10,33 @@
     </TitleContent>
     <DialogContent>
         <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
-            Añada un nuevo hijo o menor bajo su tutela. Podrá cumplimentar su Ficha Médica completa una vez creado.
+            Añada un nuevo menor bajo su tutela. Podrá cumplimentar su Ficha Médica completa una vez registrado.
         </MudText>
 
         <MudGrid>
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="_firstName" Label="Nombre *" Variant="Variant.Outlined" Required="true" />
+                <MudTextField @bind-Value="_nombre" Label="Nombre *" Variant="Variant.Outlined" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="_lastName" Label="Apellidos *" Variant="Variant.Outlined" Required="true" />
+                <MudTextField @bind-Value="_apellidos" Label="Apellidos *" Variant="Variant.Outlined" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudDatePicker @bind-Date="_birthDate" Label="Fecha de Nacimiento *" Variant="Variant.Outlined" Editable="true" MaxDate="DateTime.Today" />
+                <MudDatePicker @bind-Date="_fechaNacimiento" Label="Fecha de Nacimiento *" Variant="Variant.Outlined" Editable="true" MaxDate="DateTime.Today" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_branch" Label="Rama / Sección *" Variant="Variant.Outlined">
-                    <MudSelectItem Value="ScoutBranch.Castores">Castores (6-8 años)</MudSelectItem>
-                    <MudSelectItem Value="ScoutBranch.Manada">Manada (8-11 años)</MudSelectItem>
-                    <MudSelectItem Value="ScoutBranch.Tropa">Tropa (11-14 años)</MudSelectItem>
-                    <MudSelectItem Value="ScoutBranch.Escultas">Escultas (14-17 años)</MudSelectItem>
-                    <MudSelectItem Value="ScoutBranch.Clan">Clan Rover (17-21 años)</MudSelectItem>
+                <MudSelect @bind-Value="_rama" Label="Rama / Sección *" Variant="Variant.Outlined">
+                    <MudSelectItem Value="RamaScout.Castores">Castores (6-8 años)</MudSelectItem>
+                    <MudSelectItem Value="RamaScout.Manada">Manada (8-11 años)</MudSelectItem>
+                    <MudSelectItem Value="RamaScout.Tropa">Tropa (11-14 años)</MudSelectItem>
+                    <MudSelectItem Value="RamaScout.Escultas">Escultas (14-17 años)</MudSelectItem>
+                    <MudSelectItem Value="RamaScout.Clan">Clan Rover (17-21 años)</MudSelectItem>
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" sm="6">
                 <MudTextField @bind-Value="_dni" Label="DNI / NIE (Opcional)" Variant="Variant.Outlined" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudSelect @bind-Value="_gender" Label="Sexo" Variant="Variant.Outlined">
+                <MudSelect @bind-Value="_sexo" Label="Sexo" Variant="Variant.Outlined">
                     <MudSelectItem Value="@("Femenino")">Femenino</MudSelectItem>
                     <MudSelectItem Value="@("Masculino")">Masculino</MudSelectItem>
                     <MudSelectItem Value="@("Otro")">Otro</MudSelectItem>
@@ -46,14 +46,14 @@
                 <MudTextField @bind-Value="_cip" Label="CIP / Nº Tarjeta Sanitaria *" Variant="Variant.Outlined" Required="true" />
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudTextField @bind-Value="_emergencyPhone" Label="Teléfono de Emergencia *" Variant="Variant.Outlined" Required="true" />
+                <MudTextField @bind-Value="_telefonoEmergencia" Label="Teléfono de Emergencia *" Variant="Variant.Outlined" Required="true" />
             </MudItem>
         </MudGrid>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_saving">
-            @if (_saving)
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_guardando">
+            @if (_guardando)
             {
                 <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
                 <span>Guardando...</span>
@@ -71,27 +71,27 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public Guid LegalGuardianId { get; set; }
+    public Guid TutorLegalId { get; set; }
 
     [Parameter]
-    public Guid OrganizationId { get; set; }
+    public Guid OrganizacionId { get; set; }
 
-    private string _firstName = "";
-    private string _lastName = "";
-    private DateTime? _birthDate = DateTime.Today.AddYears(-9);
-    private ScoutBranch _branch = ScoutBranch.Manada;
+    private string _nombre = "";
+    private string _apellidos = "";
+    private DateTime? _fechaNacimiento = DateTime.Today.AddYears(-9);
+    private RamaScout _rama = RamaScout.Manada;
     private string? _dni;
-    private string _gender = "Femenino";
+    private string _sexo = "Femenino";
     private string _cip = "";
-    private string _emergencyPhone = "";
-    private bool _saving;
+    private string _telefonoEmergencia = "";
+    private bool _guardando;
 
     private void Cancel() => MudDialog.Cancel();
 
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName) || !_birthDate.HasValue ||
-            string.IsNullOrWhiteSpace(_cip) || string.IsNullOrWhiteSpace(_emergencyPhone))
+        if (string.IsNullOrWhiteSpace(_nombre) || string.IsNullOrWhiteSpace(_apellidos) || !_fechaNacimiento.HasValue ||
+            string.IsNullOrWhiteSpace(_cip) || string.IsNullOrWhiteSpace(_telefonoEmergencia))
         {
             Snackbar.Add("Por favor complete los campos obligatorios (*).", Severity.Warning);
             return;
@@ -99,35 +99,35 @@
 
         try
         {
-            _saving = true;
+            _guardando = true;
 
-            var participant = new ScoutParticipant
+            var educando = new Educando
             {
                 Id = Guid.NewGuid(),
-                OrganizationId = OrganizationId,
-                LegalGuardianId = LegalGuardianId,
-                FirstName = _firstName.Trim(),
-                LastName = _lastName.Trim(),
-                BirthDate = DateOnly.FromDateTime(_birthDate.Value),
+                OrganizacionId = OrganizacionId,
+                TutorLegalId = TutorLegalId,
+                Nombre = _nombre.Trim(),
+                Apellidos = _apellidos.Trim(),
+                FechaNacimiento = DateOnly.FromDateTime(_fechaNacimiento.Value),
                 Dni = _dni?.Trim(),
-                Gender = _gender,
-                CurrentBranch = _branch,
-                IsActive = true,
-                CreatedAtUtc = DateTime.UtcNow
+                Sexo = _sexo,
+                RamaActual = _rama,
+                Activo = true,
+                FechaCreacionUtc = DateTime.UtcNow
             };
 
-            var healthRecord = new ParticipantHealthRecord
+            var fichaMedica = new FichaMedica
             {
-                OrganizationId = OrganizationId,
-                HealthInsuranceNumber = _cip.Trim(),
-                PrimaryEmergencyPhone = _emergencyPhone.Trim(),
-                CanSwim = true,
-                VaccinationsUpToDate = true
+                OrganizacionId = OrganizacionId,
+                NumeroSeguridadSocial = _cip.Trim(),
+                TelefonoEmergenciaPrincipal = _telefonoEmergencia.Trim(),
+                SabeNadar = true,
+                VacunacionAlDia = true
             };
 
-            var created = await ParticipantService.CreateParticipantAsync(participant, healthRecord);
-            Snackbar.Add($"Educando {created.FullName} registrado correctamente.", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(created));
+            var creado = await ServicioEducandos.CrearEducandoAsync(educando, fichaMedica);
+            Snackbar.Add($"Educando {creado.NombreCompleto} registrado correctamente.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(creado));
         }
         catch (Exception ex)
         {
@@ -135,7 +135,7 @@
         }
         finally
         {
-            _saving = false;
+            _guardando = false;
         }
     }
 }

@@ -6,7 +6,9 @@ public static class ParticipantServiceExtensions
 {
     public static IServiceCollection AddParticipantFeatures(this IServiceCollection services)
     {
-        services.AddScoped<IParticipantService, ParticipantService>();
+        services.AddScoped<ServicioEducandos>();
+        services.AddScoped<IServicioEducandos>(sp => sp.GetRequiredService<ServicioEducandos>());
+        services.AddScoped<IParticipantService>(sp => sp.GetRequiredService<ServicioEducandos>());
         return services;
     }
 }
