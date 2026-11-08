@@ -1,6 +1,7 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Features.Identity;
+using WebScout.Web.Features.Participants;
 using WebScout.Web.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,9 @@ builder.Services.AddScoutTenancy(builder.Configuration);
 
 // Registrar Identity, Roles y Cookies de Autenticación
 builder.Services.AddScoutIdentity();
+
+// Registrar Dominio de Educandos y Salud
+builder.Services.AddParticipantFeatures();
 
 var app = builder.Build();
 

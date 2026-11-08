@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Participants.Domain;
 
 namespace WebScout.Web.Infrastructure.Persistence;
 
@@ -81,13 +82,16 @@ public static class DatabaseInitializer
             }
 
             // 3. Seed de Usuarios Demo para el Tenant Piloto (Lestonnac 330)
-            await SeedDemoUserAsync(userManager, logger, lestonnacId, "familia.garcia@scoutslestonnac.es", "Familia García Pérez", "12345678Z", ScoutRoles.Familia, ScoutBranch.None);
+            var garciaUser = await SeedDemoUserAsync(userManager, logger, lestonnacId, "familia.garcia@scoutslestonnac.es", "Familia García Pérez", "12345678Z", ScoutRoles.Familia, ScoutBranch.None);
             await SeedDemoUserAsync(userManager, logger, lestonnacId, "scouter.manada@scoutslestonnac.es", "Elena Akela", "87654321A", ScoutRoles.Scouter, ScoutBranch.Manada);
             await SeedDemoUserAsync(userManager, logger, lestonnacId, "coordinador@scoutslestonnac.es", "Roberto Coordinador", "45678901B", ScoutRoles.Coordinacion, ScoutBranch.None);
 
             // 4. Seed de Usuarios Demo para el Tenant de Contraste (San Vicente 412)
-            await SeedDemoUserAsync(userManager, logger, sanVicenteId, "familia.lopez@scoutssanvicente.org", "Familia López Ruiz", "23456789C", ScoutRoles.Familia, ScoutBranch.None);
+            var lopezUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "familia.lopez@scoutssanvicente.org", "Familia López Ruiz", "23456789C", ScoutRoles.Familia, ScoutBranch.None);
             await SeedDemoUserAsync(userManager, logger, sanVicenteId, "scouter.tropa@scoutssanvicente.org", "David Baloo", "98765432D", ScoutRoles.Scouter, ScoutBranch.Tropa);
+
+            // 5. Seed de Educandos y Fichas Médicas Anuales
+            await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
         }
         catch (Exception ex)
         {
@@ -95,7 +99,124 @@ public static class DatabaseInitializer
         }
     }
 
-    private static async Task SeedDemoUserAsync(
+    private static async Task SeedParticipantsAndHealthRecordsAsync(
+        WebScoutDbContext db,
+        ILogger logger,
+        Guid lestonnacId,
+        Guid sanVicenteId,
+        ScoutUser? garciaUser,
+        ScoutUser? lopezUser)
+    {
+        // Educandos de Lestonnac 330 (Familia García Pérez)
+        if (garciaUser != null && !await db.Participants.IgnoreQueryFilters().AnyAsync(p => p.LegalGuardianId == garciaUser.Id))
+        {
+            logger.LogInformation("Poblando educandos y fichas sanitarias para Lestonnac 330...");
+
+            var lucia = new ScoutParticipant
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = lestonnacId,
+                LegalGuardianId = garciaUser.Id,
+                FirstName = "Lucía",
+                LastName = "García Pérez",
+                BirthDate = new DateOnly(2017, 4, 15),
+                Gender = "Femenino",
+                CurrentBranch = ScoutBranch.Manada,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                HealthRecord = new ParticipantHealthRecord
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizationId = lestonnacId,
+                    HealthInsuranceNumber = "CIP-CLM-98234123",
+                    HealthInsuranceEntity = "SESCAM",
+                    FoodAllergies = "Alérgica a los frutos secos (cacahuete y nuez)",
+                    DietaryRequirements = "Celíaca (requiere menú 100% libre de gluten y sin trazas)",
+                    CanSwim = true,
+                    VaccinationsUpToDate = true,
+                    PrimaryEmergencyPhone = "+34 600 111 222",
+                    PrimaryEmergencyContactName = "María Pérez (Madre)",
+                    SecondaryEmergencyPhone = "+34 600 333 444",
+                    SecondaryEmergencyContactName = "Carlos García (Padre)",
+                    AdditionalObservations = "Lleva su propio botiquín con medicación de rescate en caso de ingestión accidental de gluten."
+                }
+            };
+
+            var marcos = new ScoutParticipant
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = lestonnacId,
+                LegalGuardianId = garciaUser.Id,
+                FirstName = "Marcos",
+                LastName = "García Pérez",
+                BirthDate = new DateOnly(2014, 9, 20),
+                Gender = "Masculino",
+                CurrentBranch = ScoutBranch.Tropa,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                HealthRecord = new ParticipantHealthRecord
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizationId = lestonnacId,
+                    HealthInsuranceNumber = "CIP-CLM-77123990",
+                    HealthInsuranceEntity = "SESCAM",
+                    ChronicConditions = "Asma bronquial estacional",
+                    ActiveMedication = "Ventolín (Salbutamol inhalador). Dos inhalaciones previas a ejercicio físico intenso si presenta sibilancias.",
+                    CanSwim = true,
+                    VaccinationsUpToDate = true,
+                    PrimaryEmergencyPhone = "+34 600 111 222",
+                    PrimaryEmergencyContactName = "María Pérez (Madre)",
+                    SecondaryEmergencyPhone = "+34 600 333 444",
+                    SecondaryEmergencyContactName = "Carlos García (Padre)",
+                    AdditionalObservations = "Lleva el inhalador siempre consigo en la mochila de mano."
+                }
+            };
+
+            db.Participants.AddRange(lucia, marcos);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Educandos de Lestonnac 330 creados: Lucía (Manada) y Marcos (Tropa).");
+        }
+
+        // Educando de San Vicente 412 (Familia López Ruiz)
+        if (lopezUser != null && !await db.Participants.IgnoreQueryFilters().AnyAsync(p => p.LegalGuardianId == lopezUser.Id))
+        {
+            logger.LogInformation("Poblando educando y ficha sanitaria para San Vicente 412...");
+
+            var hugo = new ScoutParticipant
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = sanVicenteId,
+                LegalGuardianId = lopezUser.Id,
+                FirstName = "Hugo",
+                LastName = "López Ruiz",
+                BirthDate = new DateOnly(2019, 2, 10),
+                Gender = "Masculino",
+                CurrentBranch = ScoutBranch.Castores,
+                IsActive = true,
+                CreatedAtUtc = DateTime.UtcNow,
+                HealthRecord = new ParticipantHealthRecord
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizationId = sanVicenteId,
+                    HealthInsuranceNumber = "CIP-CLM-44321098",
+                    HealthInsuranceEntity = "SESCAM",
+                    FoodAllergies = "Alérgico al huevo y derivados",
+                    DietaryRequirements = "Exclusión total de huevo",
+                    CanSwim = false,
+                    VaccinationsUpToDate = true,
+                    PrimaryEmergencyPhone = "+34 611 222 333",
+                    PrimaryEmergencyContactName = "Laura Ruiz (Madre)",
+                    AdditionalObservations = "Está aprendiendo a nadar, requiere manguitos o chaleco en piscina/río."
+                }
+            };
+
+            db.Participants.Add(hugo);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Educando de San Vicente 412 creado: Hugo (Castores).");
+        }
+    }
+
+    private static async Task<ScoutUser?> SeedDemoUserAsync(
         UserManager<ScoutUser> userManager,
         ILogger logger,
         Guid organizationId,
@@ -109,7 +230,7 @@ public static class DatabaseInitializer
         var existingUser = await userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.OrganizationId == organizationId && u.NormalizedEmail == email.ToUpperInvariant());
         if (existingUser != null)
         {
-            return;
+            return existingUser;
         }
 
         var user = new ScoutUser
@@ -131,10 +252,12 @@ public static class DatabaseInitializer
         {
             await userManager.AddToRoleAsync(user, role);
             logger.LogInformation("Usuario demo creado [{TenantId}]: {Email} ({Role})", organizationId, email, role);
+            return user;
         }
         else
         {
             logger.LogWarning("No se pudo crear el usuario {Email}: {Errors}", email, string.Join(", ", result.Errors.Select(e => e.Description)));
+            return null;
         }
     }
 }
