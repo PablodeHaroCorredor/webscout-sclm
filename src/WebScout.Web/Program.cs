@@ -32,4 +32,7 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+// Inicializar esquema y seed de base de datos si PostgreSQL está activo
+await WebScout.Web.Infrastructure.Persistence.DatabaseInitializer.InitializeDatabaseAsync(app.Services);
+
 app.Run();

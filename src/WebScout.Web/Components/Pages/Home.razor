@@ -1,7 +1,93 @@
-﻿@page "/"
+@page "/"
+@using WebScout.Web.Infrastructure.Tenancy
+@using WebScout.Web.Common.Domain
+@using WebScout.Web.Common.Wcag
+@inject ITenantContext Tenant
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Scout</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="scout-container" style="max-width: 900px; margin: 2rem auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    @* Cabecera Scout con los colores del grupo activo *@
+    <div style="background: @(ActivePanoleta.BaseColorHex); color: @HeaderTextColor; padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); border-bottom: 6px solid @(ActivePanoleta.BorderColorHex);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    ⚜️ SCLM Multitenant Platform
+                </span>
+                <h1 style="margin: 0.5rem 0 0.25rem 0; font-size: 2.2rem; font-weight: 700;">
+                    @(Tenant.IsResolved ? Tenant.GroupName : "Portal Asociativo SCLM")
+                </h1>
+                <p style="margin: 0; opacity: 0.9; font-size: 1.1rem;">
+                    Subdominio activo: <code style="background: rgba(0,0,0,0.2); padding: 0.2rem 0.4rem; border-radius: 4px;">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
+                    · Grupo Nº: <strong>@(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "-")</strong>
+                </p>
+            </div>
+            
+            @* Miniatura de la pañoleta scout *@
+            <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 1rem; border-radius: 10px; border: 2px solid @(ActivePanoleta.BorderColorHex);">
+                <div style="font-size: 0.8rem; text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">Pañoleta Oficial</div>
+                <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                    <span style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; background: @(ActivePanoleta.BaseColorHex); border: 2px solid #fff;" title="Fondo: @(ActivePanoleta.BaseColorHex)"></span>
+                    <span style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; background: @(ActivePanoleta.BorderColorHex); border: 2px solid #fff;" title="Ribete: @(ActivePanoleta.BorderColorHex)"></span>
+                    @if (!string.IsNullOrEmpty(ActivePanoleta.CentralStripeColorHex))
+                    {
+                        <span style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; background: @(ActivePanoleta.CentralStripeColorHex); border: 2px solid #fff;" title="Cinta central: @(ActivePanoleta.CentralStripeColorHex)"></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 
-Welcome to your new app.
+    @* Selector de Grupos para probar en local *@
+    <div style="margin-top: 2rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; font-size: 1.2rem; color: #1e293b;">🔄 Selector de Tenant (Simular Subdominios en Local)</h3>
+        <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 1rem;">
+            El middleware detecta automáticamente el subdominio o el parámetro de consulta. Haz clic en cualquiera de los dos grupos de prueba para verificar cómo cambia el contexto, el aislamiento y la identidad visual:
+        </p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="?tenant=lestonnac" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #1B5E20; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <span>⚜️</span> Lestonnac 330 (?tenant=lestonnac)
+            </a>
+            <a href="?tenant=sanvicente" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #0D47A1; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <span>⚜️</span> San Vicente 412 (?tenant=sanvicente)
+            </a>
+        </div>
+    </div>
+
+    @* Estado de la Arquitectura y Aislamiento *@
+    <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">🛡️ Aislamiento EF Core 10</div>
+            <p style="color: #475569; font-size: 0.9rem; margin: 0;">
+                Global Query Filter activo: solo se consultan registros con <code>OrganizationId = @Tenant.CurrentTenantId</code>.
+            </p>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">👁️ Accesibilidad WCAG 2.2 AA</div>
+            <p style="color: #475569; font-size: 0.9rem; margin: 0;">
+                Ratio de contraste verificado: <strong>@ContrastRatio.ToString("F2"):1</strong> (requisito mínimo: 4.5:1).
+            </p>
+        </div>
+
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">🍕 Vertical Slice Architecture</div>
+            <p style="color: #475569; font-size: 0.9rem; margin: 0;">
+                Monolito modular con slices autocontenidos en <code>Features/</code> sin capas artificiales.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private PanoletaConfig ActivePanoleta => Tenant.TenantSlug switch
+    {
+        "sanvicente" => PanoletaConfig.SanVicente412,
+        _ => PanoletaConfig.Lestonnac330
+    };
+
+    private string HeaderTextColor => WcagContrastCalculator.GetAccessibleTextColor(ActivePanoleta.BaseColorHex);
+
+    private double ContrastRatio => WcagContrastCalculator.CalculateContrastRatio(HeaderTextColor, ActivePanoleta.BaseColorHex);
+}
