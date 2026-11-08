@@ -6,9 +6,10 @@
          viewBox="0 0 100 80"
          width="@Width"
          height="@Height"
-         class="scout-panoleta-svg @CssClass"
+         class="scout-panoleta-svg @(Class ?? CssClass)"
          role="img"
-         aria-label="@(Title ?? "Pañoleta Scout Oficial")">
+         aria-label="@(Title ?? "Pañoleta Scout Oficial")"
+         @attributes="AdditionalAttributes">
         <title>@(Title ?? "Pañoleta Scout Oficial")</title>
         
         <defs>
@@ -60,8 +61,10 @@
     [Parameter] public PanoletaConfig? Config { get; set; }
     [Parameter] public int Width { get; set; } = 80;
     [Parameter] public int Height { get; set; } = 64;
+    [Parameter] public string? Class { get; set; }
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public string? Title { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string FilterId = "shadow-" + Guid.NewGuid().ToString("N")[..8];
     private PanoletaConfig EffectiveConfig => Config ?? PanoletaConfig.Lestonnac330;

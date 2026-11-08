@@ -8,6 +8,7 @@
 <MudSnackbarProvider />
 
 <MudLayout>
+    <!-- Barra Superior de Navegación -->
     <MudAppBar Elevation="1" Color="Color.Primary" Dense="false">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         
@@ -25,7 +26,8 @@
 
         <MudSpacer />
 
-        <div class="d-none d-md-flex align-center gap-2 me-2">
+        <!-- Selector de Tenant (Simular Subdominios en Local) -->
+        <div class="d-none d-lg-flex align-center gap-2 me-4">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Surface" Style="color: var(--mud-palette-text-primary);">
                 @(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")
             </MudChip>
@@ -44,17 +46,63 @@
                 San Vicente 412
             </MudButton>
         </div>
+
+        <!-- Estado de Autenticación en la Barra Superior -->
+        <AuthorizeView>
+            <Authorized>
+                <div class="d-flex align-center gap-3">
+                    <div class="d-none d-sm-block text-end">
+                        <MudText Typo="Typo.body2" Style="font-weight: 700; line-height: 1.1;">
+                            @context.User.Identity?.Name
+                        </MudText>
+                        <MudText Typo="Typo.caption" Style="opacity: 0.85;">
+                            Sesión Iniciada
+                        </MudText>
+                    </div>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Secondary" 
+                               Size="Size.Small"
+                               Href="/auth/logout"
+                               StartIcon="@Icons.Material.Filled.Logout">
+                        Salir
+                    </MudButton>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Secondary" 
+                           Size="Size.Small"
+                           Href="/login"
+                           StartIcon="@Icons.Material.Filled.Login">
+                    Iniciar Sesión
+                </MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
 
+    <!-- Menú Lateral Dinámico por Roles -->
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="DrawerVariant.Responsive">
-        <MudDrawerHeader Class="d-flex align-center gap-2 py-3">
-            <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
-                <MudIcon Icon="@Icons.Material.Filled.Forest" />
-            </MudAvatar>
-            <div>
-                <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">@(Tenant.IsResolved ? Tenant.GroupName : "Plataforma Scout")</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">WebScout SCLM</MudText>
-            </div>
+        <MudDrawerHeader Class="d-flex align-center gap-3 py-4">
+            <AuthorizeView>
+                <Authorized>
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">@context.User.Identity?.Name</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</MudText>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <MudAvatar Color="Color.Default" Variant="Variant.Outlined" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Acceso Invitado</MudText>
+                        <MudLink Href="/login" Typo="Typo.caption">Iniciar sesión →</MudLink>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
         </MudDrawerHeader>
         
         <MudDivider />
@@ -63,9 +111,66 @@
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
                 Inicio
             </MudNavLink>
+
+            <AuthorizeView Roles="Familia">
+                <Authorized>
+                    <MudNavGroup Title="Portal Familias" Icon="@Icons.Material.Filled.FamilyRestroom" Expanded="true">
+                        <MudNavLink Href="/familias/educandos" Icon="@Icons.Material.Filled.ChildCare">
+                            Mis Educandos (Fichas)
+                        </MudNavLink>
+                        <MudNavLink Href="/familias/inscripciones" Icon="@Icons.Material.Filled.EventAvailable">
+                            Inscripción a Campamentos
+                        </MudNavLink>
+                        <MudNavLink Href="/familias/pedidos" Icon="@Icons.Material.Filled.ShoppingBag">
+                            Uniformidad y Material
+                        </MudNavLink>
+                    </MudNavGroup>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Scouter,Coordinacion">
+                <Authorized>
+                    <MudNavGroup Title="Panel de Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
+                        <MudNavLink Href="/kraal/revision" Icon="@Icons.Material.Filled.AssignmentTurnedIn">
+                            Mesa de Revisión
+                        </MudNavLink>
+                        <MudNavLink Href="/kraal/secciones" Icon="@Icons.Material.Filled.Group">
+                            Mi Rama / Sección
+                        </MudNavLink>
+                        <MudNavLink Href="/kraal/actividades" Icon="@Icons.Material.Filled.Hiking">
+                            Gestor de Actividades
+                        </MudNavLink>
+                    </MudNavGroup>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView Roles="Coordinacion,Administracion">
+                <Authorized>
+                    <MudNavGroup Title="Administración de Grupo" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="false">
+                        <MudNavLink Href="/admin/tesoreria" Icon="@Icons.Material.Filled.AccountBalance">
+                            Tesorería y Pagos
+                        </MudNavLink>
+                        <MudNavLink Href="/admin/configuracion" Icon="@Icons.Material.Filled.Settings">
+                            Ajustes del Grupo
+                        </MudNavLink>
+                    </MudNavGroup>
+                </Authorized>
+            </AuthorizeView>
         </MudNavMenu>
+
+        <div class="mt-auto pa-4">
+            <MudCard Elevation="0" Outlined="true" Class="pa-3" Style="background: #F8FAFC;">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">
+                    WebScout SCLM · Identity v1.0
+                </MudText>
+                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary" Style="font-size: 0.7rem;">
+                    Aislamiento Multitenant Activo
+                </MudText>
+            </MudCard>
+        </div>
     </MudDrawer>
 
+    <!-- Contenido Principal -->
     <MudMainContent Class="pa-4 pa-md-6" Style="background-color: #F8FAFC; min-height: 100vh;">
         @Body
     </MudMainContent>
