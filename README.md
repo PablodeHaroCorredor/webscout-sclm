@@ -37,25 +37,34 @@ Copy-Item .env.example .env
 
 ---
 
-## 🚀 Estructura de la Solución (.NET)
+## 🚀 Estructura de la Solución (Vertical Slice Architecture)
 
-La solución técnica sigue una arquitectura limpia de monolito modular:
+La solución técnica adopta un enfoque de **Vertical Slice Architecture (ADR12)** para maximizar la cohesión y reducir la burocracia de código:
 
 ```text
 WebScout.slnx
 ├── src/
-│   ├── WebScout.Domain/          # Entidades puras, Value Objects (PanoletaConfig), Invariantes
-│   ├── WebScout.Application/     # Casos de uso, ITenantContext, Autorización por recurso
-│   ├── WebScout.Infrastructure/  # WebScoutDbContext (EF Core), S3/MinIO, SMTP Outbox
-│   └── WebScout.Web/             # ASP.NET Core, TenantResolutionMiddleware, Razor/MVC, CSS Tokens
+│   └── WebScout.Web/             # Aplicación principal ASP.NET Core
+│       ├── Features/             # 🍕 Casos de uso verticales autocontenidos
+│       │   ├── Tenants/          # Resolución por subdominio y provisión de grupos
+│       │   ├── Branding/         # Pañoleta, tokens CSS y contraste WCAG 2.2 AA
+│       │   ├── Activities/       # Publicación y gestión de campamentos/salidas
+│       │   ├── Inscriptions/     # Fichas, consentimientos y justificantes de pago
+│       │   ├── Orders/           # Pedidos sencillos de material (Core 1.29)
+│       │   └── Gallery/          # Álbumes y subida progresiva de fotos (MinIO/S3)
+│       ├── Infrastructure/       # ⚙️ Pilares transversales
+│       │   ├── Persistence/      # WebScoutDbContext, Global Query Filters y Migraciones
+│       │   ├── Tenancy/          # TenantResolutionMiddleware y ITenantContext
+│       │   ├── Storage/          # Servicio S3/MinIO para archivos privados
+│       │   └── Outbox/           # Despacho asíncrono y resiliente de notificaciones
+│       └── Common/               # Modelos base, Value Objects (Panoleta) y WCAG
 ├── tools/
-│   └── WebScout.Migration/       # Seeds de grupos SCLM y migrador WordPress (Lestonnac 330)
+│   └── WebScout.Migration/       # Seeds de nuevos grupos y migrador histórico L330
 ├── tests/
-│   ├── WebScout.DomainTests/     # Pruebas unitarias de reglas de negocio y cálculo WCAG
-│   ├── WebScout.ArchitectureTests/ # Verificación de límites de capas y multitenancy
-│   ├── WebScout.IntegrationTests/ # Pruebas con PostgreSQL real y S3 (PA01 - PA19)
+│   ├── WebScout.ArchitectureTests/ # Verificación de límites de slices y OrganizationId
+│   ├── WebScout.IntegrationTests/ # Pruebas contra PostgreSQL real (PA01 - PA19)
 │   └── WebScout.WebTests/        # Pruebas de navegación, accesibilidad y subdominio
-└── docs/                         # Índice y especificación técnica exhaustiva
+└── docs/                         # Especificación y documentación exhaustiva
 ```
 
 ---

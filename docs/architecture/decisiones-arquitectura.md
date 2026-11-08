@@ -17,6 +17,7 @@ Las ADR01 a ADR08 desarrollan las decisiones iniciales de la base 0.1. ADR09 con
 | ADR09 | Un contexto propietario y una línea de esquema | Contexto por módulo o doble mecanismo de creación de tablas | Migración serializada y seeds separados; identidad de despliegue distinta | Crear desde cero, actualizar anterior y restaurar |
 | ADR10 | Resolución de tenant por subdominio y filtros globales EF Core | Base de datos por grupo o esquema por grupo | Un único cluster relacional SCLM, bajo coste operativo; aislamiento forzado en DbContext | Tests de integración con dos organizaciones sintéticas sin fugas de datos |
 | ADR11 | Motor de tematización dinámica (pañoleta y tokens CSS) con WCAG 2.2 AA | Subida de archivos CSS libres o tema estático sin personalización | Identidad visual scout por grupo segura contra XSS; legibilidad y contraste garantizados | Cálculo de ratio de contraste >= 4.5:1 en tests unitarios y renderizado SVG |
+| ADR12 | Vertical Slice Architecture (VSA) en el monolito | Capas horizontales tradicionales (Domain/App/Infra/Web) | Alta cohesión por caso de uso, cero acoplamiento artificial entre capas, menor burocracia de código y desarrollo ágil | Slices autocontenidos en `Features/` con tests de integración directos |
 
 ## Ratificación y cambios
 

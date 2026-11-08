@@ -14,13 +14,12 @@ Este documento establece las instrucciones operativas obligatorias para cualquie
 
 ---
 
-## 2. Límites y Reglas de Arquitectura
+## 2. Límites y Reglas de Arquitectura (Vertical Slice Architecture)
 
-1. **Capas y Dependencias:**
-   - `WebScout.Domain` no tiene dependencias externas (ni EF Core, ni ASP.NET, ni Identity).
-   - `WebScout.Application` orquesta casos de uso y define interfaces/puertos.
-   - `WebScout.Infrastructure` implementa persistencia, S3/MinIO y envío de correo Outbox.
-   - `WebScout.Web` gestiona HTTP, subdominios (`TenantResolutionMiddleware`) y layouts Razor.
+1. **Organización por Vertical Slices (ADR12):**
+   - Las funcionalidades se organizan por casos de uso verticales dentro de `Features/<Modulo>/<CasoDeUso>/` (ej: endpoint, request, handler, validator, viewModel).
+   - Prohibido el acoplamiento directo entre slices de módulos diferentes; la comunicación se realiza mediante eventos o modelos base de `Common/`.
+   - La persistencia, el middleware de subdominio, el almacenamiento S3 y el despacho Outbox residen en `Infrastructure/` como pilares transversales para todos los slices.
 2. **Aislamiento Multitenant (`OrganizationId`):**
    - Toda entidad de negocio debe implementar `ITenantScopedEntity`.
    - `WebScoutDbContext` debe tener filtros globales (`HasQueryFilter`) configurados en todas las entidades multitenant.

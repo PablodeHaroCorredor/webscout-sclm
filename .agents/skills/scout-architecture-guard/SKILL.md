@@ -1,22 +1,22 @@
 ---
 name: scout-architecture-guard
 description: >-
-  Use this skill to inspect, validate, and enforce the Clean Modular Monolith
-  and Multitenant rules of WebScout SCLM. Ensures Domain isolation,
+  Use this skill to inspect, validate, and enforce the Vertical Slice Architecture (ADR12)
+  and Multitenant rules of WebScout SCLM. Ensures slice cohesion, Infrastructure centralization,
   OrganizationId tenant stamping, resource-based authorization, and outbox patterns.
 ---
 
 # Scout Architecture Guard
 
-Esta skill establece y verifica los límites de arquitectura del proyecto **WebScout SCLM**, garantizando que el monolito modular respete estrictamente los patrones de aislamiento multitenant, seguridad y separación de capas.
+Esta skill establece y verifica los límites de arquitectura del proyecto **WebScout SCLM**, garantizando que el monolito modular respete estrictamente los patrones de Vertical Slice Architecture (VSA), aislamiento multitenant y seguridad.
 
-## Principios Fundamentales de Arquitectura (ADR01 a ADR11)
+## Principios Fundamentales de Arquitectura (ADR01 a ADR12)
 
-1. **Separación de Responsabilidades por Capas**:
-   - `WebScout.Domain`: Entidades puras, agregados, objetos de valor (`PanoletaConfig`, `PaletteConfig`) e invariantes de negocio. **Prohibido referenciar** EF Core, ASP.NET Core Identity, bibliotecas HTTP o capas superiores.
-   - `WebScout.Application`: Casos de uso orquestados, DTOs, puertos/interfaces (`ITenantContext`, `IFileStorage`, `IEmailOutbox`), validaciones FluentValidation y comprobaciones de autorización por recurso.
-   - `WebScout.Infrastructure`: Implementaciones técnicas concretas (`WebScoutDbContext`, adaptadores Npgsql, S3/MinIO, Mailpit/SMTP Outbox, hashes criptográficos).
-   - `WebScout.Web`: Middleware de resolución de tenant (`TenantResolutionMiddleware`), páginas Razor / MVC, controladores de API, filtros de seguridad y layouts con inyección de tokens CSS.
+1. **Organización por Vertical Slices (ADR12)**:
+   - `src/WebScout.Web/Features/`: Cada caso de uso vive autocontenido dentro de su módulo (`Features/<Modulo>/<CasoDeUso>/`), agrupando endpoint, comando/consulta, handler, validación y modelo de respuesta.
+   - **Prohibido el acoplamiento cruzado rígido entre slices:** Un slice de `Activities` no invoca directamente clases internas de `Orders`. La comunicación se efectúa a través de eventos o modelos compartidos en `Common/`.
+   - `src/WebScout.Web/Infrastructure/`: Persistencia relacional (`WebScoutDbContext`), resolución de subdominio (`TenantResolutionMiddleware`), almacenamiento privado S3/MinIO y cola Outbox.
+   - `src/WebScout.Web/Common/`: Entidades compartidas, Value Objects (`PanoletaConfig`), políticas de autorización y fórmulas WCAG.
    - `tools/WebScout.Migration`: Herramientas de seed de tenants y scripts de migración aislados.
 
 2. **Aislamiento Multitenant Estricto (`OrganizationId`)**:

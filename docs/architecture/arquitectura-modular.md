@@ -1,74 +1,103 @@
-# Arquitectura modular de la web scout multitenant
+# Arquitectura de la Plataforma Web Scout: Vertical Slice Architecture
 
-Versión 1.0 · Refinamiento de arquitectura multitenant SCLM · 8 de noviembre de 2026.
+Versión 1.1 · Adopción de Vertical Slice Architecture (ADR12) para SCLM · 8 de noviembre de 2026.
 
-La propuesta es un **monolito modular multitenant en .NET 10 LTS con ASP.NET Core y EF Core**, diseñado para servir a los grupos de Scouts de Castilla-La Mancha (SCLM). La plataforma utiliza una base de datos relacional PostgreSQL con aislamiento lógico mediante filtros globales, almacenamiento particionado por tenant y resolución por subdominio. La interfaz web se construye con Razor Pages o MVC, JavaScript progresivo y un motor dinámico de tematización por tokens CSS.
+La plataforma **WebScout SCLM** es un **monolito modular basado en Vertical Slice Architecture (VSA)** en .NET 10 LTS con ASP.NET Core y Entity Framework Core. En lugar de dividir el código en capas horizontales rígidas (Domain, Application, Infrastructure, Web) que dispersan la lógica de una misma funcionalidad en múltiples proyectos, el sistema organiza el código por **casos de uso o capacidades de negocio verticales** (`Features/`).
 
-El Grupo Scout Lestonnac 330 se mantiene como el **grupo piloto** para validar la arquitectura y el proceso de migración de datos.
+La infraestructura transversal (aislamiento multitenant con `OrganizationId`, persistencia relacional con PostgreSQL, almacenamiento privado S3/MinIO y motor de correo Outbox) se centraliza en `Infrastructure/`, garantizando la seguridad y el aislamiento estricto de los datos scouts de forma uniforme para todas las verticales.
 
-## Estructura de la solución
+---
 
-Para desacoplar el código de un grupo concreto y permitir la gestión multitenant de SCLM, los proyectos y namespaces adoptan el identificador de plataforma `WebScout`:
+## Estructura de la Solución
 
 ```text
 WebScout.slnx
 src/
-  WebScout.Domain/
-  WebScout.Application/
-  WebScout.Infrastructure/
   WebScout.Web/
+    Features/                     # 🍕 Casos de uso verticales autocontenidos
+      Tenants/                    # Resolución y provisión de grupos scouts
+      Branding/                   # Pañoleta, tokens CSS y contraste WCAG 2.2 AA
+      Activities/                 # Publicación y gestión de campamentos/actividades
+      Inscriptions/               # Inscripciones, consentimientos y justificantes de pago
+      Orders/                     # Pedidos de material scout (Core 1.29)
+      Gallery/                    # Subida progresiva y galería privada de fotos
+      Administration/             # Gestión de miembros, secciones y soporte federativo
+    Infrastructure/               # ⚙️ Pilares transversales
+      Persistence/                # WebScoutDbContext, Global Query Filters y Migraciones
+      Tenancy/                    # TenantResolutionMiddleware y servicio ITenantContext
+      Storage/                    # Adaptador S3/MinIO para archivos privados y PDFs
+      Outbox/                     # Despacho duradero de correos electrónicos
+    Common/                       # 🧩 Modelos compartidos y utilidades matemáticas
+      Domain/                     # Entidades base, Value Objects (PanoletaConfig)
+      Security/                   # Políticas de autorización por recurso y permisos
+      Wcag/                       # Algoritmo de luminancia y contraste WCAG 2.2 AA
 tools/
-  WebScout.Migration/
+  WebScout.Migration/             # Herramienta de seeds de grupos y migrador WordPress L330
 tests/
-  WebScout.DomainTests/
-  WebScout.ArchitectureTests/
-  WebScout.IntegrationTests/
-  WebScout.WebTests/
-docs/
+  WebScout.ArchitectureTests/     # Verificación de aislamiento de slices y multitenancy
+  WebScout.IntegrationTests/      # Tests de integración contra PostgreSQL real (PA01-PA19)
+  WebScout.WebTests/             # Tests de interfaz y navegación
+docs/                             # Documentación viva del proyecto
 ```
 
-- `WebScout.Domain`: Entidades, invariantes de negocio, tipos de valor (como la pañoleta y paleta) y reglas de dominio sin dependencias externas.
-- `WebScout.Application`: Casos de uso orquestados, interfaces de servicios, DTOs, políticas de autorización por recurso y resolución del `ITenantContext`.
-- `WebScout.Infrastructure`: Persistencia EF Core (`WebScoutDbContext`), repositorios, almacenamiento privado de archivos, motor de plantillas y envío de correo outbox.
-- `WebScout.Web`: Middleware de resolución de tenant (`TenantResolutionMiddleware`), páginas Razor, controladores de API, inyección de tokens CSS y componentes visuales.
-- `WebScout.Migration`: Herramienta de migración con perfiles de importación por grupo (incluyendo el perfil histórico WordPress de Lestonnac 330) y datos de seed para nuevos grupos de SCLM.
+---
 
-## Dependencias y pipeline de tenant
+## Anatomía de un Vertical Slice
+
+Cada carpeta dentro de `Features/` representa un caso de uso específico y contiene todo lo necesario para responder a la solicitud:
+
+```text
+Features/Inscriptions/UploadPaymentReceipt/
+├── UploadPaymentReceiptEndpoint.cs   # Endpoint HTTP / Razor Page Handler
+├── UploadPaymentReceiptCommand.cs    # Parámetros de entrada del caso de uso
+├── UploadPaymentReceiptHandler.cs    # Lógica de negocio y persistencia
+├── UploadPaymentReceiptValidator.cs  # Validación (FluentValidation)
+└── UploadPaymentReceiptResponse.cs   # Modelo de respuesta / ViewModel
+```
+
+### Ventajas para el Proyecto Scout:
+1. **Alta cohesión:** Toda la lógica de adjuntar un justificante bancario está en un único lugar.
+2. **Cero sobre-ingeniería:** Si una consulta solo la necesita una pantalla, no se crea un repositorio genérico ni interfaces intermedias innecesarias; se consulta directamente vía `WebScoutDbContext`.
+3. **Mapeo directo con Requisitos y Pruebas:** Cada slice corresponde a uno o más requisitos del catálogo (`RF01`–`RF71`) y es probado de extremo a extremo mediante las pruebas de aceptación (`PA01`–`PA19`).
+
+---
+
+## Dependencias y Pipeline de Ejecución
 
 ```mermaid
 flowchart TB
-  Req[Petición HTTP] --> TenantMid[TenantResolutionMiddleware]
-  TenantMid --> Web[WebScout.Web]
-  Web --> App[WebScout.Application]
-  App --> Domain[WebScout.Domain]
-  Infra[WebScout.Infrastructure] --> App
-  Infra --> Domain
-  Web --> Infra
-  Migration[WebScout.Migration] --> App
-  Migration --> Infra
+    Req[Petición HTTP entrante] --> TenantMid[TenantResolutionMiddleware]
+    TenantMid --> Route[Enrutamiento al Vertical Slice]
+    Route --> Slice["Vertical Slice (Endpoint + Handler)"]
+    
+    subgraph SharedInfra["Infraestructura Compartida SCLM"]
+        TenantMid -.-> Context[ITenantContext]
+        Slice --> DB[("WebScoutDbContext (Filtro Global OrganizationId)")]
+        Slice --> Storage[("Almacenamiento S3 / MinIO")]
+        Slice --> Outbox[Cola Outbox de Notificaciones]
+    end
 ```
 
-1. **Resolución de contexto:** `TenantResolutionMiddleware` inspecciona el host/subdominio o la cabecera de desarrollo, localiza la organización en caché y establece el servicio con ámbito `ITenantContext`.
-2. **Autorización y contexto resuelto:** Las páginas y controladores nunca reciben `DbContext` directamente. `Application` recibe el contexto verificado del tenant y del usuario autenticado antes de invocar cualquier caso de uso.
-3. **Tematización por tenant:** `WebScout.Web` renderiza el layout inyectando las variables CSS del grupo resuelto (`--scout-primary`, `--panoleta-base`, etc.) y sus recursos de identidad.
+1. **Resolución de contexto:** `TenantResolutionMiddleware` detecta el subdominio (`{slug}.scoutsclm.org`), valida la organización activa y expone `ITenantContext`.
+2. **Ejecución del Slice:** El handler de la feature recibe `ITenantContext` y `WebScoutDbContext`. Todas las consultas quedan filtradas automáticamente por `OrganizationId`.
+3. **Inmutabilidad y Outbox:** Las subidas de archivos van al storage privado (obteniendo clave opaca y hash SHA-256) y los correos se registran en la tabla de Outbox dentro de la misma transacción.
 
-## Persistencia y aislamiento en EF Core
+---
+
+## Persistencia y Aislamiento en EF Core
 
 Se utiliza un único `WebScoutDbContext` para el conjunto de la plataforma con una sola línea de migraciones relacionales:
 
 - **Filtros globales de consulta (Global Query Filters):** Todas las entidades que contienen `OrganizationId` tienen configurado automáticamente un filtro en EF Core para aislar las lecturas al tenant actual:
   `builder.Entity<T>().HasQueryFilter(e => e.OrganizationId == _tenantContext.CurrentTenantId);`
 - **Asignación automática en guardado:** El método `SaveChangesAsync` intercepta la creación de entidades y estampa automáticamente el `OrganizationId` del tenant en curso, impidiendo escrituras anónimas o cruzadas.
-- **Consultas federativas explícitas:** Las operaciones especiales del equipo de soporte de SCLM deben deshabilitar explícitamente los filtros (`IgnoreQueryFilters()`) bajo un contexto auditado y justificado.
+- **Consultas federativas explícitas:** Las operaciones especiales del equipo de soporte de SCLM deben deshabilitar explícitamente los filtros (`IgnoreQueryFilters()`) bajo un contexto auditado y justificado con límite temporal de 4 horas.
 
-PostgreSQL con Npgsql en .NET 10 LTS es el proveedor de persistencia principal, validado contra el esquema único de la plataforma.
+---
 
-## Comprobaciones de arquitectura
+## Comprobaciones de Arquitectura
 
 Los tests de arquitectura (`WebScout.ArchitectureTests`) verifican:
-- Prohibición de referencias desde Domain hacia Infrastructure o Web.
-- Obligatoriedad de `OrganizationId` en todas las entidades de negocio.
-- Existencia de filtros globales de consulta en todas las entidades multitenant.
-- Prohibición de consultas cruzadas entre organizaciones en los tests de integración con base de datos real.
-
-Las decisiones detalladas se registran en [ADR](decisiones-arquitectura.md).
+- **No acoplamiento entre slices:** Un slice de `Features/Activities` no debe depender directamente de los handlers internos de `Features/Orders`. La comunicación entre módulos se realiza mediante eventos o servicios de `Common`.
+- **Obligatoriedad de `OrganizationId`:** Toda entidad persistida debe pertenecer a una organización.
+- **Aislamiento en tests de integración:** Ninguna consulta ejecutada con el contexto de `lestonnac` puede retornar datos pertenecientes a `sanvicente` (`PA01`, `PA18`).

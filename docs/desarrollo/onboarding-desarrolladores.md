@@ -15,38 +15,59 @@ dotnet --info
 dotnet --list-sdks
 ```
 
-Comparar la salida con la versión fijada, no con una instalada por casualidad en la máquina. En .NET 10 `dotnet new sln` genera `.slnx` por defecto, según la [documentación del SDK](https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/10.0/dotnet-new-sln-slnx-default). Se propone `L330.slnx`; no se añade un fichero vacío para simular una solución.
+Comparar la salida con la versión fijada, no con una instalada por casualidad en la máquina. En .NET 10 `dotnet new sln` genera `.slnx` por defecto, según la [documentación del SDK](https://learn.microsoft.com/en-us/dotnet/core/compatibility/sdk/10.0/dotnet-new-sln-slnx-default). La solución se denomina `WebScout.slnx`.
 
-## Estructura que se creará en E1
+## Estructura de la Solución (Vertical Slice Architecture)
+
+Siguiendo la decisión **ADR12**, el monolito adopta una arquitectura basada en cortes verticales (`Features/`):
 
 ```text
-L330.slnx
-src/L330.Domain/
-src/L330.Application/
-src/L330.Infrastructure/
-src/L330.Web/
-tests/L330.Domain.Tests/
-tests/L330.IntegrationTests/
-tests/L330.WebTests/
+WebScout.slnx
+src/
+  WebScout.Web/
+    Features/
+      Tenants/
+      Branding/
+      Activities/
+      Inscriptions/
+      Orders/
+      Gallery/
+    Infrastructure/
+      Persistence/ (WebScoutDbContext y Global Query Filters)
+      Tenancy/ (TenantResolutionMiddleware y ITenantContext)
+      Storage/ (Adaptador MinIO/S3)
+      Outbox/ (Despacho duradero de avisos)
+    Common/ (Modelos compartidos, Value Objects y utilidades WCAG)
+tools/
+  WebScout.Migration/
+tests/
+  WebScout.ArchitectureTests/
+  WebScout.IntegrationTests/
+  WebScout.WebTests/
 docs/
 ```
 
-Los módulos son carpetas dentro de las capas. Domain no referencia EF, Identity ni Web. Application define casos de uso y puertos; Infrastructure los implementa; Web adapta solicitudes. La primera configuración debe demostrar una dependencia correcta y una prueba útil; no se exige crear proyectos de tests vacíos.
+Cada caso de uso vive autocontenido dentro de su carpeta en `Features/` (endpoint, command/query, handler, validación y viewModel), evitando la dispersión de código en múltiples capas artificiales.
 
 ## Datos y servicios locales
 
-Usar una base exclusiva de desarrollo, cuenta de acceso con privilegios mínimos, almacenamiento privado temporal y capturador de correo sin entrega externa. Las conexiones se guardan en secretos de usuario o variables del entorno, nunca en Git. Los nombres exactos de opciones se fijarán con la implementación y se documentarán sin sus valores secretos.
+Usar los servicios en Docker incluidos en el repositorio (`docker-compose.dev.yml`):
+- PostgreSQL 17 (puerto 5432)
+- Mailpit (puerto 1025/8025)
+- MinIO (puerto 9000/9001)
 
-El seed sintético incluirá dos organizaciones para pruebas de aislamiento, secciones, roles, dos familias con respuestas independientes y una cuenta sin sección. Contraseñas de prueba se generan localmente y no se publican en documentación. No usar fotografías, PDFs médicos ni identificadores reales de menores.
+Las conexiones se guardan en `.env` (excluido de Git) o en secretos de usuario (`dotnet user-secrets`), nunca en archivos versionados.
+
+El seed sintético incluirá dos organizaciones para pruebas de aislamiento (`lestonnac` y `sanvicente`), secciones, roles, dos familias con respuestas independientes y una cuenta sin sección. Contraseñas de prueba se generan localmente y no se publican en documentación. Prohibido usar fotografías, PDFs médicos o identificadores reales de menores.
 
 ## Primer arranque una vez exista código
 
 ```powershell
 dotnet tool restore
-dotnet restore L330.slnx
-dotnet build L330.slnx --no-restore
-dotnet test L330.slnx --no-build
-dotnet run --project src/L330.Web
+dotnet restore WebScout.slnx
+dotnet build WebScout.slnx --no-restore
+dotnet test WebScout.slnx --no-build
+dotnet run --project src/WebScout.Web
 ```
 
 La base debe prepararse con el procedimiento de [migraciones](../architecture/migraciones-ef-core.md), no mediante creación automática alternativa del esquema. Registrar versión de SDK, commit, proveedor y resultado. Si falta un proyecto o configuración, se completa E1 antes de tratar esos comandos como una receta válida.
