@@ -1,40 +1,55 @@
-# Visión alcance y piloto de la web scout
+# Visión, Alcance y Piloto de la Web Scout
 
-Versión 0.1 · Propuesta de arranque · 6 de noviembre de 2026.
+**Grupo Scout Lestonnac 330 · Scouts de Castilla-La Mancha (SCLM)**  
+Versión 1.1 · Actualización de Arquitectura y Alcance · 8 de noviembre de 2026.
 
-La aplicación debe permitir a familias y responsables resolver la documentación y comunicación del grupo desde una experiencia privada comprensible en móvil. El primer resultado de valor será completar una actividad con dos participantes, justificante compartido y revisión por sección, sin perder documentos ni ampliar accesos.
+La aplicación Web Scout permite a familias y scouters gestionar la vida asociativa, sanitaria y documental del grupo desde una experiencia web privada, segura, accesible y adaptada a dispositivos móviles.
 
-## Usuarios y problemas
+La definición operativa detallada y los criterios de aceptación del piloto están formalizados en la [Definición del MVP y Alcance Operativo del Piloto](definicion-mvp-piloto.md).
 
-| Usuario | Necesidad principal | Resultado observable |
+---
+
+## 1. Usuarios y Necesidades Principales
+
+| Usuario / Rol | Necesidad Principal | Resultado Observable |
 | --- | --- | --- |
-| Familia o miembro mayor de edad | Saber qué debe entregar y consultar su estado | Cada participante tiene un expediente identificable y una corrección afecta solo a ese expediente |
-| Scouter | Comunicar y revisar lo que tiene asignado | Publica contenido propio y revisa documentos solo con concesión y alcance |
-| Coordinación y Secretaría | Tramitar ingreso, documentos y pedidos | Bandejas con estados claros, filtros y exportaciones limitadas |
-| Administración | Mantener accesos y operación | Revocación efectiva, auditoría, copias y recuperación verificable |
-| Visitante | Consultar el grupo y solicitar información o ingreso | Web pública y formularios mínimos sin crear una cuenta automáticamente |
+| **Familia (Tutor Legal)** | Disponer de un censo permanente de sus educandos, mantener su ficha médica al día y autorizar salidas fácilmente. | Cada educando tiene su expediente persistente; una inscripción o subsanación afecta únicamente a ese educando; soporte de justificante compartido para hermanos. |
+| **Scouter (Responsable de Rama)** | Convocar actividades de su sección, revisar inscripciones y disponer de información sanitaria inmediata. | Publica actividades segmentadas por rama; revisa inscripciones solo dentro de su sección responsable; genera listas de campamento y resúmenes de cocina al instante. |
+| **Coordinación y Secretaría** | Supervisar el censo general, validar autorizaciones globales y controlar altas. | Bandejas con estados claros, filtros por rama y exportaciones operativas con control de acceso. |
+| **Administración Técnica** | Mantener accesos, gobernanza multitenant y trazabilidad. | Aislamiento estricto por organización (`Tenant`), auditoría funcional inmutable y copias de seguridad verificables. |
+| **Visitante** | Conocer el grupo scout y solicitar información o ingreso. | Portal público y formulario de contacto/solicitud sin creación automática de cuenta. |
 
-## Piloto operativo y equivalencia completa
+---
 
-El piloto privado comprende E1 a E3 y los controles legales y operativos necesarios para esos módulos. Puede mantener WordPress como web pública si DC02 confirma esa estrategia. La incorporación de cada módulo exige los P0 aplicables y sus funciones P1 comprometidas; aplazar una función P1 no equivale a cumplirla.
+## 2. Piloto Operativo y Entregas
 
-La equivalencia completa añade E4: noticias públicas, páginas, composición visual, navegación, identidad, páginas legales y ayuda aplicable. El alcance de los ajustes visuales se concretará con los que realmente use el grupo. Los RF61 a RF64 no desaparecen del alcance completo por priorizar el portal privado.
+El piloto operativo se concentra en el **núcleo de identidad, censo familiar, salud y gestión de actividades**:
+1. **Identidad y Acceso Multitenant**: Autenticación segura con ASP.NET Core Identity y aislamiento estricto por grupo scout (`OrganizationId`).
+2. **Censo Familiar y Ficha Médica Anual**: Expedientes permanentes de educandos (`ScoutParticipant`) vinculados a tutores legales (`ScoutUser`), con ficha médica anual actualizada (`ParticipantHealthRecord`) que recoge alergias, intolerancias, medicación y contactos de emergencia.
+3. **Publicación y Gestión de Actividades**: Convocatorias por rama con control de fechas límite, cuotas en céntimos y condiciones de transferencia bancaria.
+4. **Flujo de Inscripción y Mesa de Revisión**: Inscripción guiada con confirmación de salud, aceptación legal y justificación de pago con soporte de hermanos; mesa de revisión segmentada por rama con flujo de subsanaciones.
+5. **Salidas de Campamento**: Nóminas de asistencia, resúmenes de alérgenos para cocina e informes médicos para botiquín.
 
-## Fuera del piloto inicial
+---
 
-Pago online, aceptación económica de pedidos, reembolsos, facturación, stock, firma dibujada, validación automática de certificados y censo familiar permanente no forman parte de la línea base. Tampoco se incluyen rondas académicas, recordatorios programados o secretaría unificada avanzada. La evolución multigrupo se estudia después del piloto y tiene [criterios propios](../evolucion/vision-multigrupo.md).
+## 3. Fuera del Alcance Inicial (Exclusiones Explícitas del MVP)
 
-## Medidas de aceptación
+Para asegurar la viabilidad y fiabilidad del lanzamiento con el Grupo Scout Lestonnac 330, las siguientes capacidades quedan excluidas del MVP inicial:
+- **Pasarelas de pago telemático directo (Redsys, Stripe, Bizum)**: El pago se acredita mediante justificante documental de transferencia bancaria verificado manualmente.
+- **Facturación mercantil y contabilidad de doble partida**: Gestión de cuotas asociativas sin módulo de facturación comercial.
+- **Firma biométrica avanzada o validación de certificados DNIe**: Validez basada en autenticación de la cuenta, trazabilidad de sesión (IP, UTC) y aceptación contractual de condiciones.
+- **Gestión de inventario y almacén de material de acampada**.
+- **Chat o mensajería instantánea interna en tiempo real**.
+- **Tienda online de merchandising avanzada con stock en tiempo real**.
 
-- Una familia presenta dos autorizaciones y consulta el estado de cada una.
-- Un revisor no obtiene datos de otra sección ni después de revocar su concesión.
-- Un fallo o reintento no pierde archivos confirmados ni duplica la operación.
-- Un responsable marca un pedido entregado sin justificar ni verificar un pago.
-- Los datos migrados concilian con el origen y pueden recuperarse desde una copia.
-- Los recorridos principales se completan con teclado y un teléfono físico.
+---
 
-Los valores de capacidad, latencia y recuperación son objetivos propuestos RNF del [catálogo](../requisitos/catalogo-requisitos.md). El inventario E0 deberá contrastar 500 cuentas, 50 sesiones concurrentes, 20 000 respuestas, 50 000 fotos y 250 GB con los volúmenes y costes reales.
+## 4. Medidas de Aceptación del Piloto
 
-## Responsabilidades propuestas
-
-Producto prioriza alcance y aceptación; Coordinación valida vocabulario y recorridos; Secretaría valida trámites e históricos; el responsable técnico sostiene las decisiones de diseño; operación valida alojamiento y recuperación; el responsable del tratamiento y su asesoría ratifican privacidad y conservación. Los nombres de las personas se asignarán en IN01.
+- Una familia registra a dos educandos en ramas distintas y cumplimenta sus fichas sanitarias.
+- Un scouter publica una actividad acotada a ramas específicas y con fecha de cierre.
+- La familia inscribe a ambos participantes utilizando un único justificante bancario compartido.
+- Un revisor de Manada no puede consultar ni validar inscripciones de educandos de Tropa o Escultas.
+- Un scouter requiere una subsanación; la familia reemplaza el justificante sin perder el resto del expediente ni afectar al hermano.
+- El Kraal exporta en segundos la nómina de teléfonos de emergencia y el desglose de intolerancias y alergias para la cocina del campamento.
+- Ninguna operación o consulta permite saltar el aislamiento entre organizaciones multitenant.

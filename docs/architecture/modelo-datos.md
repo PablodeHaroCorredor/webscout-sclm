@@ -1,73 +1,80 @@
-# Modelo de datos y contratos de integridad
+# Modelo de Datos y Contratos de Integridad
 
-Versión 0.1 · Propuesta de arranque · 6 de noviembre de 2026.
+**Grupo Scout Lestonnac 330 · Scouts de Castilla-La Mancha (SCLM)**  
+Versión 1.1 · Actualización de Arquitectura y Alcance · 8 de noviembre de 2026.
 
-El modelo relacional debe hacer explícitas las relaciones que WordPress representa con metadatos e índices de archivo. Los campos utilizados para autorización, filtros y restricciones serán columnas indexadas. Los payloads históricos y bloques editoriales podrán usar JSON con versión de esquema.
+---
 
-## Agregados principales
+## 1. Agregados Principales del Modelo
 
-| Área | Entidades propuestas | Datos esenciales |
+El modelo relacional traduce los requerimientos funcionales en estructuras tipadas, normalizadas y preparadas para PostgreSQL 17 mediante Entity Framework Core 10. Se sustituyen las estructuras no estructuradas del sistema legado por entidades formales con integridad referencial.
+
+| Área / Agregado | Entidades Principales | Propósito y Contenido Esencial |
 | --- | --- | --- |
-| Acceso | Organization, OrganizationMembership, UserSection, CapabilityGrant | Estado, perfil, sección, capacidad y versión de seguridad |
-| Comunicación | Communication, CommunicationAudience, Comment | Tipo, autor, contenido, estado, audiencia y portada |
-| Actividad | Activity, AuthorizationModelVersion | Fechas civiles, plazo, modalidad, céntimos y modelo vigente |
-| Entrega | ActivityResponse, ResponseResponsibleSection, ResponseVersion | Titular, participante declarado, estado, modelo, método y documento |
-| Pago documental de actividad | ActivityReceipt, ResponseReceiptLink | Actividad, titular, referencia común y versión de archivo |
-| Archivos | FileAsset, FileVersion, FileBinding, FileDerivative | Clave opaca, formato verificado, tamaño, hash, propósito y estado |
-| Fotos | AlbumFolder, Album, Photo | Jerarquía, audiencia, propietario, publicación y confirmación de subida |
-| Pedidos | Product, ProductSize, Order, OrderEvent, OrderReceiptVersion | Instantánea de solicitud, estado, notas, revisión y adjunto |
-| Ingreso | JoinRequest, LegacyRegistration, LegacyFormTemplate | Datos mínimos o payload con etiquetas y procedencia |
-| Legal y ayuda | LegalDocumentVersion, ConsentEvidence, TourProgress | Texto, elección, vigencia y progreso propio |
-| Operación | AuditEvent, Outbox, BackgroundJob, IdempotencyRecord, MigrationRun, LegacyIdMap | Contexto, clave, estado, correlación y reintentos |
+| **Organización y Tenancy** | `ScoutTenant` | Datos del grupo scout: nombre, slug, colores corporativos, CIF y estado activo. Frontera de seguridad `OrganizationId`. |
+| **Identidad y Acceso** | `ScoutUser`, `ScoutRole`, `IdentityUserRole` | Cuentas autenticables vía ASP.NET Core Identity: DNI, nombre completo, rama asignada a scouters (`ScoutBranch`) y roles (`Familia`, `Scouter`, `Coordinacion`, `Administracion`). |
+| **Censo de Educandos** | `ScoutParticipant` | Entidad permanente del menor: tutor legal responsable (`LegalGuardianId`), nombre, apellidos, fecha de nacimiento civil, DNI y rama actual (`CurrentBranch`). |
+| **Salud y Emergencias** | `ParticipantHealthRecord` | Expediente sanitario anual vinculado 1 a 1 con el educando: CIP/Seguridad Social, alergias alimentarias/medicamentosas, intolerancias, medicación activa pautada, vacunación, natación y teléfonos de emergencia priorizados. |
+| **Actividades y Salidas** | `ScoutActivity` | Convocatorias de acampadas y salidas: título, fechas civiles (inicio, fin, fecha límite), ramas destinatarias (máscara de bits o catálogo), cuota en céntimos e instrucciones de transferencia bancaria. |
+| **Inscripción y Tramitación** | `ActivityInscription` | Expediente de participación: vincula educando, actividad y tutor; almacena estado (`Borrador`, `PendienteRevision`, `SubsanacionRequerida`, `Confirmada`, `Cancelada`), evidencias legales y nota de subsanación. |
+| **Justificantes de Pago** | `ActivityPaymentReceipt` | Documento de transferencia bancaria aportado por la familia. Admite reutilización para múltiples hermanos inscritos a la misma actividad. |
+| **Gestión de Archivos** | `StoredFileAsset`, `StoredFileVersion` | Metadatos de archivos físicos (PDFs, imágenes de justificantes): hash SHA-256, tipo MIME verificado, tamaño en bytes y ruta segura fuera de la raíz web pública. |
+| **Auditoría y Operación** | `AuditEvent`, `OutboxMessage` | Registro cronológico inmutable de eventos de negocio sensibles y cola transaccional para notificaciones asíncronas por correo. |
 
-## Claves y relaciones
+---
 
-Toda entidad de negocio tiene OrganizationId. Las claves alternativas y foráneas que relacionan recursos de la organización deberán incluirlo. Una respuesta enlaza actividad y titular de la misma organización. Cada vínculo compartido comprobará además ActivityId y OwnerMembershipId; no bastará con una FK al recibo que admita otro titular.
+## 2. Diagrama Entidad-Relación (ERD)
 
 ```mermaid
 erDiagram
-  ACTIVITY ||--o{ MODEL_VERSION : conserva
-  ACTIVITY ||--o{ RESPONSE : recibe
-  RESPONSE ||--|{ RESPONSE_VERSION : versiona
-  RESPONSE_VERSION }o--o| ACTIVITY_RECEIPT : comparte
-  MODEL_VERSION }o--|| FILE_VERSION : utiliza
-  RESPONSE_VERSION }o--|| FILE_VERSION : presenta
-  ACTIVITY_RECEIPT }o--|| FILE_VERSION : contiene
-  ORDER ||--o{ ORDER_RECEIPT_VERSION : adjunta
-  ORDER_RECEIPT_VERSION }o--|| FILE_VERSION : utiliza
+    SCOUT_TENANT ||--|{ SCOUT_USER : pertenece
+    SCOUT_TENANT ||--|{ SCOUT_PARTICIPANT : censa
+    SCOUT_TENANT ||--|{ SCOUT_ACTIVITY : organiza
+
+    SCOUT_USER ||--|{ SCOUT_PARTICIPANT : tutela
+    SCOUT_PARTICIPANT ||--|| PARTICIPANT_HEALTH_RECORD : posee
+
+    SCOUT_ACTIVITY ||--|{ ACTIVITY_INSCRIPTION : recibe
+    SCOUT_PARTICIPANT ||--|{ ACTIVITY_INSCRIPTION : asiste
+    SCOUT_USER ||--|{ ACTIVITY_INSCRIPTION : tramita
+
+    ACTIVITY_INSCRIPTION }o--o| ACTIVITY_PAYMENT_RECEIPT : vincula
+    ACTIVITY_PAYMENT_RECEIPT }o--|| STORED_FILE_VERSION : contiene
 ```
 
-El diagrama muestra relaciones lógicas. El modelo físico distinguirá los vínculos por finalidad y deberá demostrar integridad de cada tipo; no se aceptará una referencia polimórfica ResourceId como garantía suficiente de organización o existencia. Las tablas de respuesta, modelo, foto y pedido tendrán relaciones verificables a sus versiones de archivo.
+---
 
-## Unicidad
+## 3. Claves, Restricciones e Invariantes de Integridad
 
-- Sección por organización y slug.
-- Correspondencia heredada por sistema de origen, tipo e identificador antiguo.
-- Idempotencia por organización, actor, operación y clave, con hash de la petición.
-- Foto por organización, álbum y token de subida.
-- Versión por organización, agregado y ordinal estable.
-- Un solo modelo vigente por actividad y un solo adjunto activo de pedido, preservando anteriores.
+### 3.1. Multitenancy y Claves Foráneas
+- **Regla de oro de Tenancy**: Toda entidad operativa posee la columna `OrganizationId NOT NULL` con clave foránea a `ScoutTenants(Id)`.
+- Toda relación foránea compuesta valida la consistencia del tenant. Por ejemplo, una `ActivityInscription` no puede vincular una actividad de un grupo con un educando de otro grupo.
 
-No habrá una restricción única de respuesta por cuenta y actividad ni por nombre del participante. La prevención de doble envío usa la operación, no el nombre de un hermano.
+### 3.2. Unicidad de Inscripción por Educando
+- **Restricción Unique**: `[OrganizationId, ActivityId, ParticipantId]`.
+- Un educando solo puede tener un registro de inscripción para una misma actividad. Se elimina el riesgo de envíos duplicados accidentales por parte de las familias.
 
-## Concurrencia y tipos de dato
+### 3.3. Pago Compartido para Hermanos
+- La entidad `ActivityPaymentReceipt` almacena los metadatos de la transferencia bancaria (titular que ordenó el pago, fecha de la transferencia, referencia bancaria y `FileVersionId`).
+- Si una familia inscribe a dos hijos a una misma actividad, ambas entidades `ActivityInscription` apuntan al mismo `PaymentReceiptId`.
+- **Integridad**: Un justificante de pago no puede ser reutilizado por cuentas familiares diferentes ni en actividades distintas.
 
-Los agregados editables tendrán Version como token explícito de EF Core. El proveedor elegido determinará su implementación; no se trasladará un rowversion de SQL Server a PostgreSQL por semejanza de nombre. Los cambios obsoletos fallan con conflicto y no sobrescriben silenciosamente.
+### 3.4. Tipos de Datos y Precisión
+- **Importes económicos**: Se almacenan estrictamente como enteros (`int`) que representan **céntimos de euro** (ej. 25,00 € = `2500`). Se evitan por completo errores de redondeo asociados a tipos en coma flotante (`float`/`double`).
+- **Fechas de negocio**:
+  - `BirthDate` se almacena como `DateOnly` (fecha civil pura, sin zona horaria ni desfases de hora UTC).
+  - Fechas de actividad (`StartDate`, `EndDate`) se almacenan como fechas locales de la organización (`Europe/Madrid`).
+  - Marcas de tiempo de auditoría y aceptación legal (`ConfirmedAtUtc`, `LegalAcceptedAtUtc`) se registran invariablemente en `DateTime` UTC (`timestamptz` en PostgreSQL).
+- **Control de Concurrencia**:
+  - Las entidades de negocio editables incorporan una columna de control de versión / token de concurrencia optimista (`xmin` o propiedad de versión en EF Core) para prevenir sobrescrituras simultáneas entre scouters.
 
-Los importes se guardan como céntimos enteros y Currency igual a EUR en el piloto; un precio ausente en histórico se conserva como desconocido y se distingue de cero. El pedido conserva nombre, talla, cantidad, precio y total informativo de la solicitud. No se recalculan a partir del catálogo actual ni se crea un estado de pago activo.
+---
 
-Los instantes de recepción y auditoría se almacenan en UTC. Nacimiento, inicio, final y plazo son fechas civiles; el cierre del plazo usa la zona de la organización. Se prueban días de cambio de horario y límites de cierre. No se aplica una conversión UTC arbitraria a una fecha de nacimiento.
+## 4. Almacenamiento Seguro de Archivos Sanitarios y Justificantes
 
-## Archivos y consistencia
-
-FileVersion conserva bytes inmutables y huella SHA256. Las miniaturas son derivadas separadas. En PDF firmado no se eliminan metadatos, se recomprime ni se vuelve a guardar para presentarlo. Una versión anterior no se elimina al sustituirla.
-
-Una preparación privada produce UploadId y estado. Cuando todos los archivos requeridos están validados, el caso de uso asocia las versiones y confirma respuesta o sustitución en base junto a evento y outbox. Si hay comprobación asíncrona, se devuelve operación pendiente y no se presenta una respuesta final como guardada. La versión activa anterior sigue disponible hasta confirmar el reemplazo.
-
-Se conciliará almacenamiento frente a vínculos y preparaciones caducadas. La limpieza física solo alcanza objetos sin referencias que deban conservarse. Borrar una autorización no elimina el justificante de otro hermano. Los detalles de conservación están en [ciclo de vida](politica-ciclo-vida-y-versiones.md).
-
-## Índices iniciales
-
-Organización, estado y fecha en solicitudes y pedidos; organización, actividad, estado y fecha en respuestas; relación de sección responsable; organización, tipo y publicación en comunicaciones; organización, carpeta y estado en álbumes; y organización, recurso y fecha en eventos. Listados y exportaciones usan orden estable y páginas o lotes acotados.
-
-Los datos de salud e identificación de históricos quedan fuera de las proyecciones ordinarias y logs. El modelo no deduce relaciones familiares ni consolida participantes por coincidencia textual. RF26 a RF40, RF49, RF54 y RF68 a RF71 gobiernan estas restricciones.
+- Los archivos adjuntos (justificantes de transferencia bancaria, informes médicos excepcionales) no se almacenan como blobs en base de datos ni en carpetas públicas servidas por el servidor web (`wwwroot`).
+- Se depositan en un almacenamiento privado de archivos con nombres opacos basados en GUIDs.
+- El acceso y descarga de cualquier archivo requiere pasar por un endpoint seguro (`/api/files/{id}`) que comprueba:
+  1. Que el usuario autenticado pertenece al mismo `OrganizationId`.
+  2. Que el usuario es el tutor legal propietario del expediente O un Scouter con permiso sobre la rama del educando.
+- Se calculan y verifican huellas criptográficas **SHA-256** para asegurar la inmutabilidad de los comprobantes presentados.
