@@ -1,16 +1,17 @@
-using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Infrastructure.Tenancy;
 
 namespace WebScout.Web.Infrastructure.Persistence;
 
 /// <summary>
 /// Contexto de base de datos relacional PostgreSQL de la plataforma WebScout SCLM.
-/// Aplica de forma automática Global Query Filters y estampado de OrganizationId para el aislamiento lógico de datos.
+/// Integra ASP.NET Core Identity con aislamiento multitenant estricto (OrganizationId).
 /// </summary>
-public class WebScoutDbContext : DbContext
+public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
 {
     private readonly ITenantContext _tenantContext;
 
@@ -25,9 +26,10 @@ public class WebScoutDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // 1. Configuración de tablas de ASP.NET Core Identity
         base.OnModelCreating(modelBuilder);
 
-        // 1. Configuración de la entidad Tenant
+        // 2. Configuración de la entidad Tenant
         modelBuilder.Entity<ScoutTenant>(b =>
         {
             b.HasKey(t => t.Id);
@@ -41,7 +43,15 @@ public class WebScoutDbContext : DbContext
             b.OwnsOne(t => t.Palette);
         });
 
-        // 2. Configuración de Actividades
+        // 3. Configuración de ScoutUser (Multitenant)
+        modelBuilder.Entity<ScoutUser>(b =>
+        {
+            b.Property(u => u.FullName).HasMaxLength(150).IsRequired();
+            b.Property(u => u.Dni).HasMaxLength(20);
+            b.HasIndex(u => new { u.OrganizationId, u.NormalizedEmail });
+        });
+
+        // 4. Configuración de Actividades
         modelBuilder.Entity<ScoutActivity>(b =>
         {
             b.HasKey(a => a.Id);
@@ -50,7 +60,7 @@ public class WebScoutDbContext : DbContext
             b.HasIndex(a => new { a.OrganizationId, a.StartDate });
         });
 
-        // 3. Aplicación automática de Global Query Filters en todas las entidades ITenantScopedEntity
+        // 5. Aplicación automática de Global Query Filters en todas las entidades ITenantScopedEntity
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(ITenantScopedEntity).IsAssignableFrom(entityType.ClrType))
@@ -67,7 +77,6 @@ public class WebScoutDbContext : DbContext
     private void ConfigureGlobalTenantFilter<TEntity>(ModelBuilder modelBuilder)
         where TEntity : class, ITenantScopedEntity
     {
-        // builder.Entity<TEntity>().HasQueryFilter(e => e.OrganizationId == _tenantContext.CurrentTenantId);
         modelBuilder.Entity<TEntity>()
             .HasQueryFilter(e => e.OrganizationId == _tenantContext.CurrentTenantId);
     }
@@ -90,13 +99,17 @@ public class WebScoutDbContext : DbContext
         {
             if (entry.State == EntityState.Added)
             {
-                if (_tenantContext.CurrentTenantId == Guid.Empty)
+                // Si la entidad aún no tiene OrganizationId explícito, estampar el tenant activo del contexto
+                if (entry.Entity.OrganizationId == Guid.Empty)
                 {
-                    throw new InvalidOperationException(
-                        $"Operación bloqueada: No se puede persistir la entidad '{entry.Entity.GetType().Name}' sin un Tenant activo en el contexto.");
-                }
+                    if (_tenantContext.CurrentTenantId == Guid.Empty)
+                    {
+                        throw new InvalidOperationException(
+                            $"Operación bloqueada: No se puede persistir la entidad '{entry.Entity.GetType().Name}' sin un Tenant activo en el contexto.");
+                    }
 
-                entry.Entity.OrganizationId = _tenantContext.CurrentTenantId;
+                    entry.Entity.OrganizationId = _tenantContext.CurrentTenantId;
+                }
             }
         }
     }

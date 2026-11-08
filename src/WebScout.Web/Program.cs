@@ -1,5 +1,6 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
+using WebScout.Web.Features.Identity;
 using WebScout.Web.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,13 +15,15 @@ builder.Services.AddMudServices();
 // Registrar Tenancy multitenant y Persistencia EF Core
 builder.Services.AddScoutTenancy(builder.Configuration);
 
+// Registrar Identity, Roles y Cookies de Autenticación
+builder.Services.AddScoutIdentity();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -30,13 +33,20 @@ app.UseHttpsRedirection();
 // Middleware de resolución de grupo scout por subdominio
 app.UseScoutTenancy();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+
+// Endpoints de autenticación (Login, Logout, QuickLogin)
+app.MapIdentityEndpoints();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Inicializar esquema y seed de base de datos si PostgreSQL está activo
+// Inicializar esquema, migraciones y seed de base de datos
 await WebScout.Web.Infrastructure.Persistence.DatabaseInitializer.InitializeDatabaseAsync(app.Services);
 
 app.Run();
