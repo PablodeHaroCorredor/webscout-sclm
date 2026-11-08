@@ -1,81 +1,107 @@
 ---
 name: git-workflow-conventions
 description: >-
-  Use this skill to guide version control operations for WebScout SCLM. Enforces
-  Conventional Commits, branch naming strategies, pre-commit hygiene (zero secrets,
-  no real minor data), and GitHub synchronization.
+  Guía integral del flujo de trabajo de Git y GitHub para WebScout SCLM. Establece
+  la estrategia de branching (GitHub Flow), nomenclatura de ramas, Conventional Commits,
+  plantillas de Pull Request, política de Squash & Merge, protección de main y trazabilidad.
 ---
 
-# Git Workflow & Security Conventions
+# Estrategia de Git & GitHub Workflow — WebScout SCLM
 
-Esta skill define las directrices obligatorias para el control de versiones en el repositorio **WebScout SCLM** alojado en GitHub.
+Este documento y skill rige la gestión del código fuente, branching, trazabilidad y control de calidad en el repositorio GitHub `webscout-sclm`.
 
-## 1. Reglas Innegociables de Seguridad y Protección de Datos
+---
 
-En estricto cumplimiento del RGPD / LOPDGDD y las directrices éticas scouts:
-- ❌ **JAMÁS hacer commit de datos reales de menores:** Nombres reales, DNIs, fechas de nacimiento, direcciones o teléfonos deben ser siempre datos sintéticos (ej. "Juan Pérez", "test_scout@example.org").
-- ❌ **JAMÁS hacer commit de documentos médicos o fichas sanitarias reales:** Usar exclusivamente PDFs sintéticos de prueba con texto de muestra.
-- ❌ **JAMÁS hacer commit de credenciales o secretos:** Cadenas de conexión a PostgreSQL, claves de acceso a S3/AWS, tokens de API o contraseñas deben gestionarse mediante `dotnet user-secrets` o variables de entorno locales (`.env`), que están excluidas por `.gitignore`.
-- ❌ **JAMÁS hacer commit de volcados de producción:** Los volcados de WordPress o copias de seguridad reales deben almacenarse en repositorios seguros cifrados fuera del árbol de Git.
+## 1. Principios de Trazabilidad y Calidad
 
-## 2. Estrategia de Ramas (Git Flow Simplificado)
+1. **`main` es siempre desplegable y estable:**
+   - Ningún commit se realiza directamente sobre `main` sin pasar por Pull Request (excepto inicialización del repo o correcciones de documentación urgentes autorizadas).
+   - Todo código en `main` debe compilar en limpio (`dotnet build`) y superar el 100% de las pruebas (`dotnet test`).
+2. **Historial Lineal y Atómico (Squash & Merge):**
+   - La estrategia de integración oficial es **Squash and Merge**.
+   - Cada funcionalidad o corrección se consolida en un único commit en `main` con mensaje convencional y enlace a la PR:
+     `feat(actividades): gestión y publicación de salidas por rama (#12)`
+   - Beneficios: Historial limpio, facilidad para `git bisect`, rollbacks atómicos inmediatos mediante `git revert <commit-id>` y trazabilidad 1:1 con las PRs de GitHub.
+3. **Cero Secretos y Cero Datos Reales (RGPD):**
+   - ❌ **Prohibido commit de datos de menores o familias:** Usar exclusivamente datos ficticios sintéticos.
+   - ❌ **Prohibido commit de credenciales o cadenas de conexión reales:** Emplear `dotnet user-secrets` o `.env`.
 
-- `main`: Rama de producción / entregables estables. Todo código aquí debe compilar y haber superado la batería de tests.
-- `develop` (o ramas de función directamente si es equipo reducido): Rama de integración continua.
-- Ramas temáticas por tarea o entrega:
-  - `feat/E0-tenant-prototype`
-  - `feat/E1-domain-models`
-  - `fix/pa02-revocation-check`
-  - `docs/update-adr10-refinements`
+---
 
-## 3. Formato de Mensajes de Commit (Conventional Commits)
+## 2. Nomenclatura de Ramas
 
-Los mensajes de commit deben seguir la convención internacional estructurada:
+Toda nueva tarea o funcionalidad parte de `main` actualizado y utiliza la siguiente convención:
+
+| Prefijo | Propósito | Ejemplo |
+| :--- | :--- | :--- |
+| `feat/` | Nueva funcionalidad o módulo de negocio | `feat/actividades-publicacion-kraal`, `feat/inscripciones-pasarela` |
+| `fix/` | Corrección de fallos o bugs | `fix/filtro-multitenant-actividades`, `fix/validacion-dias-plazo` |
+| `refactor/` | Reestructuración de código sin alterar comportamiento | `refactor/unificar-dtos-actividad`, `refactor/limpieza-servicios` |
+| `test/` | Incorporación o mejora de tests unitarios o integración | `test/aislamiento-actividades-inquilinos` |
+| `docs/` | Cambios en documentación técnica o guías | `docs/actualizar-arquitectura-mvp` |
+| `chore/` | Mantenimiento de herramientas, NuGet, CI/CD | `chore/actualizar-dependencias-mudblazor` |
+
+---
+
+## 3. Formato de Commits (Conventional Commits)
 
 ```text
-<tipo>(<ámbito>): <descripción concisa en imperativo o presente>
+<tipo>(<ámbito>): <descripción concisa en imperativo y castellano>
 
-[cuerpo opcional detallando el motivo del cambio y cómo se valida]
+[Cuerpo opcional detallando el motivo del cambio y arquitectura]
 
-[referencia a requisitos o ADRs, ej: Cierra #12, Cumple RF04, Valida PA01]
+[Referencias: Closes #X, Paso 3 MVP, RF04]
 ```
 
-### Tipos Permitidos:
-- `feat`: Nueva funcionalidad o componente (ej: `feat(tenant): resolver subdominios dinámicamente`).
-- `fix`: Corrección de un defecto o fallo de validación (ej: `fix(auth): forzar revocación de sesión en cambio de sección`).
-- `docs`: Modificaciones únicamente en documentación (ej: `docs(adr): incorporar ADR10 y ADR11`).
-- `test`: Añadir o modificar pruebas (ej: `test(pa01): verificar aislamiento de datos entre familias`).
-- `refactor`: Refactorización de código sin cambio de comportamiento (ej: `refactor(domain): extraer ValueObject PanoletaConfig`).
-- `chore`: Tareas de configuración, herramientas o dependencias (ej: `chore(tools): actualizar paquetes en Directory.Packages.props`).
+### Ejemplos válidos:
+- `feat(actividades): incorporar entidad ActividadScout con precio en euros y ramas destinatarias`
+- `feat(kraal): vista de creación y publicación de campamentos con MudBlazor`
+- `fix(inscripcion): corregir bloqueo de plazas tras fecha límite`
+- `test(actividades): añadir pruebas de aislamiento multi-inquilino en repositorio`
 
-## 4. Flujo de Trabajo con el Repositorio de GitHub
+---
 
-### Vincular el Repositorio Remoto Personal de GitHub:
+## 4. Ciclo de Vida de una Funcionalidad (Paso a Paso)
+
+### Paso 1: Sincronizar y crear rama de trabajo
 ```powershell
-# Comprobar si existe remoto configurado
-git remote -v
-
-# Añadir el repositorio de GitHub personal como origin (sustituyendo <tu-usuario> y <tu-repo>)
-git remote add origin https://github.com/<tu-usuario>/webScoutsSclm.git
-
-# Subir la rama principal con seguimiento
-git push -u origin main
+git checkout main
+git pull origin main
+git checkout -b feat/actividades-publicacion-kraal
 ```
 
-### Ciclo Diario de Trabajo:
+### Paso 2: Desarrollo y commits atómicos locales
+- Realizar cambios modulares y tests.
+- Probar localmente antes de cada commit:
 ```powershell
-# 1. Verificar estado y archivos modificados
-git status
+dotnet test
+git add <archivos-relevantes>
+git commit -m "feat(actividades): implementar IServicioActividades y ServicioActividades"
+```
 
-# 2. Añadir cambios de forma selectiva
-git add <archivos-o-rutas>
+### Paso 3: Verificación Previa a la Pull Request
+Antes de publicar la rama, ejecutar la verificación obligatoria:
+1. `dotnet build WebScout.slnx` -> 0 errores.
+2. `dotnet test` -> 100% tests pasados.
+3. `git status` -> No dejar archivos basura, temporales o secretos.
 
-# 3. Comprobar que no se han colado archivos no deseados ni secretos
-git diff --cached
+### Paso 4: Publicar rama en GitHub
+```powershell
+git push -u origin feat/actividades-publicacion-kraal
+```
 
-# 4. Crear commit con formato convencional
-git commit -m "feat(branding): implementar cálculo de contraste WCAG 2.2 AA"
+### Paso 5: Abrir y Completar Pull Request
+- Rellenar la plantilla `.github/pull_request_template.md`.
+- Verificar que el pipeline de GitHub Actions (`CI WebScout SCLM`) finalice en verde.
+- Revisión de código y aprobación.
 
-# 5. Sincronizar con GitHub
-git push
+### Paso 6: Integración y Limpieza
+- En la interfaz de GitHub, seleccionar **"Squash and merge"**.
+- Confirmar el mensaje con formato convencional y número de PR.
+- Eliminar la rama remota en GitHub.
+- En local:
+```powershell
+git checkout main
+git pull origin main
+git branch -d feat/actividades-publicacion-kraal
 ```

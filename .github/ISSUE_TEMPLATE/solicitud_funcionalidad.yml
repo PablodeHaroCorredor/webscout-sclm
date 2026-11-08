@@ -1,0 +1,37 @@
+name: 🚀 Solicitud de Funcionalidad / Tarea
+description: Proponer una nueva funcionalidad, módulo o tarea del proyecto WebScout.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por proponer una mejora para WebScout SCLM. Completa la siguiente información para mantener la trazabilidad.
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción de la Necesidad
+      description: ¿Qué funcionalidad se necesita y qué problema resuelve?
+    validations:
+      required: true
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo Afectado
+      options:
+        - "Identidad y Cuentas"
+        - "Educandos y Fichas Médicas"
+        - "Actividades y Campamentos"
+        - "Inscripciones y Pagos"
+        - "Comunicaciones y Avisos"
+        - "Infraestructura / Persistencia"
+    validations:
+      required: true
+  - type: textarea
+    id: criterios-aceptacion
+    attributes:
+      label: Criterios de Aceptación
+      description: ¿Qué condiciones deben cumplirse para dar la tarea por completada?
+      placeholder: "- [ ] El Scouter puede definir ramas destinatarias\n- [ ] Las familias solo ven actividades de sus ramas"
+    validations:
+      required: true
