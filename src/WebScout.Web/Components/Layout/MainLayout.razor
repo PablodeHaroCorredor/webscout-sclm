@@ -9,7 +9,7 @@
 
 <MudLayout>
     <!-- Barra Superior Limpia y Agnóstica -->
-    <MudAppBar Elevation="0" Style="border-bottom: 1px solid #E2E8F0; background-color: #FFFFFF; color: #0F172A;" Dense="false">
+    <MudAppBar Elevation="0" Style="border-bottom: 1px solid #E2E8F0; background-color: #FFFFFF; color: #0F172A; height: 64px;" Fixed="true" Dense="false">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         
         <div class="d-flex align-center gap-2 ms-2">
@@ -105,10 +105,8 @@
     </MudDrawer>
 
     <!-- Contenido Principal con espacio superior garantizado para que el AppBar no tape nada -->
-    <MudMainContent Class="pa-4 pa-md-6 pt-16" Style="background-color: #F8FAFC; min-height: 100vh;">
-        <div class="pt-2">
-            @Body
-        </div>
+    <MudMainContent Class="px-4 px-md-8 pb-8" Style="background-color: #F8FAFC; min-height: 100vh; padding-top: calc(var(--mud-appbar-height, 64px) + 28px) !important;">
+        @Body
     </MudMainContent>
 </MudLayout>
 
