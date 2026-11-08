@@ -1,87 +1,153 @@
-# Casos de uso prioritarios del piloto
+# Casos de Uso Prioritarios del Piloto
 
-Versión 0.1 · Propuesta de arranque · 6 de noviembre de 2026.
+**Grupo Scout Lestonnac 330 · Scouts de Castilla-La Mancha (SCLM)**  
+Versión 1.1 · Actualización de Arquitectura y Alcance · 8 de noviembre de 2026.
 
-Los casos de uso convierten los requisitos en recorridos que Producto, Coordinación y desarrollo puedan revisar juntos. Conservan el comportamiento de 1.29 y se ejecutarán sobre datos sintéticos en las primeras demostraciones.
+Los casos de uso formalizan los recorridos que Producto, Kraal de Scouters y Desarrollo validan conjuntamente. Se apoyan en el modelo relacional persistente de **Censo Familiar, Ficha Médica Anual y Mesa de Revisión por Rama**, eliminando el modelo efímero de «participante declarado» del sistema legado.
 
-## CU01 Solicitar ingreso
+---
 
-Actor: visitante. Resultado: solicitud privada Pendiente, con datos mínimos y evidencia legal. RF10 a RF14; PA11 y PA13.
+## CU01 Solicitar ingreso e incorporar al censo
 
-1. Facilita participante, nacimiento, relación y persona de contacto.
-2. Declara facultad para aportar los datos, acepta el tratamiento necesario y decide por separado las comunicaciones opcionales.
-3. El servidor valida valores, antispam y versión legal y confirma la recepción.
-4. El equipo consulta la solicitud y puede pasar a Contactado, Lista de espera, Aceptado o Rechazado.
+**Actor:** Visitante (familiar o tutor) / Secretaría.  
+**Resultado:** Solicitud privada registrada; tras aceptación, habilitación de cuenta familiar y alta de educando en censo.  
+**Trazabilidad:** RF10 a RF14; PA11 y PA13.
 
-Un fallo de correo mantiene la solicitud guardada y el aviso pendiente. No se crea cuenta ni se solicitan DNI o salud en esta fase. Si la persona se representa a sí misma se comprueba mayoría de edad conforme al contrato del formulario.
+1. El visitante facilita datos básicos del menor (nombre, apellidos, fecha de nacimiento), datos de contacto del tutor y rama scout orientativa.
+2. Declara potestad legal para aportar los datos, acepta la política de privacidad obligatoria y decide por separado las comunicaciones informativas.
+3. El servidor valida valores, mecanismo antispam y versión legal, emitiendo acuse de recibo.
+4. Secretaría evalúa la solicitud y cambia su estado (`Pendiente`, `Lista de espera`, `Aceptada` o `Rechazada`).
+5. Al marcar `Aceptada`, el sistema remite invitación al tutor legal para crear su cuenta familiar en el portal, incorporar formalmente al educando al censo de su rama y cumplimentar su primera Ficha Sanitaria Anual.
 
-## CU02 Dar acceso y retirar una concesión
+---
 
-Actor: Administración. Resultado: cuenta habilitada con secciones y capacidades determinadas. RF01 a RF08; PA01 a PA03.
+## CU01b Gestión del censo familiar y Ficha Médica Anual
 
-1. Crea o invita una cuenta, asigna perfil y secciones.
-2. Concede de forma independiente revisión, publicación pública o pedidos cuando corresponda.
-3. Comprueba el resultado con una cuenta sin facultades globales.
-4. Revoca una capacidad y verifica que el siguiente acceso directo al recurso deja de estar autorizado sin depender de cerrar el navegador.
+**Actor:** Familia (Tutor legal autenticado).  
+**Resultado:** Expediente duradero del menor (`ScoutParticipant`) y Ficha Médica Anual (`ParticipantHealthRecord`) vigentes.
 
-Asignar Todo el grupo no equivale a conceder revisión global. El permiso de pedidos del Scouter abarca los pedidos del grupo y mantiene cerrados los otros trámites.
+1. El tutor legal accede al *Portal de Familias* (`/familias`).
+2. Da de alta o edita el perfil de sus hijos (nombre, apellidos, fecha de nacimiento civil, DNI si dispone de él, sexo y rama asignada por el grupo).
+3. Cumplimenta o actualiza el expediente sanitario anual de cada educando:
+   - Identificación sanitaria (CIP / Nº Seguridad Social, seguro privado).
+   - Alergias e intolerancias (alimentarias, medicamentosas, ambientales; dietas especiales como celiaquía o exclusión de cerdo).
+   - Tratamientos crónicos y medicación activa pautada para salidas.
+   - Estado de vacunación según calendario oficial.
+   - Habilidad natatoria (*«¿Sabe nadar?»* — indispensable para campamentos acuáticos).
+   - Teléfonos de emergencia priorizados (Tutor principal, segundo tutor, familiar de reserva).
+4. La información queda salvaguardada bajo cifrado y aislamiento estricto por organización (`Tenant`).
 
-## CU03 Preparar una comunicación
+---
 
-Actor: Scouter o Coordinación. Resultado: aviso o actividad publicado para su audiencia. RF17 a RF24; PA12.
+## CU02 Dar acceso y gestionar permisos por rama
 
-Elige tipo, crea borrador, redacta y añade imágenes con texto alternativo. Configura secciones y comprueba la vista previa. Una actividad con precio positivo exige modelo y modalidad PDF. Publica con capacidad suficiente. Otra persona con lectura por sección no adquiere edición del contenido ajeno.
+**Actor:** Administración del grupo / Coordinación.  
+**Resultado:** Cuenta habilitada con roles y asignación de ramas responsables.  
+**Trazabilidad:** RF01 a RF08; PA01 a PA03.
 
-Para difundir un aviso en público crea una copia independiente en borrador. No se trasladan documentos o imágenes privados; añade únicamente activos públicos autorizados y completa revisión editorial antes de publicar.
+1. Invita o da de alta a un scouter, asignándole el rol `Scouter` o `Coordinacion` y su rama operativa (`Castores`, `Manada`, `Tropa`, `Escultas`, `Clan`).
+2. Concede de forma independiente facultades: revisión de inscripciones de rama, publicación de avisos/actividades, gestión económica o administración.
+3. Verifica el alcance: un scouter asignado exclusivamente a Manada solo puede consultar y validar expedientes de educandos de Manada.
+4. Revoca una concesión o desactiva la cuenta, comprobando que el siguiente acceso directo al recurso queda denegado inmediatamente sin depender del reinicio de sesión.
 
-## CU04 Presentar documentos de dos hermanos
+---
 
-Actor: familia. Resultado: dos respuestas independientes y un solo justificante compartido. RF25 a RF31; PA04 a PA06.
+## CU03 Publicar una actividad o campamento
 
-1. Descarga el modelo vigente y firma el PDF fuera de la aplicación.
-2. Presenta la primera autorización con participante y secciones responsables; añade justificante si la actividad tiene coste.
-3. Presenta al segundo participante, aunque sea de la misma sección, con su propio PDF.
-4. Selecciona el justificante anterior si cubre también esa entrega.
-5. Consulta estados y documentos de cada respuesta por separado.
+**Actor:** Scouter responsable o Coordinación.  
+**Resultado:** Convocatoria de actividad publicada para las ramas destinatarias.  
+**Trazabilidad:** RF17 a RF24; PA12.
 
-Si el modelo cambió se exige descargar el vigente. Fuera de plazo se rechaza también la corrección. Otra cuenta o actividad no puede reutilizar el justificante. Los nombres iguales no se fusionan automáticamente y el doble envío se controla por clave de operación.
+1. Crea borrador de actividad: título, descripción operativa, lugar/ubicación, recomendaciones de equipo y fechas civiles (salida, regreso y **fecha límite de inscripción**).
+2. Selecciona las **ramas destinatarias**: una sola sección (ej. Manada), varias (ej. Tropa + Escultas) o *Todo el Grupo* (Campamentos de Navidad, San Jorge o Verano).
+3. Fija condiciones económicas: cuota por participante en céntimos (0 si es gratuita) e instrucciones de transferencia bancaria (entidad, IBAN, titular y formato del concepto).
+4. Asocia las cláusulas de autorización legal requeridas (pernocta, salidas fuera del municipio, transporte y asistencia sanitaria de urgencia).
+5. Publica la actividad. Las familias con educandos en las ramas convocadas reciben aviso y visualizan la actividad en su portal privado.
 
-## CU05 Revisar y corregir una autorización
+---
 
-Actores: revisor habilitado y propietario. Resultado: una nueva versión del expediente corregido, con anteriores conservadas. RF32 a RF34 y RF38; PA02, PA04 y PA09.
+## CU04 Inscribir a educandos (hermanos) con justificante compartido
 
-El revisor filtra respuestas dentro de sus secciones responsables, consulta el documento y solicita corrección con motivo. La familia abre esa respuesta, mantiene participante, sustituye el PDF y confirma. Solo esa respuesta vuelve a Recibida; su hermano mantiene estado. La versión anterior sigue accesible según permiso. Dos revisores que actúan sobre la misma revisión reciben conflicto, sin sobreescritura.
+**Actor:** Familia (Tutor legal autenticado).  
+**Resultado:** Dos expedientes de inscripción independientes vinculados al mismo justificante de transferencia bancaria.  
+**Trazabilidad:** RF25 a RF31; PA04 a PA06.
 
-## CU06 Subir fotos desde un móvil
+1. La familia accede a la convocatoria de la actividad desde su portal. El sistema detecta automáticamente qué educandos de su censo son aptos por pertenecer a las ramas convocadas (ej. Lucía en Manada y Marcos en Tropa).
+2. **Inscripción del primer educando (Lucía)**:
+   - Revisa el resumen de la Ficha Médica vigente y pulsa: *«Confirmo que los datos sanitarios y de emergencia están actualizados»* (con acceso directo a edición si hubiera cambios).
+   - Lee y acepta las autorizaciones legales de la salida con evidencia inmutable (timestamp UTC, IP y usuario autenticado).
+   - Si la actividad tiene cuota, sube el archivo del justificante de transferencia bancaria (PDF, JPG, PNG).
+   - Confirma la inscripción; el expediente de Lucía pasa a estado `PendienteRevision`.
+3. **Inscripción del segundo educando (Marcos)**:
+   - El sistema detecta que el tutor ya aportó un justificante bancario reciente para esta misma actividad.
+   - El tutor valida la ficha médica de Marcos y acepta sus cláusulas legales individuales.
+   - En el paso de pago, selecciona la opción: *«Asociar justificante ya aportado (Transferencia conjunta para hermanos)»*.
+   - Confirma la inscripción; el expediente de Marcos pasa a estado `PendienteRevision` de forma independiente.
+4. Cada hermano conserva su propio ciclo de vida, estado de revisión y trazabilidad.
 
-Actor: responsable del álbum. Resultado: fotos confirmadas y estado del álbum según decisión final. RF39 a RF47; PA09 y PA10.
+---
 
-Acumula selecciones hasta 100 fotos, activa o desactiva optimización y guarda. Observa envío y confirmación por foto. Puede pausar tras la foto actual, reintentar fallidas o terminar parcialmente de forma explícita. La foto ya confirmada no se duplica tras perder su respuesta de red.
+## CU05 Revisar inscripciones y gestionar subsanaciones
 
-Cerrar la página conserva lo confirmado y pierde la cola pendiente en memoria; no se promete reanudación posterior. El nuevo álbum permanece en borrador hasta finalizar y tener foto. En uno ya publicado, las fotos confirmadas pueden ser visibles antes de terminar todo el lote.
+**Actores:** Scouter revisor de rama y Familia.  
+**Resultado:** Expediente validado formalmente o rectificado sin pérdida de información.  
+**Trazabilidad:** RF32 a RF34, RF38; PA02, PA04 y PA09.
 
-## CU07 Solicitar y entregar un producto
+1. El scouter de Manada accede a la mesa de revisión de su sección y visualiza la inscripción de Lucía.
+2. Si la documentación y el importe bancario son correctos, pulsa **Aprobar inscripción** (pasa a `Confirmada`).
+3. Si el comprobante bancario resulta ilegible o el importe no coincide con la cuota establecida:
+   - El scouter selecciona **Requerir subsanación**, indicando un motivo claro (ej. *«El comprobante bancario está cortado y no se lee el importe total»*).
+   - El expediente de Lucía pasa a `SubsanacionRequerida`. La inscripción de su hermano Marcos en Tropa permanece inalterada en su propio estado.
+4. La familia recibe notificación, accede a la ficha de inscripción de Lucía, sustituye exclusivamente el archivo cuestionado y pulsa **Reenviar subsanación**.
+5. La inscripción vuelve automáticamente a `PendienteRevision` para su validación final por el scouter.
 
-Actores: familia y gestor de pedidos. Resultado: pedido con seguimiento y adjunto opcional independiente. RF48 a RF54; PA07 y PA08.
+---
 
-La familia solicita producto publicado, talla válida y 1 a 10 unidades. El pedido conserva el precio informativo del momento. Puede adjuntar o sustituir justificante desde Solicitado. El gestor cambia entre los seis estados y puede marcar Entregado sin documento ni verificación de pago.
+## CU05b Generar salidas operativas de campamento (Cocina, Botiquín y Emergencias)
 
-El propietario cancela desde Solicitado o Revisado, con motivo; después contacta con el equipo. No puede subir nuevos adjuntos en Rechazado o Cancelado. La exportación de pedidos abarca el conjunto anunciado y no incluye archivos, URLs privadas o datos económicos antiguos de 1.28.
+**Actor:** Scouter responsable de sección o Coordinación.  
+**Resultado:** Informes operativos generados al instante para la intendencia y seguridad del campamento.
 
-## CU08 Sustituir el modelo PDF
+1. Finalizado el plazo de inscripción, el equipo de Kraal accede a la actividad en estado de cierre.
+2. **Nómina de Asistencia y Emergencias**: Genera la lista nominal de educandos confirmados por rama, con edad cumplida y teléfonos de emergencia de sus tutores ordenados por prioridad de llamada.
+3. **Informe de Cocina e Intendencia**: Genera la matriz agregada de necesidades dietéticas para el equipo de intendentes y cocineros (recuento de celíacos, alérgenos específicos: huevo, frutos secos, crustáceos; intolerancias a la lactosa y menús adaptados).
+4. **Dossier de Botiquín y Salud**: Genera el informe confidencial para el scouter responsable de salud del campamento: números de CIP / Seguridad Social, pautas de medicación activa que deben administrarse durante la acampada, patologías crónicas y nivel de natación.
 
-Actor: responsable de actividad. Resultado: modelo vigente nuevo e histórico conservado. RF26 y RF27; PA05 y PA06.
+---
 
-Selecciona nuevo PDF, confirma sustitución y guarda con la versión de actividad leída. Los nuevos formularios usan esa versión. Las respuestas existentes conservan su modelo conocido y no se invalidan automáticamente. El responsable decide si alguna requiere corrección; un histórico sin versión permanece desconocido.
+## CU06 Subir fotos de actividad desde móvil
 
-## CU09 Atender exportación o supresión
+**Actor:** Scouter responsable de álbum / Comunicación.  
+**Resultado:** Fotografías cargadas, optimizadas y publicadas para las familias autorizadas.  
+**Trazabilidad:** RF39 a RF47; PA09 y PA10.
 
-Actor: responsable autorizado de privacidad. Resultado: operación limitada al ámbito acreditado y con excepciones justificadas. RF55 a RF60; PA13 y PA14.
+1. Selecciona o crea el álbum asociado a la actividad o campamento.
+2. Selecciona un lote de fotos desde el dispositivo móvil (hasta 100 imágenes por lote).
+3. El sistema optimiza las imágenes en cliente, preserva permisos y envía la cola con barra de progreso.
+4. El scouter confirma la subida; las fotos quedan accesibles únicamente para las familias de los educandos participantes y el equipo de responsables.
 
-Verifica identidad y alcance, inventaría datos y vínculos, revisa conservación y reclamaciones y prepara la operación. Ejecuta exportación mínima o supresión/bloqueo aplicable, comprueba archivos compartidos y registra resultado sin copiar información sensible. La política incluye réplicas y caducidad de copias, no solo las filas de la base.
+---
 
-## CU10 Migrar y habilitar el piloto
+## CU07 Solicitar prendas o insignias del grupo
 
-Actores: migración, operación y validación funcional. Resultado: un único sistema escritor con datos conciliados. RF68 a RF71; PA15 y PA19.
+**Actores:** Familia y Responsable de Pedidos.  
+**Resultado:** Solicitud de material de grupo (pañoleta, polos, insignias) con seguimiento de entrega.  
+**Trazabilidad:** RF48 a RF54; PA07 y PA08.
 
-Ensaya importación con manifiesto y correspondencias, valida permisos y archivos, congela escritura del módulo, hace importación final y concilia. Habilita .NET solo cuando se cumplen los criterios de salida. Volver a WordPress después de nuevas entregas exige reconciliar esas operaciones, no solo reinstalar el ZIP anterior.
+1. La familia consulta los artículos disponibles (pañoleta oficial, camiseta de rama, polar de grupo) y sus tallas.
+2. Registra una solicitud indicando educando destinatario, producto y unidades.
+3. Adjunta de manera voluntaria el justificante de pago si realizó transferencia previa.
+4. El responsable de pedidos gestiona los estados (`Solicitado`, `Revisado`, `Pedido al proveedor`, `Entregado`) y entrega las prendas en mano durante una reunión de grupo.
+
+---
+
+## CU08 Atender derechos de privacidad, exportación o supresión
+
+**Actor:** Responsable de Tratamiento / Delegado de Protección de Datos.  
+**Resultado:** Ejercicio de derechos ARCO/RGPD conforme a la normativa vigente.  
+**Trazabilidad:** RF55 a RF60; PA13 y PA14.
+
+1. El responsable recibe una solicitud formal de acceso, rectificación o supresión de un titular.
+2. Identifica al usuario y sus educandos vinculados en la base de datos.
+3. Emite un volcado estructurado de sus datos o aplica el bloqueo/supresión de los expedientes que no deban conservarse por obligaciones legales o de seguro de accidentes.
+4. Registra el evento en la auditoría inmutable del sistema.

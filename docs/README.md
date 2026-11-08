@@ -6,7 +6,7 @@ Este índice organiza la documentación de arranque por responsabilidad. Todos l
 
 ## Ruta recomendada
 
-1. [Visión y alcance](producto/vision-alcance-y-mvp.md), [decisiones](planificacion/decisiones-y-riesgos.md) y [entregas](planificacion/plan-entregas-y-backlog.md).
+1. [Definición del MVP y alcance operativo](producto/definicion-mvp-piloto.md), [visión del producto](producto/vision-alcance-y-mvp.md) y [decisiones](planificacion/decisiones-y-riesgos.md).
 2. [Catálogo RF/RNF](requisitos/catalogo-requisitos.md), [casos de uso](requisitos/casos-de-uso.md) y [privacidad](requisitos/privacidad-y-conservacion.md).
 3. [Arquitectura](architecture/arquitectura-modular.md), [seguridad](architecture/politica-seguridad-y-permisos.md), [datos](architecture/modelo-datos.md) y [ADR](architecture/decisiones-arquitectura.md).
 4. [Desarrollo](desarrollo/onboarding-desarrolladores.md), [pruebas](testing/estrategia-y-trazabilidad.md), [migración](migracion/plan-migracion-wordpress.md) y [operación](deployment/operacion-y-recuperacion.md).
@@ -31,7 +31,8 @@ Este índice organiza la documentación de arranque por responsabilidad. Todos l
 
 | Documento | Propósito | Responsable propuesto |
 | --- | --- | --- |
-| [Visión alcance y piloto de la web scout](producto/vision-alcance-y-mvp.md) | Objetivo, actores, alcance inicial y medida de éxito. | Promotor y Coordinación |
+| [Definición del MVP y alcance operativo](producto/definicion-mvp-piloto.md) | Alcance formal, 4 módulos clave, salidas de campamento y exclusiones del MVP con Lestonnac 330. | Producto y Kraal |
+| [Visión alcance y piloto de la web scout](producto/vision-alcance-y-mvp.md) | Objetivo general, actores, alcance inicial y medidas de éxito. | Promotor y Coordinación |
 
 ### Arquitectura y políticas
 
