@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Participants.Domain;
 
@@ -92,6 +93,9 @@ public static class DatabaseInitializer
 
             // 5. Seed de Educandos y Fichas Médicas Anuales
             await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
+
+            // 6. Seed de Actividades y Campamentos por Ramas
+            await SeedActivitiesAsync(db, logger, lestonnacId, sanVicenteId);
         }
         catch (Exception ex)
         {
@@ -257,6 +261,131 @@ public static class DatabaseInitializer
         {
             logger.LogWarning("No se pudo crear el usuario {Email}: {Errors}", email, string.Join(", ", result.Errors.Select(e => e.Description)));
             return null;
+        }
+    }
+
+    private static async Task SeedActivitiesAsync(
+        WebScoutDbContext db,
+        ILogger logger,
+        Guid lestonnacId,
+        Guid sanVicenteId)
+    {
+        // 1. Actividades para Lestonnac 330
+        if (!await db.Actividades.IgnoreQueryFilters().AnyAsync(a => a.OrganizacionId == lestonnacId))
+        {
+            logger.LogInformation("Poblando actividades y campamentos para Lestonnac 330...");
+
+            var ahora = DateTime.UtcNow;
+            var sabadoManada = DateTime.SpecifyKind(ahora.Date.AddDays(7).AddHours(9), DateTimeKind.Utc);
+            var acampadaInicio = DateTime.SpecifyKind(ahora.Date.AddDays(20).AddHours(8), DateTimeKind.Utc);
+            var acampadaFin = DateTime.SpecifyKind(ahora.Date.AddDays(22).AddHours(18), DateTimeKind.Utc);
+            var campamentoVeranoInicio = DateTime.SpecifyKind(new DateTime(2027, 7, 15, 8, 0, 0), DateTimeKind.Utc);
+            var campamentoVeranoFin = DateTime.SpecifyKind(new DateTime(2027, 7, 27, 19, 0, 0), DateTimeKind.Utc);
+
+            var salidaManada = new ActividadScout
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = lestonnacId,
+                Titulo = "Salida a la Laguna del Arquillo: Rastreos y Naturaleza",
+                Descripcion = "Jornada de día completo para la Manada para trabajar la técnica scout de rastreo, reconocimiento de huellas de la fauna autóctona y juego de pistas en el entorno protegido de la laguna.",
+                Tipo = TipoActividad.Salida,
+                Estado = EstadoActividad.Publicada,
+                RamasDestinatarias = [RamaScout.Manada],
+                Lugar = "Paraje Natural Laguna del Arquillo (Masegoso)",
+                PuntoEncuentroSalida = "Local Scout Lestonnac a las 09:00h",
+                PuntoEncuentroRegreso = "Local Scout Lestonnac a las 18:00h",
+                FechaInicio = sabadoManada,
+                FechaFin = sabadoManada.AddHours(9),
+                FechaLimiteInscripcion = sabadoManada.AddDays(-3),
+                Precio = 12.50m,
+                IbanCuentaBancaria = "ES91 2100 0418 4502 0005 1330",
+                ConceptoPagoSugerido = "Salida Manada - Nombre Educando",
+                MaterialRequerido = "Mochila pequeña, cantimplora llena (1L mínimo), almuerzo y comida de media mañana, gorra, protección solar, pañoleta y calzado deportivo adecuado para caminar.",
+                ObservacionesSanitarias = "Revisar previamente si el educando es sensible a picaduras de avispa.",
+                FechaCreacionUtc = ahora
+            };
+
+            var acampadaOtono = new ActividadScout
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = lestonnacId,
+                Titulo = "Acampada de Manada y Tropa en Sierra de Alcaraz",
+                Descripcion = "Gran acampada de fin de semana con pernocta en cabañas y tiendas de campaña en el albergue juvenil. Talleres de cabuyería, fuego de campamento y marchas adaptadas por ramas.",
+                Tipo = TipoActividad.Acampada,
+                Estado = EstadoActividad.Publicada,
+                RamasDestinatarias = [RamaScout.Manada, RamaScout.Tropa],
+                Lugar = "Albergue Juvenil Los Batanes, Riópar (Albacete)",
+                PuntoEncuentroSalida = "Estación de Autobuses (Andén 12) a las 08:00h",
+                PuntoEncuentroRegreso = "Estación de Autobuses a las 18:30h",
+                FechaInicio = acampadaInicio,
+                FechaFin = acampadaFin,
+                FechaLimiteInscripcion = acampadaInicio.AddDays(-6),
+                Precio = 28.50m,
+                IbanCuentaBancaria = "ES91 2100 0418 4502 0005 1330",
+                ConceptoPagoSugerido = "Acampada Alcaraz - Nombre Educando",
+                MaterialRequerido = "Saco de dormir (confort 5°C), esterilla aislante, muda completa en bolsa estanca, neceser scout con toalla pequeña, botas de montaña, linterna frontal con pilas, cubiertos, plato hondo de aluminio o plástico y pañoleta.",
+                ObservacionesSanitarias = "Bajas temperaturas nocturnas. Familias con educandos asmáticos o alérgicos deben verificar que la medicación de rescate figure en la ficha médica anual.",
+                FechaCreacionUtc = ahora
+            };
+
+            var campamentoVerano = new ActividadScout
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = lestonnacId,
+                Titulo = "Campamento de Verano Pirineos 2027 (Grupo Completo)",
+                Descripcion = "Campamento de verano de 12 días en alta montaña para todas las ramas del grupo scout. Grandes construcciones, ascensiones y vivacs.",
+                Tipo = TipoActividad.Campamento,
+                Estado = EstadoActividad.Borrador,
+                RamasDestinatarias = [], // Grupo completo
+                Lugar = "Valle de Pineta, Bielsa (Huesca)",
+                PuntoEncuentroSalida = "Patio del Colegio Lestonnac a las 06:30h",
+                PuntoEncuentroRegreso = "Patio del Colegio Lestonnac a las 20:00h",
+                FechaInicio = campamentoVeranoInicio,
+                FechaFin = campamentoVeranoFin,
+                FechaLimiteInscripcion = campamentoVeranoInicio.AddMonths(-1),
+                Precio = 245.00m,
+                IbanCuentaBancaria = "ES91 2100 0418 4502 0005 1330",
+                ConceptoPagoSugerido = "Campamento Pirineos - Nombre Educando",
+                MaterialRequerido = "Dossier completo de campamento de verano disponible en la reunión de familias.",
+                FechaCreacionUtc = ahora
+            };
+
+            db.Actividades.AddRange(salidaManada, acampadaOtono, campamentoVerano);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Actividades demo de Lestonnac 330 creadas con éxito.");
+        }
+
+        // 2. Actividades para San Vicente 412
+        if (!await db.Actividades.IgnoreQueryFilters().AnyAsync(a => a.OrganizacionId == sanVicenteId))
+        {
+            logger.LogInformation("Poblando actividades demo para San Vicente 412...");
+
+            var ahora = DateTime.UtcNow;
+            var jornadaCastores = DateTime.SpecifyKind(ahora.Date.AddDays(10).AddHours(10), DateTimeKind.Utc);
+
+            var actividadCastores = new ActividadScout
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = sanVicenteId,
+                Titulo = "Jornada de la Presa en el Bosque: Gran Juego de Castores",
+                Descripcion = "Juegos cooperativos al aire libre para la Colonia de Castores. Descubriremos cómo construyen sus presas los castores y aprenderemos a cuidar nuestro entorno natural.",
+                Tipo = TipoActividad.Salida,
+                Estado = EstadoActividad.Publicada,
+                RamasDestinatarias = [RamaScout.Castores],
+                Lugar = "Parque Forestal La Pulgosa",
+                PuntoEncuentroSalida = "Entrada principal del parque a las 10:00h",
+                PuntoEncuentroRegreso = "Entrada principal del parque a las 14:00h",
+                FechaInicio = jornadaCastores,
+                FechaFin = jornadaCastores.AddHours(4),
+                FechaLimiteInscripcion = jornadaCastores.AddDays(-2),
+                Precio = 0.00m, // Actividad gratuita
+                MaterialRequerido = "Ropa deportiva cómoda que se pueda ensuciar, zapatillas de deporte, gorra, cantimplora con agua y almuerzo saludable.",
+                FechaCreacionUtc = ahora
+            };
+
+            db.Actividades.Add(actividadCastores);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Actividad demo de San Vicente 412 creada: Castores (Gratuita).");
         }
     }
 }

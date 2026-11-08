@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Infrastructure.Persistence;
 using WebScout.Web.Infrastructure.Tenancy;
 using Xunit;
