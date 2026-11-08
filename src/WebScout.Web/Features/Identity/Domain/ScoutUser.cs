@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Participants.Domain;
 
 namespace WebScout.Web.Features.Identity.Domain;
 
@@ -27,4 +28,9 @@ public class ScoutUser : IdentityUser<Guid>, ITenantScopedEntity
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public DateTime? LastLoginAtUtc { get; set; }
+
+    /// <summary>
+    /// Educandos (hijos/tutelados) censados bajo la tutela de esta cuenta familiar.
+    /// </summary>
+    public ICollection<ScoutParticipant> Children { get; set; } = new List<ScoutParticipant>();
 }

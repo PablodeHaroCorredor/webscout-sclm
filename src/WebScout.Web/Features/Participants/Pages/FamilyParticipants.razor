@@ -1,0 +1,279 @@
+@page "/familias/educandos"
+@using Microsoft.AspNetCore.Identity
+@using WebScout.Web.Features.Participants.Components
+@attribute [Authorize(Roles = ScoutRoles.Familia)]
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ScoutUser> UserManager
+@inject IParticipantService ParticipantService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject ITenantContext Tenant
+
+<PageTitle>Mis Educandos · @(Tenant.IsResolved ? Tenant.GroupName : "WebScout")</PageTitle>
+
+<div class="mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-4">
+        <div>
+            <MudText Typo="Typo.h5" Style="font-weight: 800; color: var(--mud-palette-primary);">
+                Mis Educandos y Fichas Médicas
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                Expedientes de sus hijos censados en @(Tenant.IsResolved ? Tenant.GroupName : "el grupo"). Mantenga la ficha médica actualizada para salidas y campamentos.
+            </MudText>
+        </div>
+
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="OpenAddParticipantDialogAsync">
+            Añadir Educando
+        </MudButton>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="d-flex justify-center align-center pa-12">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+    </div>
+}
+else if (_participants.Count == 0)
+{
+    <MudCard Elevation="0" Outlined="true" Class="pa-8 text-center" Style="background: white;">
+        <MudIcon Icon="@Icons.Material.Filled.FamilyRestroom" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
+        <MudText Typo="Typo.h6" Style="font-weight: 700;">No tiene educandos registrados</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mt-2 mb-4">
+            Registre a sus hijos para poder inscribirlos a los campamentos y salidas del grupo scout.
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenAddParticipantDialogAsync">
+            Registrar mi primer educando
+        </MudButton>
+    </MudCard>
+}
+else
+{
+    <MudGrid>
+        @foreach (var participant in _participants)
+        {
+            var hr = participant.HealthRecord;
+            <MudItem xs="12" md="6" @key="participant.Id">
+                <MudCard Elevation="1" Outlined="true" Class="rounded-lg h-100 d-flex flex-column" Style="background: white; border-top: 4px solid var(--mud-palette-primary);">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="@GetBranchColor(participant.CurrentBranch)" Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@GetBranchIcon(participant.CurrentBranch)" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <div class="d-flex justify-space-between align-center flex-wrap gap-2">
+                                <div>
+                                    <MudText Typo="Typo.h6" Style="font-weight: 700; line-height: 1.2;">
+                                        @participant.FullName
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        @participant.CalculateAge() años (@participant.BirthDate.ToString("dd/MM/yyyy"))
+                                    </MudText>
+                                </div>
+                                <MudChip T="string" 
+                                         Color="@GetBranchColor(participant.CurrentBranch)" 
+                                         Size="Size.Small" 
+                                         Variant="Variant.Filled" 
+                                         Style="font-weight: 700;">
+                                    @participant.CurrentBranch.ToString()
+                                </MudChip>
+                            </div>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+
+                    <MudCardContent Class="pt-0 flex-grow-1">
+                        <MudDivider Class="mb-3" />
+
+                        <!-- Resumen Sanitario -->
+                        <div class="mb-3">
+                            <div class="d-flex align-center justify-space-between text-caption mb-1">
+                                <span class="mud-text-secondary font-weight-bold">TARJETA SANITARIA</span>
+                                <span class="font-weight-bold" style="font-family: monospace;">@(hr?.HealthInsuranceNumber ?? "No asignada")</span>
+                            </div>
+                        </div>
+
+                        <!-- Alertas de Alergias e Intolerancias -->
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            @if (!string.IsNullOrWhiteSpace(hr?.DietaryRequirements))
+                            {
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Icon="@Icons.Material.Filled.Restaurant" Variant="Variant.Filled">
+                                    @hr.DietaryRequirements
+                                </MudChip>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(hr?.FoodAllergies))
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Warning" Variant="Variant.Filled">
+                                    Alergia: @hr.FoodAllergies
+                                </MudChip>
+                            }
+                            else if (string.IsNullOrWhiteSpace(hr?.DietaryRequirements))
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">
+                                    Sin alergias alimentarias
+                                </MudChip>
+                            }
+
+                            @if (hr?.CanSwim == true)
+                            {
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Pool">
+                                    Sabe nadar
+                                </MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small" Variant="Variant.Filled" Icon="@Icons.Material.Filled.NotListedLocation">
+                                    No sabe nadar
+                                </MudChip>
+                            }
+                        </div>
+
+                        <!-- Medicación Activa / Enfermedades Crónicas -->
+                        @if (!string.IsNullOrWhiteSpace(hr?.ActiveMedication) || !string.IsNullOrWhiteSpace(hr?.ChronicConditions))
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3 py-1 px-2" Variant="Variant.Outlined">
+                                <MudText Typo="Typo.caption" Style="line-height: 1.2;">
+                                    <strong>Salud/Medicación:</strong> @(hr?.ActiveMedication ?? hr?.ChronicConditions)
+                                </MudText>
+                            </MudAlert>
+                        }
+
+                        <!-- Contacto de Emergencia -->
+                        <div class="pa-2 rounded" style="background: #F1F5F9;">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block font-weight-bold">
+                                CONTACTO DE EMERGENCIA
+                            </MudText>
+                            <div class="d-flex align-center gap-2 mt-1">
+                                <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Color="Color.Primary" />
+                                <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                    @(hr?.PrimaryEmergencyPhone ?? "Sin teléfono")
+                                </MudText>
+                                @if (!string.IsNullOrWhiteSpace(hr?.PrimaryEmergencyContactName))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        (@hr.PrimaryEmergencyContactName)
+                                    </MudText>
+                                }
+                            </div>
+                        </div>
+
+                        @if (hr != null)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-end mt-2" Style="font-size: 0.7rem;">
+                                Ficha confirmada: @hr.LastUpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        }
+                    </MudCardContent>
+
+                    <MudCardActions Class="pa-3 justify-end" Style="background: #FAFAFA; border-top: 1px solid #EEEEEE;">
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small" 
+                                   StartIcon="@Icons.Material.Filled.EditNote"
+                                   OnClick="@(() => OpenEditHealthRecordDialogAsync(participant))">
+                            Actualizar Ficha Médica
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+    private List<ScoutParticipant> _participants = new();
+    private ScoutUser? _currentUser;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                _currentUser = await UserManager.GetUserAsync(user);
+                if (_currentUser != null)
+                {
+                    _participants = await ParticipantService.GetParticipantsByGuardianAsync(_currentUser.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar los educandos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenAddParticipantDialogAsync()
+    {
+        if (_currentUser == null) return;
+
+        var parameters = new DialogParameters<AddParticipantDialog>
+        {
+            { x => x.LegalGuardianId, _currentUser.Id },
+            { x => x.OrganizationId, _currentUser.OrganizationId }
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddParticipantDialog>("Registrar Educando", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenEditHealthRecordDialogAsync(ScoutParticipant participant)
+    {
+        var parameters = new DialogParameters<EditHealthRecordDialog>
+        {
+            { x => x.Participant, participant }
+        };
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditHealthRecordDialog>("Ficha Médica Anual", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private static Color GetBranchColor(ScoutBranch branch) => branch switch
+    {
+        ScoutBranch.Castores => Color.Info,
+        ScoutBranch.Manada => Color.Warning,
+        ScoutBranch.Tropa => Color.Success,
+        ScoutBranch.Escultas => Color.Error,
+        ScoutBranch.Clan => Color.Dark,
+        _ => Color.Default
+    };
+
+    private static string GetBranchIcon(ScoutBranch branch) => branch switch
+    {
+        ScoutBranch.Castores => Icons.Material.Filled.Water,
+        ScoutBranch.Manada => Icons.Material.Filled.Pets,
+        ScoutBranch.Tropa => Icons.Material.Filled.Explore,
+        ScoutBranch.Escultas => Icons.Material.Filled.Terrain,
+        ScoutBranch.Clan => Icons.Material.Filled.Rowing,
+        _ => Icons.Material.Filled.ChildCare
+    };
+}

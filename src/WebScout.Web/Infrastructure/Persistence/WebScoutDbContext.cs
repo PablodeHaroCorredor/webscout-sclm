@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Tenancy;
 
 namespace WebScout.Web.Infrastructure.Persistence;
@@ -23,6 +24,8 @@ public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
 
     public DbSet<ScoutTenant> Tenants => Set<ScoutTenant>();
     public DbSet<ScoutActivity> Activities => Set<ScoutActivity>();
+    public DbSet<ScoutParticipant> Participants => Set<ScoutParticipant>();
+    public DbSet<ParticipantHealthRecord> HealthRecords => Set<ParticipantHealthRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -60,7 +63,45 @@ public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
             b.HasIndex(a => new { a.OrganizationId, a.StartDate });
         });
 
-        // 5. Aplicación automática de Global Query Filters en todas las entidades ITenantScopedEntity
+        // 5. Configuración de Educandos (ScoutParticipant)
+        modelBuilder.Entity<ScoutParticipant>(b =>
+        {
+            b.HasKey(p => p.Id);
+            b.Property(p => p.FirstName).HasMaxLength(100).IsRequired();
+            b.Property(p => p.LastName).HasMaxLength(150).IsRequired();
+            b.Property(p => p.Dni).HasMaxLength(20);
+            b.Property(p => p.Gender).HasMaxLength(20);
+
+            b.HasIndex(p => new { p.OrganizationId, p.LegalGuardianId });
+            b.HasIndex(p => new { p.OrganizationId, p.CurrentBranch });
+            b.HasIndex(p => new { p.OrganizationId, p.IsActive });
+
+            b.HasOne(p => p.LegalGuardian)
+                .WithMany(u => u.Children)
+                .HasForeignKey(p => p.LegalGuardianId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(p => p.HealthRecord)
+                .WithOne(h => h.Participant)
+                .HasForeignKey<ParticipantHealthRecord>(h => h.ParticipantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 6. Configuración de Ficha Médica Anual (ParticipantHealthRecord)
+        modelBuilder.Entity<ParticipantHealthRecord>(b =>
+        {
+            b.HasKey(h => h.Id);
+            b.Property(h => h.HealthInsuranceNumber).HasMaxLength(50).IsRequired();
+            b.Property(h => h.HealthInsuranceEntity).HasMaxLength(100);
+            b.Property(h => h.PrimaryEmergencyPhone).HasMaxLength(30).IsRequired();
+            b.Property(h => h.PrimaryEmergencyContactName).HasMaxLength(100);
+            b.Property(h => h.SecondaryEmergencyPhone).HasMaxLength(30);
+            b.Property(h => h.SecondaryEmergencyContactName).HasMaxLength(100);
+
+            b.HasIndex(h => new { h.OrganizationId, h.ParticipantId }).IsUnique();
+        });
+
+        // 7. Aplicación automática de Global Query Filters en todas las entidades ITenantScopedEntity
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(ITenantScopedEntity).IsAssignableFrom(entityType.ClrType))
