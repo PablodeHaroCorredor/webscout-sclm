@@ -10,7 +10,9 @@ public static class TenantServiceExtensions
 {
     public static IServiceCollection AddScoutTenancy(this IServiceCollection services, IConfiguration configuration)
     {
-        // Registrar el contexto de tenant con ciclo de vida Scoped (por petición HTTP)
+        services.AddHttpContextAccessor();
+
+        // Registrar el contexto de tenant con ciclo de vida Scoped (por petición HTTP o circuito Blazor)
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 
