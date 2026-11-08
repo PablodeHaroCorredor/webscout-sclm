@@ -16,7 +16,7 @@ public static class TenantServiceExtensions
 
         // Registrar DbContext con PostgreSQL / Npgsql
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=webscout_dev;Username=scout_admin;Password=scout_dev_password_change_me";
+            ?? "Host=localhost;Port=5433;Database=webscout_dev;Username=scout_admin;Password=scout_dev_password_change_me";
 
         services.AddDbContext<WebScoutDbContext>(options =>
         {
