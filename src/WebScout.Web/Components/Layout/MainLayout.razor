@@ -12,7 +12,7 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         
         <div class="d-flex align-center gap-3 ms-2">
-            <PanoletaSvg Config="ActivePanoleta" Width="40" Height="32" />
+            <PanoletaSvg Config="ActivePanoleta" Width="38" Height="30" />
             <div>
                 <MudText Typo="Typo.h6" Style="font-weight: 700; line-height: 1.2;">
                     @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")
@@ -25,7 +25,7 @@
 
         <MudSpacer />
 
-        <div class="d-none d-md-flex align-center gap-2 me-4">
+        <div class="d-none d-md-flex align-center gap-2 me-2">
             <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Surface" Style="color: var(--mud-palette-text-primary);">
                 @(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")
             </MudChip>
@@ -44,14 +44,6 @@
                 San Vicente 412
             </MudButton>
         </div>
-
-        <MudButton Variant="Variant.Filled" 
-                   Color="Color.Secondary" 
-                   Size="Size.Small"
-                   Href="/diseno"
-                   StartIcon="@Icons.Material.Filled.Palette">
-            UI Kit
-        </MudButton>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="DrawerVariant.Responsive">
@@ -60,8 +52,8 @@
                 <MudIcon Icon="@Icons.Material.Filled.Forest" />
             </MudAvatar>
             <div>
-                <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Mi Espacio Scout</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Portal del Educando y Familias</MudText>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">@(Tenant.IsResolved ? Tenant.GroupName : "Plataforma Scout")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">WebScout SCLM</MudText>
             </div>
         </MudDrawerHeader>
         
@@ -69,44 +61,9 @@
 
         <MudNavMenu Bordered="true">
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-                Inicio y Portada
+                Inicio
             </MudNavLink>
-            <MudNavLink Href="/diseno" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AutoAwesome">
-                Sistema de Diseño (MudBlazor)
-            </MudNavLink>
-            
-            <MudNavGroup Title="Área Familiar" Icon="@Icons.Material.Filled.FamilyRestroom" Expanded="true">
-                <MudNavLink Href="/tramites" Icon="@Icons.Material.Filled.AssignmentTurnedIn">
-                    Mis Gestiones y Fichas
-                </MudNavLink>
-                <MudNavLink Href="/pedidos" Icon="@Icons.Material.Filled.ShoppingBag">
-                    Uniformidad y Material
-                </MudNavLink>
-                <MudNavLink Href="/fotos" Icon="@Icons.Material.Filled.PhotoLibrary">
-                    Galería Privada
-                </MudNavLink>
-            </MudNavGroup>
-
-            <MudNavGroup Title="Gestión de Kraal" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="false">
-                <MudNavLink Href="/revision" Icon="@Icons.Material.Filled.Rule">
-                    Mesa de Revisión
-                </MudNavLink>
-                <MudNavLink Href="/secciones" Icon="@Icons.Material.Filled.Diversity3">
-                    Ramas y Secciones
-                </MudNavLink>
-            </MudNavGroup>
         </MudNavMenu>
-
-        <div class="mt-auto pa-4">
-            <MudCard Elevation="0" Outlined="true" Class="pa-3" Style="background: #F8FAFC;">
-                <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 600;">
-                    SCLM Platform v1.0
-                </MudText>
-                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary" Style="font-size: 0.7rem;">
-                    Conformidad WCAG 2.2 AA · .NET 10
-                </MudText>
-            </MudCard>
-        </div>
     </MudDrawer>
 
     <MudMainContent Class="pa-4 pa-md-6" Style="background-color: #F8FAFC; min-height: 100vh;">
