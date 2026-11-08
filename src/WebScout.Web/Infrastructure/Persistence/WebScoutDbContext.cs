@@ -10,9 +10,10 @@ namespace WebScout.Web.Infrastructure.Persistence;
 
 /// <summary>
 /// Contexto de base de datos relacional PostgreSQL de la plataforma WebScout SCLM.
-/// Integra ASP.NET Core Identity con aislamiento multitenant estricto (OrganizationId).
+/// Integra ASP.NET Core Identity con aislamiento multitenant estricto (OrganizacionId).
+/// Modelo de datos normalizado íntegramente en castellano.
 /// </summary>
-public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
+public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
 {
     private readonly ITenantContext _tenantContext;
 
@@ -22,89 +23,99 @@ public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
         _tenantContext = tenantContext;
     }
 
-    public DbSet<ScoutTenant> Tenants => Set<ScoutTenant>();
-    public DbSet<ScoutActivity> Activities => Set<ScoutActivity>();
-    public DbSet<ScoutParticipant> Participants => Set<ScoutParticipant>();
-    public DbSet<ParticipantHealthRecord> HealthRecords => Set<ParticipantHealthRecord>();
+    public DbSet<GrupoScout> GruposScout => Set<GrupoScout>();
+    public DbSet<ActividadScout> Actividades => Set<ActividadScout>();
+    public DbSet<Educando> Educandos => Set<Educando>();
+    public DbSet<FichaMedica> FichasMedicas => Set<FichaMedica>();
+
+    // Aliases retrocompatibles para consultas existentes
+    public DbSet<GrupoScout> Tenants => GruposScout;
+    public DbSet<ActividadScout> Activities => Actividades;
+    public DbSet<Educando> Participants => Educandos;
+    public DbSet<FichaMedica> HealthRecords => FichasMedicas;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // 1. Configuración de tablas de ASP.NET Core Identity
         base.OnModelCreating(modelBuilder);
 
-        // 2. Configuración de la entidad Tenant
-        modelBuilder.Entity<ScoutTenant>(b =>
+        // 2. Configuración de la entidad GrupoScout (Tenant)
+        modelBuilder.Entity<GrupoScout>(b =>
         {
+            b.ToTable("GruposScout");
             b.HasKey(t => t.Id);
             b.HasIndex(t => t.Slug).IsUnique();
             b.Property(t => t.Slug).HasMaxLength(64).IsRequired();
-            b.Property(t => t.Name).HasMaxLength(128).IsRequired();
-            b.Property(t => t.ContactEmail).HasMaxLength(256).IsRequired();
+            b.Property(t => t.Nombre).HasMaxLength(128).IsRequired();
+            b.Property(t => t.EmailContacto).HasMaxLength(256).IsRequired();
 
             // Mapeo de Value Objects de identidad
             b.OwnsOne(t => t.Panoleta);
-            b.OwnsOne(t => t.Palette);
+            b.OwnsOne(t => t.Paleta);
         });
 
-        // 3. Configuración de ScoutUser (Multitenant)
-        modelBuilder.Entity<ScoutUser>(b =>
+        // 3. Configuración de UsuarioScout (Multitenant)
+        modelBuilder.Entity<UsuarioScout>(b =>
         {
-            b.Property(u => u.FullName).HasMaxLength(150).IsRequired();
+            b.Property(u => u.NombreCompleto).HasMaxLength(150).IsRequired();
             b.Property(u => u.Dni).HasMaxLength(20);
-            b.HasIndex(u => new { u.OrganizationId, u.NormalizedEmail });
+            b.HasIndex(u => new { u.OrganizacionId, u.NormalizedEmail });
         });
 
         // 4. Configuración de Actividades
-        modelBuilder.Entity<ScoutActivity>(b =>
+        modelBuilder.Entity<ActividadScout>(b =>
         {
+            b.ToTable("Actividades");
             b.HasKey(a => a.Id);
-            b.Property(a => a.Title).HasMaxLength(150).IsRequired();
-            b.Property(a => a.Location).HasMaxLength(200).IsRequired();
-            b.HasIndex(a => new { a.OrganizationId, a.StartDate });
+            b.Property(a => a.Titulo).HasMaxLength(150).IsRequired();
+            b.Property(a => a.Lugar).HasMaxLength(200).IsRequired();
+            b.HasIndex(a => new { a.OrganizacionId, a.FechaInicio });
         });
 
-        // 5. Configuración de Educandos (ScoutParticipant)
-        modelBuilder.Entity<ScoutParticipant>(b =>
+        // 5. Configuración de Educandos
+        modelBuilder.Entity<Educando>(b =>
         {
+            b.ToTable("Educandos");
             b.HasKey(p => p.Id);
-            b.Property(p => p.FirstName).HasMaxLength(100).IsRequired();
-            b.Property(p => p.LastName).HasMaxLength(150).IsRequired();
+            b.Property(p => p.Nombre).HasMaxLength(100).IsRequired();
+            b.Property(p => p.Apellidos).HasMaxLength(150).IsRequired();
             b.Property(p => p.Dni).HasMaxLength(20);
-            b.Property(p => p.Gender).HasMaxLength(20);
+            b.Property(p => p.Sexo).HasMaxLength(20);
 
-            b.HasIndex(p => new { p.OrganizationId, p.LegalGuardianId });
-            b.HasIndex(p => new { p.OrganizationId, p.CurrentBranch });
-            b.HasIndex(p => new { p.OrganizationId, p.IsActive });
+            b.HasIndex(p => new { p.OrganizacionId, p.TutorLegalId });
+            b.HasIndex(p => new { p.OrganizacionId, p.RamaActual });
+            b.HasIndex(p => new { p.OrganizacionId, p.Activo });
 
-            b.HasOne(p => p.LegalGuardian)
-                .WithMany(u => u.Children)
-                .HasForeignKey(p => p.LegalGuardianId)
+            b.HasOne(p => p.TutorLegal)
+                .WithMany(u => u.Educandos)
+                .HasForeignKey(p => p.TutorLegalId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            b.HasOne(p => p.HealthRecord)
-                .WithOne(h => h.Participant)
-                .HasForeignKey<ParticipantHealthRecord>(h => h.ParticipantId)
+            b.HasOne(p => p.FichaMedica)
+                .WithOne(h => h.Educando)
+                .HasForeignKey<FichaMedica>(h => h.EducandoId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // 6. Configuración de Ficha Médica Anual (ParticipantHealthRecord)
-        modelBuilder.Entity<ParticipantHealthRecord>(b =>
+        // 6. Configuración de Ficha Médica Anual
+        modelBuilder.Entity<FichaMedica>(b =>
         {
+            b.ToTable("FichasMedicas");
             b.HasKey(h => h.Id);
-            b.Property(h => h.HealthInsuranceNumber).HasMaxLength(50).IsRequired();
-            b.Property(h => h.HealthInsuranceEntity).HasMaxLength(100);
-            b.Property(h => h.PrimaryEmergencyPhone).HasMaxLength(30).IsRequired();
-            b.Property(h => h.PrimaryEmergencyContactName).HasMaxLength(100);
-            b.Property(h => h.SecondaryEmergencyPhone).HasMaxLength(30);
-            b.Property(h => h.SecondaryEmergencyContactName).HasMaxLength(100);
+            b.Property(h => h.NumeroSeguridadSocial).HasMaxLength(50).IsRequired();
+            b.Property(h => h.EntidadAseguradora).HasMaxLength(100);
+            b.Property(h => h.TelefonoEmergenciaPrincipal).HasMaxLength(30).IsRequired();
+            b.Property(h => h.NombreContactoEmergenciaPrincipal).HasMaxLength(100);
+            b.Property(h => h.TelefonoEmergenciaSecundario).HasMaxLength(30);
+            b.Property(h => h.NombreContactoEmergenciaSecundario).HasMaxLength(100);
 
-            b.HasIndex(h => new { h.OrganizationId, h.ParticipantId }).IsUnique();
+            b.HasIndex(h => new { h.OrganizacionId, h.EducandoId }).IsUnique();
         });
 
-        // 7. Aplicación automática de Global Query Filters en todas las entidades ITenantScopedEntity
+        // 7. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(ITenantScopedEntity).IsAssignableFrom(entityType.ClrType))
+            if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))
             {
                 var method = typeof(WebScoutDbContext)
                     .GetMethod(nameof(ConfigureGlobalTenantFilter), BindingFlags.NonPublic | BindingFlags.Instance)?
@@ -116,40 +127,39 @@ public class WebScoutDbContext : IdentityDbContext<ScoutUser, ScoutRole, Guid>
     }
 
     private void ConfigureGlobalTenantFilter<TEntity>(ModelBuilder modelBuilder)
-        where TEntity : class, ITenantScopedEntity
+        where TEntity : class, IEntidadOrganizacion
     {
         modelBuilder.Entity<TEntity>()
-            .HasQueryFilter(e => e.OrganizationId == _tenantContext.CurrentTenantId);
+            .HasQueryFilter(e => e.OrganizacionId == _tenantContext.CurrentTenantId);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        StampTenantId();
+        EstamparOrganizacionId();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
-        StampTenantId();
+        EstamparOrganizacionId();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
-    private void StampTenantId()
+    private void EstamparOrganizacionId()
     {
-        foreach (var entry in ChangeTracker.Entries<ITenantScopedEntity>())
+        foreach (var entry in ChangeTracker.Entries<IEntidadOrganizacion>())
         {
             if (entry.State == EntityState.Added)
             {
-                // Si la entidad aún no tiene OrganizationId explícito, estampar el tenant activo del contexto
-                if (entry.Entity.OrganizationId == Guid.Empty)
+                if (entry.Entity.OrganizacionId == Guid.Empty)
                 {
                     if (_tenantContext.CurrentTenantId == Guid.Empty)
                     {
                         throw new InvalidOperationException(
-                            $"Operación bloqueada: No se puede persistir la entidad '{entry.Entity.GetType().Name}' sin un Tenant activo en el contexto.");
+                            $"Operación bloqueada: No se puede persistir la entidad '{entry.Entity.GetType().Name}' sin una Organización activa en el contexto.");
                     }
 
-                    entry.Entity.OrganizationId = _tenantContext.CurrentTenantId;
+                    entry.Entity.OrganizacionId = _tenantContext.CurrentTenantId;
                 }
             }
         }

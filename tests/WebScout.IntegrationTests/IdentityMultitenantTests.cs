@@ -37,17 +37,17 @@ public class IdentityMultitenantTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, ctx))
         {
-            var user = new ScoutUser
+            var user = new UsuarioScout
             {
                 UserName = "familia.garcia@lestonnac.es",
                 Email = "familia.garcia@lestonnac.es",
-                FullName = "Familia García Pérez"
+                NombreCompleto = "Familia García Pérez"
             };
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
 
-            Assert.Equal(OrgLestonnac, user.OrganizationId);
+            Assert.Equal(OrgLestonnac, user.OrganizacionId);
         }
     }
 
@@ -60,12 +60,12 @@ public class IdentityMultitenantTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, ctxLestonnac))
         {
-            db.Users.Add(new ScoutUser
+            db.Users.Add(new UsuarioScout
             {
                 UserName = "scouter.manada@lestonnac.es",
                 Email = "scouter.manada@lestonnac.es",
-                FullName = "Elena Akela",
-                AssignedBranch = ScoutBranch.Manada
+                NombreCompleto = "Elena Akela",
+                RamaAsignada = RamaScout.Manada
             });
             await db.SaveChangesAsync();
         }
@@ -76,12 +76,12 @@ public class IdentityMultitenantTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, ctxSanVicente))
         {
-            db.Users.Add(new ScoutUser
+            db.Users.Add(new UsuarioScout
             {
                 UserName = "scouter.tropa@sanvicente.org",
                 Email = "scouter.tropa@sanvicente.org",
-                FullName = "David Baloo",
-                AssignedBranch = ScoutBranch.Tropa
+                NombreCompleto = "David Baloo",
+                RamaAsignada = RamaScout.Tropa
             });
             await db.SaveChangesAsync();
         }
@@ -91,9 +91,9 @@ public class IdentityMultitenantTests : IDisposable
         {
             var users = await db.Users.ToListAsync();
             Assert.Single(users);
-            Assert.Equal("Elena Akela", users[0].FullName);
-            Assert.Equal(ScoutBranch.Manada, users[0].AssignedBranch);
-            Assert.Equal(OrgLestonnac, users[0].OrganizationId);
+            Assert.Equal("Elena Akela", users[0].NombreCompleto);
+            Assert.Equal(RamaScout.Manada, users[0].RamaAsignada);
+            Assert.Equal(OrgLestonnac, users[0].OrganizacionId);
         }
 
         // 4. Verificar que San Vicente solo ve a su propio scouter
@@ -101,9 +101,9 @@ public class IdentityMultitenantTests : IDisposable
         {
             var users = await db.Users.ToListAsync();
             Assert.Single(users);
-            Assert.Equal("David Baloo", users[0].FullName);
-            Assert.Equal(ScoutBranch.Tropa, users[0].AssignedBranch);
-            Assert.Equal(OrgSanVicente, users[0].OrganizationId);
+            Assert.Equal("David Baloo", users[0].NombreCompleto);
+            Assert.Equal(RamaScout.Tropa, users[0].RamaAsignada);
+            Assert.Equal(OrgSanVicente, users[0].OrganizacionId);
         }
     }
 

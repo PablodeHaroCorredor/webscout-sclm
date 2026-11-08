@@ -1,51 +1,51 @@
-@inject IParticipantService ParticipantService
+@inject IServicioEducandos ServicioEducandos
 @inject ISnackbar Snackbar
 
 <MudDialog>
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Color="Color.Primary" />
-            <MudText Typo="Typo.h6">Ficha Médica Anual: @Participant.FullName</MudText>
+            <MudText Typo="Typo.h6">Ficha Médica Anual: @Educando.NombreCompleto</MudText>
         </div>
     </TitleContent>
     <DialogContent>
         <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-4">
-            <!-- Pestaña 1: Identificación y Emergencias -->
+            <!-- Pestaña 1: Identificación y Contactos -->
             <MudTabPanel Text="Identificación y Contactos" Icon="@Icons.Material.Filled.ContactPhone">
                 <MudGrid>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.HealthInsuranceNumber" 
+                        <MudTextField @bind-Value="Ficha.NumeroSeguridadSocial" 
                                       Label="CIP / Nº Seguridad Social / Póliza *" 
                                       Variant="Variant.Outlined" 
                                       Required="true" 
                                       HelperText="Código que figura en la tarjeta sanitaria" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.HealthInsuranceEntity" 
+                        <MudTextField @bind-Value="Ficha.EntidadAseguradora" 
                                       Label="Entidad Aseguradora" 
                                       Variant="Variant.Outlined" 
                                       HelperText="Ej. SESCAM, MUFACE, Adeslas, Sanitas..." />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.PrimaryEmergencyPhone" 
+                        <MudTextField @bind-Value="Ficha.TelefonoEmergenciaPrincipal" 
                                       Label="Teléfono Emergencia Principal *" 
                                       Variant="Variant.Outlined" 
                                       Required="true" 
                                       HelperText="Teléfono prioritario para localización en campamento" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.PrimaryEmergencyContactName" 
+                        <MudTextField @bind-Value="Ficha.NombreContactoEmergenciaPrincipal" 
                                       Label="Nombre Contacto Principal" 
                                       Variant="Variant.Outlined" 
-                                      HelperText="Ej. María García (Madre)" />
+                                      HelperText="Ej. María Pérez (Madre)" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.SecondaryEmergencyPhone" 
+                        <MudTextField @bind-Value="Ficha.TelefonoEmergenciaSecundario" 
                                       Label="Teléfono Emergencia Alternativo" 
                                       Variant="Variant.Outlined" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.SecondaryEmergencyContactName" 
+                        <MudTextField @bind-Value="Ficha.NombreContactoEmergenciaSecundario" 
                                       Label="Nombre Contacto Alternativo" 
                                       Variant="Variant.Outlined" 
                                       HelperText="Ej. Carlos García (Padre)" />
@@ -56,33 +56,33 @@
             <!-- Pestaña 2: Alergias, Intolerancias y Dietas -->
             <MudTabPanel Text="Alergias y Dieta" Icon="@Icons.Material.Filled.Restaurant">
                 <MudAlert Severity="Severity.Info" Class="mb-4" Variant="Variant.Outlined" Dense="true">
-                    Esta información es crítica para confeccionar los menús de acampadas y campamentos de verano con el equipo de intendencia.
+                    Esta información es crítica para confeccionar los menús de acampadas y campamentos con el equipo de intendencia de cocina.
                 </MudAlert>
 
                 <MudGrid>
                     <MudItem xs="12">
-                        <MudTextField @bind-Value="Record.DietaryRequirements" 
+                        <MudTextField @bind-Value="Ficha.RegimenAlimenticio" 
                                       Label="Régimen Dietético e Intolerancias" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
                                       HelperText="Ej. Celíaco (estricto sin trazas), intolerante a la lactosa, vegetariano, exclusión carne de cerdo..." />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.FoodAllergies" 
+                        <MudTextField @bind-Value="Ficha.AlergiasAlimentarias" 
                                       Label="Alergias Alimentarias" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
                                       HelperText="Ej. Cacahuetes, frutos secos, huevo, marisco, kiwi..." />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudTextField @bind-Value="Record.MedicalAllergies" 
+                        <MudTextField @bind-Value="Ficha.AlergiasMedicamentosas" 
                                       Label="Alergias a Medicamentos" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
                                       HelperText="Ej. Penicilina, aspirina, antiinflamatorios (AINEs)..." />
                     </MudItem>
                     <MudItem xs="12">
-                        <MudTextField @bind-Value="Record.EnvironmentalAllergies" 
+                        <MudTextField @bind-Value="Ficha.AlergiasAmbientales" 
                                       Label="Alergias Ambientales y Picaduras" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
@@ -95,35 +95,35 @@
             <MudTabPanel Text="Medicación y Campamentos" Icon="@Icons.Material.Filled.Hiking">
                 <MudGrid>
                     <MudItem xs="12">
-                        <MudTextField @bind-Value="Record.ActiveMedication" 
+                        <MudTextField @bind-Value="Ficha.MedicacionActiva" 
                                       Label="Medicación Activa y Pautas para Salidas" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
                                       HelperText="Indicar nombre del fármaco, dosis exacta y horarios durante las actividades (ej. Ventolín en caso de crisis)." />
                     </MudItem>
                     <MudItem xs="12">
-                        <MudTextField @bind-Value="Record.ChronicConditions" 
+                        <MudTextField @bind-Value="Ficha.EnfermedadesCronicas" 
                                       Label="Enfermedades Crónicas o Patologías" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" 
                                       HelperText="Ej. Asma bronquial, diabetes, epilepsia, cardiopatías..." />
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudSwitch @bind-Value="Record.VaccinationsUpToDate" Color="Color.Success">
+                        <MudSwitch @bind-Value="Ficha.VacunacionAlDia" Color="Color.Success">
                             <MudText Typo="Typo.body2">
                                 <strong>Vacunación al día:</strong> Cumple el calendario oficial de vacunaciones.
                             </MudText>
                         </MudSwitch>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudSwitch @bind-Value="Record.CanSwim" Color="Color.Primary">
+                        <MudSwitch @bind-Value="Ficha.SabeNadar" Color="Color.Primary">
                             <MudText Typo="Typo.body2">
                                 <strong>Sabe nadar:</strong> Se desenvuelve con soltura en actividades acuáticas.
                             </MudText>
                         </MudSwitch>
                     </MudItem>
                     <MudItem xs="12">
-                        <MudTextField @bind-Value="Record.AdditionalObservations" 
+                        <MudTextField @bind-Value="Ficha.ObservacionesAdicionales" 
                                       Label="Otras Observaciones para el Scouter de Salud / Botiquín" 
                                       Variant="Variant.Outlined" 
                                       Lines="2" />
@@ -134,8 +134,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_saving">
-            @if (_saving)
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="_guardando">
+            @if (_guardando)
             {
                 <MudProgressCircular Class="ms-n1 me-2" Size="Size.Small" Indeterminate="true" />
                 <span>Guardando...</span>
@@ -153,20 +153,19 @@
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
-    public ScoutParticipant Participant { get; set; } = default!;
+    public Educando Educando { get; set; } = default!;
 
-    private ParticipantHealthRecord Record { get; set; } = default!;
-    private bool _saving;
+    private FichaMedica Ficha { get; set; } = default!;
+    private bool _guardando;
 
     protected override void OnInitialized()
     {
-        // Clonar o usar la ficha existente
-        Record = Participant.HealthRecord ?? new ParticipantHealthRecord
+        Ficha = Educando.FichaMedica ?? new FichaMedica
         {
-            ParticipantId = Participant.Id,
-            OrganizationId = Participant.OrganizationId,
-            HealthInsuranceNumber = "",
-            PrimaryEmergencyPhone = ""
+            EducandoId = Educando.Id,
+            OrganizacionId = Educando.OrganizacionId,
+            NumeroSeguridadSocial = "",
+            TelefonoEmergenciaPrincipal = ""
         };
     }
 
@@ -174,7 +173,7 @@
 
     private async Task SaveAsync()
     {
-        if (string.IsNullOrWhiteSpace(Record.HealthInsuranceNumber) || string.IsNullOrWhiteSpace(Record.PrimaryEmergencyPhone))
+        if (string.IsNullOrWhiteSpace(Ficha.NumeroSeguridadSocial) || string.IsNullOrWhiteSpace(Ficha.TelefonoEmergenciaPrincipal))
         {
             Snackbar.Add("El CIP/Nº de Seguridad Social y el Teléfono de Emergencia son obligatorios.", Severity.Warning);
             return;
@@ -182,11 +181,11 @@
 
         try
         {
-            _saving = true;
-            await ParticipantService.UpdateHealthRecordAsync(Record);
-            Participant.HealthRecord = Record;
+            _guardando = true;
+            await ServicioEducandos.ActualizarFichaMedicaAsync(Ficha);
+            Educando.FichaMedica = Ficha;
             Snackbar.Add("Ficha médica actualizada correctamente.", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(Record));
+            MudDialog.Close(DialogResult.Ok(Ficha));
         }
         catch (Exception ex)
         {
@@ -194,7 +193,7 @@
         }
         finally
         {
-            _saving = false;
+            _guardando = false;
         }
     }
 }

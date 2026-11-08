@@ -1,10 +1,10 @@
 @page "/familias/educandos"
 @using Microsoft.AspNetCore.Identity
 @using WebScout.Web.Features.Participants.Components
-@attribute [Authorize(Roles = ScoutRoles.Familia)]
+@attribute [Authorize(Roles = RolesScout.Familia)]
 @inject AuthenticationStateProvider AuthStateProvider
-@inject UserManager<ScoutUser> UserManager
-@inject IParticipantService ParticipantService
+@inject UserManager<UsuarioScout> UserManager
+@inject IServicioEducandos ServicioEducandos
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject ITenantContext Tenant
@@ -31,13 +31,13 @@
     </div>
 </div>
 
-@if (_loading)
+@if (_cargando)
 {
     <div class="d-flex justify-center align-center pa-12">
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
     </div>
 }
-else if (_participants.Count == 0)
+else if (_educandos.Count == 0)
 {
     <MudCard Elevation="0" Outlined="true" Class="pa-8 text-center" Style="background: white;">
         <MudIcon Icon="@Icons.Material.Filled.FamilyRestroom" Size="Size.Large" Color="Color.Primary" Class="mb-3" />
@@ -53,33 +53,33 @@ else if (_participants.Count == 0)
 else
 {
     <MudGrid>
-        @foreach (var participant in _participants)
+        @foreach (var educando in _educandos)
         {
-            var hr = participant.HealthRecord;
-            <MudItem xs="12" md="6" @key="participant.Id">
+            var fm = educando.FichaMedica;
+            <MudItem xs="12" md="6" @key="educando.Id">
                 <MudCard Elevation="1" Outlined="true" Class="rounded-lg h-100 d-flex flex-column" Style="background: white; border-top: 4px solid var(--mud-palette-primary);">
                     <MudCardHeader>
                         <CardHeaderAvatar>
-                            <MudAvatar Color="@GetBranchColor(participant.CurrentBranch)" Variant="Variant.Filled" Size="Size.Medium">
-                                <MudIcon Icon="@GetBranchIcon(participant.CurrentBranch)" />
+                            <MudAvatar Color="@GetBranchColor(educando.RamaActual)" Variant="Variant.Filled" Size="Size.Medium">
+                                <MudIcon Icon="@GetBranchIcon(educando.RamaActual)" />
                             </MudAvatar>
                         </CardHeaderAvatar>
                         <CardHeaderContent>
                             <div class="d-flex justify-space-between align-center flex-wrap gap-2">
                                 <div>
                                     <MudText Typo="Typo.h6" Style="font-weight: 700; line-height: 1.2;">
-                                        @participant.FullName
+                                        @educando.NombreCompleto
                                     </MudText>
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                        @participant.CalculateAge() años (@participant.BirthDate.ToString("dd/MM/yyyy"))
+                                        @educando.CalcularEdad() años (@educando.FechaNacimiento.ToString("dd/MM/yyyy"))
                                     </MudText>
                                 </div>
                                 <MudChip T="string" 
-                                         Color="@GetBranchColor(participant.CurrentBranch)" 
+                                         Color="@GetBranchColor(educando.RamaActual)" 
                                          Size="Size.Small" 
                                          Variant="Variant.Filled" 
                                          Style="font-weight: 700;">
-                                    @participant.CurrentBranch.ToString()
+                                    @educando.RamaActual.ToString()
                                 </MudChip>
                             </div>
                         </CardHeaderContent>
@@ -92,33 +92,33 @@ else
                         <div class="mb-3">
                             <div class="d-flex align-center justify-space-between text-caption mb-1">
                                 <span class="mud-text-secondary font-weight-bold">TARJETA SANITARIA</span>
-                                <span class="font-weight-bold" style="font-family: monospace;">@(hr?.HealthInsuranceNumber ?? "No asignada")</span>
+                                <span class="font-weight-bold" style="font-family: monospace;">@(fm?.NumeroSeguridadSocial ?? "No asignada")</span>
                             </div>
                         </div>
 
                         <!-- Alertas de Alergias e Intolerancias -->
                         <div class="d-flex flex-wrap gap-2 mb-3">
-                            @if (!string.IsNullOrWhiteSpace(hr?.DietaryRequirements))
+                            @if (!string.IsNullOrWhiteSpace(fm?.RegimenAlimenticio))
                             {
                                 <MudChip T="string" Color="Color.Warning" Size="Size.Small" Icon="@Icons.Material.Filled.Restaurant" Variant="Variant.Filled">
-                                    @hr.DietaryRequirements
+                                    @fm.RegimenAlimenticio
                                 </MudChip>
                             }
 
-                            @if (!string.IsNullOrWhiteSpace(hr?.FoodAllergies))
+                            @if (!string.IsNullOrWhiteSpace(fm?.AlergiasAlimentarias))
                             {
                                 <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.Warning" Variant="Variant.Filled">
-                                    Alergia: @hr.FoodAllergies
+                                    Alergia: @fm.AlergiasAlimentarias
                                 </MudChip>
                             }
-                            else if (string.IsNullOrWhiteSpace(hr?.DietaryRequirements))
+                            else if (string.IsNullOrWhiteSpace(fm?.RegimenAlimenticio))
                             {
                                 <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Outlined">
                                     Sin alergias alimentarias
                                 </MudChip>
                             }
 
-                            @if (hr?.CanSwim == true)
+                            @if (fm?.SabeNadar == true)
                             {
                                 <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Pool">
                                     Sabe nadar
@@ -133,11 +133,11 @@ else
                         </div>
 
                         <!-- Medicación Activa / Enfermedades Crónicas -->
-                        @if (!string.IsNullOrWhiteSpace(hr?.ActiveMedication) || !string.IsNullOrWhiteSpace(hr?.ChronicConditions))
+                        @if (!string.IsNullOrWhiteSpace(fm?.MedicacionActiva) || !string.IsNullOrWhiteSpace(fm?.EnfermedadesCronicas))
                         {
                             <MudAlert Severity="Severity.Warning" Dense="true" Class="mb-3 py-1 px-2" Variant="Variant.Outlined">
                                 <MudText Typo="Typo.caption" Style="line-height: 1.2;">
-                                    <strong>Salud/Medicación:</strong> @(hr?.ActiveMedication ?? hr?.ChronicConditions)
+                                    <strong>Salud/Medicación:</strong> @(fm?.MedicacionActiva ?? fm?.EnfermedadesCronicas)
                                 </MudText>
                             </MudAlert>
                         }
@@ -150,21 +150,21 @@ else
                             <div class="d-flex align-center gap-2 mt-1">
                                 <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Color="Color.Primary" />
                                 <MudText Typo="Typo.body2" Style="font-weight: 600;">
-                                    @(hr?.PrimaryEmergencyPhone ?? "Sin teléfono")
+                                    @(fm?.TelefonoEmergenciaPrincipal ?? "Sin teléfono")
                                 </MudText>
-                                @if (!string.IsNullOrWhiteSpace(hr?.PrimaryEmergencyContactName))
+                                @if (!string.IsNullOrWhiteSpace(fm?.NombreContactoEmergenciaPrincipal))
                                 {
                                     <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                        (@hr.PrimaryEmergencyContactName)
+                                        (@fm.NombreContactoEmergenciaPrincipal)
                                     </MudText>
                                 }
                             </div>
                         </div>
 
-                        @if (hr != null)
+                        @if (fm != null)
                         {
                             <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-end mt-2" Style="font-size: 0.7rem;">
-                                Ficha confirmada: @hr.LastUpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                Ficha confirmada: @fm.UltimaActualizacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         }
                     </MudCardContent>
@@ -174,7 +174,7 @@ else
                                    Color="Color.Primary" 
                                    Size="Size.Small" 
                                    StartIcon="@Icons.Material.Filled.EditNote"
-                                   OnClick="@(() => OpenEditHealthRecordDialogAsync(participant))">
+                                   OnClick="@(() => OpenEditHealthRecordDialogAsync(educando))">
                             Actualizar Ficha Médica
                         </MudButton>
                     </MudCardActions>
@@ -185,9 +185,9 @@ else
 }
 
 @code {
-    private List<ScoutParticipant> _participants = new();
-    private ScoutUser? _currentUser;
-    private bool _loading = true;
+    private List<Educando> _educandos = new();
+    private UsuarioScout? _currentUser;
+    private bool _cargando = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -196,7 +196,7 @@ else
 
     private async Task LoadDataAsync()
     {
-        _loading = true;
+        _cargando = true;
         try
         {
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -206,7 +206,7 @@ else
                 _currentUser = await UserManager.GetUserAsync(user);
                 if (_currentUser != null)
                 {
-                    _participants = await ParticipantService.GetParticipantsByGuardianAsync(_currentUser.Id);
+                    _educandos = await ServicioEducandos.ObtenerPorTutorAsync(_currentUser.Id);
                 }
             }
         }
@@ -216,7 +216,7 @@ else
         }
         finally
         {
-            _loading = false;
+            _cargando = false;
         }
     }
 
@@ -226,8 +226,8 @@ else
 
         var parameters = new DialogParameters<AddParticipantDialog>
         {
-            { x => x.LegalGuardianId, _currentUser.Id },
-            { x => x.OrganizationId, _currentUser.OrganizationId }
+            { x => x.TutorLegalId, _currentUser.Id },
+            { x => x.OrganizacionId, _currentUser.OrganizacionId }
         };
 
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
@@ -240,11 +240,11 @@ else
         }
     }
 
-    private async Task OpenEditHealthRecordDialogAsync(ScoutParticipant participant)
+    private async Task OpenEditHealthRecordDialogAsync(Educando educando)
     {
         var parameters = new DialogParameters<EditHealthRecordDialog>
         {
-            { x => x.Participant, participant }
+            { x => x.Educando, educando }
         };
 
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
@@ -257,23 +257,23 @@ else
         }
     }
 
-    private static Color GetBranchColor(ScoutBranch branch) => branch switch
+    private static Color GetBranchColor(RamaScout rama) => rama switch
     {
-        ScoutBranch.Castores => Color.Info,
-        ScoutBranch.Manada => Color.Warning,
-        ScoutBranch.Tropa => Color.Success,
-        ScoutBranch.Escultas => Color.Error,
-        ScoutBranch.Clan => Color.Dark,
+        RamaScout.Castores => Color.Info,
+        RamaScout.Manada => Color.Warning,
+        RamaScout.Tropa => Color.Success,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Dark,
         _ => Color.Default
     };
 
-    private static string GetBranchIcon(ScoutBranch branch) => branch switch
+    private static string GetBranchIcon(RamaScout rama) => rama switch
     {
-        ScoutBranch.Castores => Icons.Material.Filled.Water,
-        ScoutBranch.Manada => Icons.Material.Filled.Pets,
-        ScoutBranch.Tropa => Icons.Material.Filled.Explore,
-        ScoutBranch.Escultas => Icons.Material.Filled.Terrain,
-        ScoutBranch.Clan => Icons.Material.Filled.Rowing,
+        RamaScout.Castores => Icons.Material.Filled.Water,
+        RamaScout.Manada => Icons.Material.Filled.Pets,
+        RamaScout.Tropa => Icons.Material.Filled.Explore,
+        RamaScout.Escultas => Icons.Material.Filled.Terrain,
+        RamaScout.Clan => Icons.Material.Filled.Rowing,
         _ => Icons.Material.Filled.ChildCare
     };
 }
