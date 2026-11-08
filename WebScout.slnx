@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WebScout.Web/WebScout.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WebScout.ArchitectureTests/WebScout.ArchitectureTests.csproj" />
+    <Project Path="tests/WebScout.IntegrationTests/WebScout.IntegrationTests.csproj" />
+    <Project Path="tests/WebScout.WebTests/WebScout.WebTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/WebScout.Migration/WebScout.Migration.csproj" />
+  </Folder>
+</Solution>
