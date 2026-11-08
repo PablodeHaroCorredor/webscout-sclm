@@ -59,6 +59,7 @@ Este índice organiza la documentación de arranque por responsabilidad. Todos l
 | Documento | Propósito | Responsable propuesto |
 | --- | --- | --- |
 | [Experiencia de uso y accesibilidad](diseno/experiencia-y-accesibilidad.md) | Navegación, patrones de pantalla, mensajes y revisión móvil. | Diseño y QA |
+| [Manual de identidad corporativa y guía de estilo](diseno/manual-identidad-corporativa.md) | Identidad visual SCLM y multitenant, pañoletas, tokens CSS, componentes UI, accesibilidad y tono de voz. | Diseño y Comunicación |
 
 ### Contratos e integraciones
 
