@@ -1,43 +1,43 @@
 ---
 name: github-pr-lifecycle
 description: >-
-  Automatiza y guía el ciclo completo de Pull Requests en WebScout SCLM: creación de
-  ramas por funcionalidad, verificación de compilación y tests, preparación del cuerpo
-  de la PR según la plantilla del repositorio, y procedimiento de fusión limpia.
+  Automatiza y guía el ciclo completo de Pull Requests en WebScout SCLM sobre develop y main:
+  creación de ramas por funcionalidad (feat/<nombre>-<issue>), verificación de compilación y tests,
+  preparación del cuerpo de la PR según la plantilla del repositorio, y procedimiento de fusión limpia.
 ---
 
 # GitHub PR Lifecycle — Procedimiento Operativo
 
-Esta skill proporciona los pasos directos para abrir, gestionar y cerrar cambios mediante ramas y Pull Requests con alta trazabilidad.
+Esta skill proporciona los pasos directos para abrir, gestionar y cerrar cambios mediante ramas y Pull Requests con alta trazabilidad bajo el modelo GitLab Flow / GitFlow adaptado.
 
 ---
 
 ## 1. Comprobaciones Previas al Inicio de Rama
 
-Antes de iniciar cualquier desarrollo:
+Antes de iniciar cualquier desarrollo, siempre partir de **`develop`**:
 ```powershell
-# 1. Asegurar estar en main y sin cambios sucios
-git checkout main
+# 1. Asegurar estar en develop y con el árbol limpio
+git checkout develop
 git status
-git pull origin main
+git pull origin develop
 ```
 
 ---
 
 ## 2. Creación de la Rama de Funcionalidad
 
-Seguir la convención: `<tipo>/<hito-o-modulo>-<descripcion>`:
+Seguir la convención: `<tipo>/<nombre-descriptivo>-<numero-issue>`:
 ```powershell
 # Ejemplos:
-git checkout -b feat/paso3-actividades-kraal
-git checkout -b fix/inscripcion-fecha-limite
+git checkout -b feat/actividades-campamentos-ramas-3
+git checkout -b bugfix/inscripcion-fecha-limite-14
 ```
 
 ---
 
 ## 3. Protocolo de Calidad Pre-PR (Gatekeeper)
 
-Antes de considerar una rama lista para Pull Request, se debe ejecutar imperativamente la siguiente secuencia:
+Antes de considerar una rama lista para Pull Request:
 
 1. **Compilación de la solución completa:**
    ```powershell
@@ -50,44 +50,38 @@ Antes de considerar una rama lista para Pull Request, se debe ejecutar imperativ
 3. **Inspección de archivos en staging:**
    ```powershell
    git status
-   git diff --name-only origin/main
+   git diff --name-only origin/develop
    ```
    *Verificar que no existan ficheros `.env`, volcados o datos con nombres reales de menores.*
 
 ---
 
-## 4. Estructura de la Descripción del PR
+## 4. Publicación y Creación de PR
 
-Al crear la Pull Request (o preparar su texto para GitHub), aplicar el formato estándar:
+1. **Subir rama al remoto:**
+   ```powershell
+   git push -u origin feat/actividades-campamentos-ramas-3
+   ```
+2. **Destino del PR:**
+   - Base branch: **`develop`** (para features y bugfixes normales).
+   - Base branch: **`main`** (únicamente para `release/v...` o `hotfix/...`).
 
-```markdown
-## 📋 Descripción del Cambio
-Implementación de [Módulo/Funcionalidad]. Permite a [Rol] realizar [Acción].
-
-## 🔗 Referencias y Trazabilidad
-- **Hito:** Paso [X] del MVP
-- **Issue:** Closes #[N]
-
-## 🏷️ Tipo de Cambio
-- [x] ✨ `feat`: Nueva funcionalidad
-
-## ✅ Checklist de Aceptación y Calidad (DoD)
-- [x] Compilación limpia (`dotnet build`).
-- [x] Todos los tests pasan (`dotnet test`).
-- [x] Aislamiento multi-inquilino (`IEntidadOrganizacion` verificado).
-- [x] Ubicuidad y castellano estricto en entidades y vistas.
-- [x] Cero datos reales de menores (RGPD).
-- [x] Cero credenciales o secretos en código.
-- [x] Componentes MudBlazor estándar y diseño limpio.
-```
+3. **Estructura del PR (plantilla .github/pull_request_template.md):**
+   - Enlace al Issue: `Closes #3`
+   - Checklist de DoD completado.
 
 ---
 
 ## 5. Estrategia de Fusión: Squash and Merge
 
-Para mantener el historial de `main` limpio, lineal y trazable:
-1. Asegurar que el workflow de GitHub Actions (`ci.yml`) está en verde.
-2. Realizar **Squash and Merge** en la interfaz de GitHub o mediante comando.
-3. Formato del commit resultante:
+1. Asegurar que el pipeline de GitHub Actions (`ci.yml`) está en verde.
+2. Realizar **Squash and Merge** hacia `develop`.
+3. Título del commit en `develop`:
    `feat(actividades): publicar campamentos y actividades por ramas (#3)`
-4. Borrar la rama de funcionalidad una vez fusionada.
+4. Borrar la rama remota de la feature.
+5. En local:
+   ```powershell
+   git checkout develop
+   git pull origin develop
+   git branch -d feat/actividades-campamentos-ramas-3
+   ```
