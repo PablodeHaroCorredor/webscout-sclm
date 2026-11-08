@@ -3,56 +3,56 @@
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
 
-<PageTitle>Guía de Estilo y Sistema de Diseño · @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
+<PageTitle>Sistema de Diseño e Identidad Visual · @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
 
 <div class="scout-container" style="padding-top: 2rem; padding-bottom: 4rem;">
     <!-- ====================================================================
-         1. Barra de Navegación y Selector de Tenant
+         Cabecera Institucional y Selector de Contexto Federativo
          ==================================================================== -->
-    <header class="scout-card" style="margin-bottom: 2rem; border-top: 6px solid var(--scout-primary);">
+    <header class="scout-card" style="margin-bottom: 2rem; border-top: 5px solid var(--scout-primary);">
         <div class="scout-card-body">
             <div class="scout-flex-between">
                 <div>
                     <div class="scout-flex-gap" style="margin-bottom: 0.5rem;">
-                        <span class="scout-badge scout-badge-info">⚜️ SCLM Design System v0.1</span>
-                        <span class="scout-badge scout-badge-neutral">WCAG 2.2 AA Compliance</span>
+                        <span class="scout-badge scout-badge-neutral">Normativa SCLM-DIR-DIS-01</span>
+                        <span class="scout-badge scout-badge-info">WCAG 2.2 Nivel AA</span>
                     </div>
                     <h1 class="scout-title-xl" style="margin-bottom: 0.25rem;">
-                        Manual y Muestrario de Diseño Visual
+                        Sistema de Diseño y Manual de Identidad Visual
                     </h1>
-                    <p class="scout-text-muted" style="margin: 0;">
-                        Visualización interactiva de tokens, componentes accesibles y personalización multitenant para <strong>@(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</strong>.
+                    <p class="scout-text-muted" style="margin: 0; max-width: 680px;">
+                        Especificación técnica de tokens, accesibilidad algorítmica y componentes de interfaz para la plataforma federativa y los grupos scouts integrados.
                     </p>
                 </div>
 
-                <!-- Pañoleta Oficial del Tenant Activo -->
+                <!-- Bloque de Pañoleta Oficial del Grupo Activo -->
                 <div style="text-align: center; background: #F8FAFC; padding: 1rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--scout-border-subtle);">
-                    <PanoletaSvg Config="ActivePanoleta" Width="90" Height="70" Title="Pañoleta del Tenant" />
-                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--scout-text-main); margin-top: 0.25rem;">
-                        @(Tenant.IsResolved ? Tenant.GroupName : "Lestonnac 330")
+                    <PanoletaSvg Config="ActivePanoleta" Width="84" Height="66" Title="Pañoleta Oficial del Tenant" />
+                    <div style="font-size: 0.8125rem; font-weight: 700; color: var(--scout-text-main); margin-top: 0.35rem;">
+                        @(Tenant.IsResolved ? Tenant.GroupName : "Grupo Scout Lestonnac 330")
                     </div>
                     <div style="font-size: 0.75rem; color: var(--scout-text-muted);">
-                        Grupo Nº @(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "330")
+                        Grupo Nº @(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "330") · SCLM
                     </div>
                 </div>
             </div>
 
             <hr style="border: 0; border-top: 1px solid var(--scout-border-subtle); margin: 1.5rem 0;" />
 
-            <!-- Selector dinámico de Tenant para comprobar adaptabilidad cromática -->
+            <!-- Selector de Contexto Organizativo (Tenant) -->
             <div class="scout-flex-between">
                 <div class="scout-flex-gap">
-                    <span style="font-weight: 600; font-size: 0.9rem;">🔄 Simular Grupo Scout:</span>
+                    <span style="font-weight: 600; font-size: 0.875rem; color: var(--scout-text-main);">Contexto de Grupo Federado:</span>
                     <a href="diseno?tenant=lestonnac" class="scout-btn scout-btn-sm @(Tenant.TenantSlug != "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                        <span>⚜️</span> Lestonnac 330 (Verde/Amarillo)
+                        Lestonnac 330 (Verde / Amarillo)
                     </a>
                     <a href="diseno?tenant=sanvicente" class="scout-btn scout-btn-sm @(Tenant.TenantSlug == "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                        <span>⚜️</span> San Vicente 412 (Azul/Rojo)
+                        San Vicente 412 (Azul / Rojo)
                     </a>
                 </div>
                 <div>
                     <a href="/" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        ← Volver a Portada
+                        Volver a Portada
                     </a>
                 </div>
             </div>
@@ -60,136 +60,136 @@
     </header>
 
     <!-- ====================================================================
-         2. Diagnóstico de Accesibilidad y Tokens del Tenant Activo
+         1. Identidad de Grupo y Verificación Algorítmica WCAG 2.2 AA
          ==================================================================== -->
     <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">1. Identidad Cromática del Grupo y Motor WCAG 2.2 AA</h2>
+        <h2 class="scout-title-lg">1. Identidad de Grupo y Verificación de Contraste (WCAG 2.2 AA)</h2>
         <p class="scout-text-body">
-            Cada grupo federado en SCLM proyecta sus propios colores de pañoleta y marca. El motor algorítmico calcula el ratio de luminancia en servidor para garantizar que ningún texto o control sea ilegible.
+            Cada grupo federado en SCLM proyecta su esquema cromático oficial. El motor en servidor evalúa la luminancia relativa y asegura que ninguna combinación infrinja el umbral mínimo de 4.5:1 para texto normal.
         </p>
 
         <div class="scout-grid-3">
-            <!-- Tarjeta Color Principal -->
-            <div class="scout-card" style="border-top: 5px solid @ActivePanoleta.BaseColorHex;">
+            <!-- Color Base -->
+            <div class="scout-card" style="border-top: 4px solid @ActivePanoleta.BaseColorHex;">
                 <div class="scout-card-body">
-                    <div style="font-weight: 700; margin-bottom: 0.25rem;">Color Principal (Base)</div>
+                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Color Principal (Base)</div>
                     <div class="scout-code">@ActivePanoleta.BaseColorHex</div>
                     <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BaseColorHex; border: 1px solid rgba(0,0,0,0.1);"></span>
+                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BaseColorHex; border: 1px solid rgba(0,0,0,0.12);"></span>
                         <div style="text-align: right;">
-                            <div style="font-size: 0.8rem; color: var(--scout-text-muted);">Texto Automático:</div>
-                            <strong style="color: @HeaderTextColor; background: @ActivePanoleta.BaseColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+                            <div style="font-size: 0.75rem; color: var(--scout-text-muted); text-transform: uppercase; font-weight: 600;">Texto Calculado</div>
+                            <strong style="color: @HeaderTextColor; background: @ActivePanoleta.BaseColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8125rem;">
                                 @HeaderTextColor
                             </strong>
                         </div>
                     </div>
                 </div>
                 <div class="scout-card-footer">
-                    <span style="font-size: 0.85rem;">Ratio Contraste: <strong>@ContrastRatio.ToString("F2"):1</strong></span>
+                    <span style="font-size: 0.8125rem;">Ratio: <strong>@ContrastRatio.ToString("F2"):1</strong></span>
                     <span class="scout-badge @(ContrastRatio >= 4.5 ? "scout-badge-success" : "scout-badge-danger")">
-                        @(ContrastRatio >= 4.5 ? "✓ WCAG AA" : "✕ Falla AA")
+                        @(ContrastRatio >= 4.5 ? "Conforme AA" : "No conforme")
                     </span>
                 </div>
             </div>
 
-            <!-- Tarjeta Color Ribete / Acento -->
-            <div class="scout-card" style="border-top: 5px solid @ActivePanoleta.BorderColorHex;">
+            <!-- Color Ribete -->
+            <div class="scout-card" style="border-top: 4px solid @ActivePanoleta.BorderColorHex;">
                 <div class="scout-card-body">
-                    <div style="font-weight: 700; margin-bottom: 0.25rem;">Ribete Oficial (Borde)</div>
+                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Ribete Perimetral (Borde)</div>
                     <div class="scout-code">@ActivePanoleta.BorderColorHex</div>
                     <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BorderColorHex; border: 1px solid rgba(0,0,0,0.1);"></span>
+                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BorderColorHex; border: 1px solid rgba(0,0,0,0.12);"></span>
                         <div style="text-align: right;">
-                            <div style="font-size: 0.8rem; color: var(--scout-text-muted);">Texto Automático:</div>
-                            <strong style="color: @BorderTextColor; background: @ActivePanoleta.BorderColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.85rem;">
+                            <div style="font-size: 0.75rem; color: var(--scout-text-muted); text-transform: uppercase; font-weight: 600;">Texto Calculado</div>
+                            <strong style="color: @BorderTextColor; background: @ActivePanoleta.BorderColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8125rem;">
                                 @BorderTextColor
                             </strong>
                         </div>
                     </div>
                 </div>
                 <div class="scout-card-footer">
-                    <span style="font-size: 0.85rem;">Ratio Contraste: <strong>@BorderContrastRatio.ToString("F2"):1</strong></span>
+                    <span style="font-size: 0.8125rem;">Ratio: <strong>@BorderContrastRatio.ToString("F2"):1</strong></span>
                     <span class="scout-badge @(BorderContrastRatio >= 4.5 ? "scout-badge-success" : "scout-badge-danger")">
-                        @(BorderContrastRatio >= 4.5 ? "✓ WCAG AA" : "✕ Falla AA")
+                        @(BorderContrastRatio >= 4.5 ? "Conforme AA" : "No conforme")
                     </span>
                 </div>
             </div>
 
-            <!-- Tarjeta Pañoleta y Cinta Central -->
-            <div class="scout-card" style="border-top: 5px solid #4A148C;">
+            <!-- Elemento Vectorial -->
+            <div class="scout-card" style="border-top: 4px solid #4A148C;">
                 <div class="scout-card-body">
-                    <div style="font-weight: 700; margin-bottom: 0.25rem;">Cinta Central y Heráldica</div>
+                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Cinta Central y Heráldica</div>
                     <div class="scout-code">@(ActivePanoleta.CentralStripeColorHex ?? "Sin cinta central")</div>
                     <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
-                        <PanoletaSvg Config="ActivePanoleta" Width="60" Height="48" />
-                        <div style="font-size: 0.85rem; color: var(--scout-text-muted);">
-                            Emblema: <strong>@(ActivePanoleta.HasEmblem ? "Flor de lis ⚜️" : "No aplica")</strong>
+                        <PanoletaSvg Config="ActivePanoleta" Width="54" Height="44" />
+                        <div style="font-size: 0.8125rem; color: var(--scout-text-muted);">
+                            Emblema: <strong>@(ActivePanoleta.HasEmblem ? "Flor de lis oficial" : "Sin emblema")</strong>
                         </div>
                     </div>
                 </div>
                 <div class="scout-card-footer">
-                    <span style="font-size: 0.85rem; color: var(--scout-text-muted);">Componente:</span>
-                    <span class="scout-badge scout-badge-info">SVG Paramétrico</span>
+                    <span style="font-size: 0.8125rem; color: var(--scout-text-muted);">Renderizado:</span>
+                    <span class="scout-badge scout-badge-neutral">SVG Paramétrico</span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ====================================================================
-         3. Código Cromático de Secciones Educativas
+         2. Código Cromático Oficial de Ramas Pedagógicas
          ==================================================================== -->
     <section style="margin-bottom: 2.5rem;">
         <h2 class="scout-title-lg">2. Ramas Pedagógicas (Código Cromático SCLM)</h2>
         <p class="scout-text-body">
-            Transversal a todos los grupos federados, cada rama scout dispone de su identidad visual y de edad para facilitar el reconocimiento instantáneo por parte de familias y educandos.
+            Valores cromáticos normalizados y contrastados para las cinco etapas educativas del escultismo, comunes a todos los grupos de la federación.
         </p>
 
         <div class="scout-grid-3">
             <div class="scout-card">
                 <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-castores">🐿️ Colonia de Castores</span>
-                    <p style="font-size: 0.9rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600;">6 a 8 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">Lema: <em>Compartir</em>. Naranja y turquesa del río.</p>
+                    <span class="scout-branch-badge scout-branch-castores">Colonia de Castores</span>
+                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">6 a 8 años</p>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Compartir</em>. Gama cálida y celeste de ribera.</p>
                 </div>
             </div>
 
             <div class="scout-card">
                 <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-manada">🐺 Manada de Lobatos</span>
-                    <p style="font-size: 0.9rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600;">8 a 11 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">Lema: <em>Haremos lo mejor</em>. Amarillo y marrón selva.</p>
+                    <span class="scout-branch-badge scout-branch-manada">Manada de Lobatos</span>
+                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">8 a 11 años</p>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Haremos lo mejor</em>. Amarillo y pardo selva.</p>
                 </div>
             </div>
 
             <div class="scout-card">
                 <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-tropa">⛺ Sección Scout / Tropa</span>
-                    <p style="font-size: 0.9rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600;">11 a 14 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">Lema: <em>Siempre listos</em>. Azul cielo y verde bosque.</p>
+                    <span class="scout-branch-badge scout-branch-tropa">Sección Scout / Tropa</span>
+                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">11 a 14 años</p>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Siempre listos</em>. Azul cielo y verde forestal.</p>
                 </div>
             </div>
 
             <div class="scout-card">
                 <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-escultas">🧭 Unidad Esculta / Pioneros</span>
-                    <p style="font-size: 0.9rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600;">14 a 17 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">Lema: <em>Unidad</em>. Rojo valentía y blanco.</p>
+                    <span class="scout-branch-badge scout-branch-escultas">Unidad Esculta / Pioneros</span>
+                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">14 a 17 años</p>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Unidad</em>. Rojo valentía y neutro blanco.</p>
                 </div>
             </div>
 
             <div class="scout-card">
                 <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-clan">🥾 Clan Rover / Rutas</span>
-                    <p style="font-size: 0.9rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600;">17 a 21 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">Lema: <em>Servir</em>. Verde esperanza y burdeos.</p>
+                    <span class="scout-branch-badge scout-branch-clan">Clan Rover / Rutas</span>
+                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">17 a 21 años</p>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Servir</em>. Verde esperanza y burdeos de camino.</p>
                 </div>
             </div>
 
-            <div class="scout-card" style="background: #F1F5F9; border-style: dashed;">
+            <div class="scout-card" style="background: #F8FAFC; border-style: dashed;">
                 <div class="scout-card-body" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
-                    <div style="font-weight: 700; color: #475569; margin-bottom: 0.25rem;">⚜️ Kraal de Scouters</div>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.85rem;">
-                        Educadores y responsables de grupo. Acceso a paneles de revisión, firmas y expedientes.
+                    <div style="font-weight: 700; font-size: 0.875rem; color: #334155; margin-bottom: 0.25rem;">Kraal de Scouters</div>
+                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">
+                        Educadores scouts responsables. Acceso autorizado a expedientes, fichas médicas y actas.
                     </p>
                 </div>
             </div>
@@ -197,66 +197,70 @@
     </section>
 
     <!-- ====================================================================
-         4. Botones Táctiles Móviles y Estados Semánticos
+         3. Botones y Objetivos Táctiles Móviles (>= 44x44px)
          ==================================================================== -->
     <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">3. Botones Móviles Accesibles (Área $\ge 44 \times 44\text{px}$) e Insignias</h2>
+        <h2 class="scout-title-lg">3. Controles Interactivos y Estados Semánticos</h2>
         <p class="scout-text-body">
-            Diseñados para pulsar con pulgar en pantallas pequeñas sin errores ni falsas pulsaciones involuntarias.
+            Dimensionados para interacción táctil en movilidad (norma WCAG 2.5.8, objetivo mínimo de $44 \times 44\text{ px}$). Toda indicación de estado incluye texto descriptivo explícito.
         </p>
 
         <div class="scout-card">
             <div class="scout-card-body">
-                <div style="font-weight: 600; margin-bottom: 0.75rem;">Jerarquía de Botones de Acción:</div>
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--scout-text-main);">
+                    Variantes de Botón:
+                </div>
                 <div class="scout-flex-gap" style="margin-bottom: 1.5rem;">
                     <button type="button" class="scout-btn scout-btn-primary">
-                        <span>📝</span> Presentar Nueva Autorización
+                        Firmar Autorización
                     </button>
                     <button type="button" class="scout-btn scout-btn-secondary">
-                        <span>📄</span> Descargar Modelo Vigente
+                        Descargar Modelo PDF
                     </button>
-                    <button type="button" class="scout-btn scout-btn-accent">
-                        <span>🛒</span> Solicitar Uniformidad
+                    <button type="button" class="scout-btn scout-btn-outline-primary">
+                        Solicitar Pedido
                     </button>
                     <button type="button" class="scout-btn scout-btn-warning">
-                        <span>✏️</span> Corregir Expediente
+                        Subsanar Expediente
                     </button>
                     <button type="button" class="scout-btn scout-btn-danger">
-                        <span>✕</span> Cancelar Trámite
+                        Anular Solicitud
                     </button>
                     <button type="button" class="scout-btn scout-btn-primary" disabled>
-                        <span>🔒</span> Plazo Cerrado
+                        Plazo Cerrado
                     </button>
                 </div>
 
-                <div style="font-weight: 600; margin-bottom: 0.75rem;">Insignias de Estado Semánticas (Con Icono para Daltonismo):</div>
+                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--scout-text-main);">
+                    Insignias de Estado Semánticas (Cumplimiento de Independencia Cromática):
+                </div>
                 <div class="scout-flex-gap">
-                    <span class="scout-badge scout-badge-success">✓ Confirmado por Tesorería</span>
-                    <span class="scout-badge scout-badge-warning">⏳ Pendiente de Conciliación</span>
-                    <span class="scout-badge scout-badge-danger">⚠️ Requiere Subsanación</span>
-                    <span class="scout-badge scout-badge-info">ℹ️ En Revisión por Kraal</span>
-                    <span class="scout-badge scout-badge-neutral">🔒 Archivado / Cerrado</span>
+                    <span class="scout-badge scout-badge-success">[✓ Confirmado por Tesorería]</span>
+                    <span class="scout-badge scout-badge-warning">[⏳ Pendiente de Conciliación]</span>
+                    <span class="scout-badge scout-badge-danger">[! Requiere Subsanación]</span>
+                    <span class="scout-badge scout-badge-info">[i En Revisión de Kraal]</span>
+                    <span class="scout-badge scout-badge-neutral">[Cerrado / Archivado]</span>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ====================================================================
-         5. Patrón de UX: Tarjeta de Participante (Área Familiar)
+         4. Patrón Familiar: Expediente y Trámites del Educando
          ==================================================================== -->
     <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">4. Patrón Familiar: Tarjeta de Educando y Trámites Vivos</h2>
+        <h2 class="scout-title-lg">4. Patrón de Expediente Familiar (Zona Privada)</h2>
         <p class="scout-text-body">
-            La vista principal de las familias agrupa las actividades pendientes por hijo, evitando mezclar expedientes o confundir a los padres cuando tienen varios niños en distintas secciones.
+            La vista para las familias estructura los trámites por participante, garantizando que expedientes de distintos educandos no se mezclen ni confundan sus estados documentales o bancarios.
         </p>
 
         <div class="scout-grid-2">
-            <!-- Participante 1: Lucas (Manada) -->
+            <!-- Educando 1 -->
             <div class="scout-card">
                 <div class="scout-card-header">
                     <div>
-                        <span class="scout-branch-badge scout-branch-manada" style="margin-bottom: 0.25rem;">🐺 Manada de Lobatos</span>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--scout-text-main);">
+                        <span class="scout-branch-badge scout-branch-manada" style="margin-bottom: 0.25rem;">Manada de Lobatos</span>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--scout-text-main);">
                             Lucas Martín García
                         </div>
                     </div>
@@ -265,60 +269,60 @@
                 <div class="scout-card-body">
                     <div style="background: #F8FAFC; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
                         <div class="scout-flex-between" style="margin-bottom: 0.5rem;">
-                            <strong style="color: var(--scout-text-main); font-size: 0.95rem;">🏕️ Acampada de San Jorge 2027</strong>
-                            <span class="scout-badge scout-badge-danger" style="font-size: 0.75rem;">Cierra en 3 días</span>
+                            <strong style="color: var(--scout-text-main); font-size: 0.9375rem;">Acampada de San Jorge 2027</strong>
+                            <span class="scout-badge scout-badge-danger" style="font-size: 0.6875rem;">Cierre en 3 días</span>
                         </div>
-                        <p class="scout-text-muted" style="font-size: 0.85rem; margin-bottom: 0.75rem;">
-                            Lugar: Albergue Juvenil Riópar · Coste: 45,00 €
+                        <p class="scout-text-muted" style="font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                            Ubicación: Riópar (Albacete) · Cuota de actividad: 45,00 €
                         </p>
-                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem;">
-                            <div>📄 Autorización firmada: <strong class="scout-badge scout-badge-success" style="font-size: 0.7rem;">✓ Versión 1 entregada</strong></div>
-                            <div>💳 Justificante bancario: <strong class="scout-badge scout-badge-warning" style="font-size: 0.7rem;">⏳ Adjunto (en revisión)</strong></div>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8125rem;">
+                            <div>Autorización firmada: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Entregada v1</strong></div>
+                            <div>Justificante de ingreso: <strong class="scout-badge scout-badge-warning" style="font-size: 0.6875rem;">Adjunto (en revisión)</strong></div>
                         </div>
                     </div>
                 </div>
                 <div class="scout-card-footer">
                     <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Ver Ficha Médica
+                        Ficha Médica
                     </button>
                     <button type="button" class="scout-btn scout-btn-sm scout-btn-primary">
-                        Detalles del Trámite
+                        Gestionar Trámite
                     </button>
                 </div>
             </div>
 
-            <!-- Participante 2: Lucía (Sección Scout) -->
+            <!-- Educando 2 -->
             <div class="scout-card">
                 <div class="scout-card-header">
                     <div>
-                        <span class="scout-branch-badge scout-branch-tropa" style="margin-bottom: 0.25rem;">⛺ Sección Scout</span>
-                        <div style="font-size: 1.15rem; font-weight: 700; color: var(--scout-text-main);">
+                        <span class="scout-branch-badge scout-branch-tropa" style="margin-bottom: 0.25rem;">Sección Scout / Tropa</span>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--scout-text-main);">
                             Lucía Martín García
                         </div>
                     </div>
-                    <span class="scout-badge scout-badge-success">Todo al día</span>
+                    <span class="scout-badge scout-badge-success">Expediente al día</span>
                 </div>
                 <div class="scout-card-body">
                     <div style="background: #F8FAFC; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
                         <div class="scout-flex-between" style="margin-bottom: 0.5rem;">
-                            <strong style="color: var(--scout-text-main); font-size: 0.95rem;">🌲 Campamento de Pascua</strong>
-                            <span class="scout-badge scout-badge-success" style="font-size: 0.75rem;">Plaza Confirmada</span>
+                            <strong style="color: var(--scout-text-main); font-size: 0.9375rem;">Campamento de Pascua 2027</strong>
+                            <span class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Plaza Confirmada</span>
                         </div>
-                        <p class="scout-text-muted" style="font-size: 0.85rem; margin-bottom: 0.75rem;">
-                            Lugar: Sierra de Alcaraz · Coste: 60,00 €
+                        <p class="scout-text-muted" style="font-size: 0.8125rem; margin-bottom: 0.75rem;">
+                            Ubicación: Sierra de Alcaraz · Cuota de actividad: 60,00 €
                         </p>
-                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem;">
-                            <div>📄 Autorización: <strong class="scout-badge scout-badge-success" style="font-size: 0.7rem;">✓ Verificada por Scouter</strong></div>
-                            <div>💳 Pago de actividad: <strong class="scout-badge scout-badge-success" style="font-size: 0.7rem;">✓ Conciliado</strong></div>
+                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8125rem;">
+                            <div>Autorización firmada: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Verificada por Scouter</strong></div>
+                            <div>Abono bancario: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Conciliado</strong></div>
                         </div>
                     </div>
                 </div>
                 <div class="scout-card-footer">
                     <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Ver Ficha Médica
+                        Ficha Médica
                     </button>
                     <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Descargar Justificante
+                        Descargar Comprobante
                     </button>
                 </div>
             </div>
@@ -326,33 +330,30 @@
     </section>
 
     <!-- ====================================================================
-         6. Formularios Accesibles y Alertas del Sistema
+         5. Formularios Accesibles y Alertas del Sistema
          ==================================================================== -->
     <section>
-        <h2 class="scout-title-lg">5. Formularios Accesibles y Mensajes de Feedback</h2>
+        <h2 class="scout-title-lg">5. Formularios y Retroalimentación del Sistema</h2>
         <p class="scout-text-body">
-            Entradas con etiquetas visibles persistentes, foco resaltado y mensajes de alerta constructivos.
+            Entradas estructuradas con etiquetas fijas, foco perimetral de contraste elevado y mensajes descriptivos de acción correctora.
         </p>
 
-        <!-- Banners de Alerta -->
+        <!-- Banners de Alerta Formales -->
         <div class="scout-alert scout-alert-success">
-            <span style="font-size: 1.25rem;">✓</span>
             <div>
-                <strong>Inscripción tramitada correctamente:</strong> Hemos registrado tu autorización para la actividad. Recibirás confirmación cuando el Kraal revise la documentación.
+                <strong>Inscripción registrada:</strong> La autorización ha sido recibida correctamente. El estado se actualizará cuando el equipo de scouters verifique la documentación.
             </div>
         </div>
 
         <div class="scout-alert scout-alert-warning">
-            <span style="font-size: 1.25rem;">⚠️</span>
             <div>
-                <strong>Plazo de inscripción próximo a expirar:</strong> Quedan menos de 72 horas para adjuntar el justificante bancario de la Acampada de San Jorge.
+                <strong>Plazo próximo de vencimiento:</strong> Restan menos de 72 horas para adjuntar el comprobante bancario para la Acampada de San Jorge.
             </div>
         </div>
 
         <div class="scout-alert scout-alert-danger">
-            <span style="font-size: 1.25rem;">✕</span>
             <div>
-                <strong>Documento obsoleto detectado:</strong> El modelo de autorización médica fue actualizado el 10 de noviembre. Descarga la nueva versión para poder completar la entrega.
+                <strong>Versión de modelo no vigente:</strong> El formulario entregado corresponde a una versión obsoleta de la ficha médica. Descarga el modelo vigente para formalizar la entrega.
             </div>
         </div>
 
@@ -361,15 +362,15 @@
             <div class="scout-card-body">
                 <div class="scout-grid-2">
                     <div class="scout-form-group">
-                        <label class="scout-label" for="txtNombre">Nombre del Participante (Educando):</label>
+                        <label class="scout-label" for="txtNombre">Nombre completo del educando:</label>
                         <input id="txtNombre" class="scout-input" type="text" value="Lucas Martín García" />
-                        <span class="scout-helper-text">Tal como figura en la tarjeta sanitaria o DNI.</span>
+                        <span class="scout-helper-text">Tal como figura en la tarjeta de identificación sanitaria o DNI.</span>
                     </div>
 
                     <div class="scout-form-group">
-                        <label class="scout-label" for="txtDni">DNI / NIE del Titular Responsable (con error simulado):</label>
+                        <label class="scout-label" for="txtDni">DNI / NIE de la persona tutora legal (con error simulado):</label>
                         <input id="txtDni" class="scout-input scout-input-error" type="text" value="12345678" aria-invalid="true" aria-describedby="dniError" />
-                        <span id="dniError" class="scout-error-message">⚠️ La letra del DNI no coincide con el dígito de control.</span>
+                        <span id="dniError" class="scout-error-message">El formato introducido no incluye el dígito de control reglamentario.</span>
                     </div>
                 </div>
             </div>

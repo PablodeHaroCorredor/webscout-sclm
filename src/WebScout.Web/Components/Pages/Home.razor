@@ -2,90 +2,90 @@
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
 
-<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Scout</PageTitle>
+<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Federativa</PageTitle>
 
 <div class="scout-container" style="max-width: 960px; margin: 2rem auto; font-family: var(--font-stack);">
     @* Cabecera Scout con los colores del grupo activo *@
-    <div style="background: @(ActivePanoleta.BaseColorHex); color: @HeaderTextColor; padding: 2.5rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border-bottom: 6px solid @(ActivePanoleta.BorderColorHex);">
+    <div style="background: @(ActivePanoleta.BaseColorHex); color: @HeaderTextColor; padding: 2.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border-bottom: 5px solid @(ActivePanoleta.BorderColorHex);">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
             <div>
-                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                    ⚜️ SCLM Multitenant Platform
+                <span style="display: inline-block; background: rgba(255,255,255,0.2); padding: 0.2rem 0.65rem; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                    Scouts de Castilla-La Mancha · SCLM
                 </span>
-                <h1 style="margin: 0.5rem 0 0.25rem 0; font-size: 2.2rem; font-weight: 800;">
+                <h1 style="margin: 0.4rem 0 0.2rem 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em;">
                     @(Tenant.IsResolved ? Tenant.GroupName : "Portal Asociativo SCLM")
                 </h1>
-                <p style="margin: 0; opacity: 0.9; font-size: 1.05rem;">
-                    Subdominio activo: <code style="background: rgba(0,0,0,0.25); color: #fff; padding: 0.2rem 0.4rem; border-radius: var(--radius-sm);">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
-                    · Grupo Nº: <strong>@(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "-")</strong>
+                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">
+                    Subdominio activo: <code style="background: rgba(0,0,0,0.25); color: #fff; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); font-family: var(--font-mono);">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
+                    · Censo Oficial: <strong>@(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "-")</strong>
                 </p>
             </div>
             
             @* Miniatura de la pañoleta scout paramétrica *@
-            <div style="text-align: center; background: rgba(255,255,255,0.18); padding: 1rem 1.25rem; border-radius: var(--radius-md); border: 2px solid @(ActivePanoleta.BorderColorHex);">
-                <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: 0.5px;">Pañoleta Oficial</div>
-                <PanoletaSvg Config="ActivePanoleta" Width="85" Height="68" />
+            <div style="text-align: center; background: rgba(255,255,255,0.15); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.3);">
+                <div style="font-size: 0.6875rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.35rem; letter-spacing: 0.04em; opacity: 0.95;">Pañoleta Oficial</div>
+                <PanoletaSvg Config="ActivePanoleta" Width="80" Height="64" />
             </div>
         </div>
     </div>
 
     @* Acceso directo al Muestrario de Diseño & Identidad Corporativa *@
-    <div class="scout-card" style="margin-top: 1.75rem; border-left: 6px solid #4A148C; background: linear-gradient(to right, #FFFFFF, #FAF5FF);">
+    <div class="scout-card" style="margin-top: 1.5rem; border-left: 5px solid var(--sclm-purple-base);">
         <div class="scout-card-body scout-flex-between">
             <div>
-                <span class="scout-badge scout-badge-info" style="margin-bottom: 0.4rem;">🎨 Muestrario Interactivo</span>
-                <h3 class="scout-title-md" style="margin: 0.25rem 0;">Manual de Identidad y Sistema de Diseño (UI Kit)</h3>
-                <p class="scout-text-muted" style="margin: 0; font-size: 0.9rem;">
-                    Explora los tokens CSS, la escala tipográfica, las 5 ramas pedagógicas scouts y los componentes táctiles accesibles.
+                <span class="scout-badge scout-badge-neutral" style="margin-bottom: 0.35rem;">Normativa SCLM-DIR-DIS-01</span>
+                <h3 class="scout-title-md" style="margin: 0.2rem 0;">Manual de Identidad y Sistema de Diseño (UI Kit)</h3>
+                <p class="scout-text-muted" style="margin: 0; font-size: 0.875rem;">
+                    Consulta las directrices normativas, los tokens de diseño por grupo, el código cromático de ramas y los componentes de interfaz accesibles.
                 </p>
             </div>
-            <a href="diseno?tenant=@Tenant.TenantSlug" class="scout-btn scout-btn-primary" style="background: #4A148C; border-color: #38006B;">
-                <span>✨</span> Ver Guía de Estilos y UI Kit
+            <a href="diseno?tenant=@Tenant.TenantSlug" class="scout-btn scout-btn-primary" style="background: var(--sclm-purple-base); border-color: var(--sclm-purple-dark);">
+                Ver Sistema de Diseño
             </a>
         </div>
     </div>
 
     @* Selector de Grupos para probar en local *@
-    <div style="margin-top: 1.75rem; background: #ffffff; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-sm);">
-        <h3 style="margin-top: 0; font-size: 1.15rem; color: #1e293b;">🔄 Selector de Tenant (Simular Subdominios en Local)</h3>
-        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">
-            El middleware detecta automáticamente el subdominio o el parámetro de consulta. Haz clic en cualquiera de los dos grupos de prueba para verificar cómo cambia el contexto, el aislamiento y la identidad visual:
+    <div style="margin-top: 1.5rem; background: #ffffff; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-xs);">
+        <h3 style="margin-top: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b;">Simulación de Contexto Organizativo (Tenant)</h3>
+        <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+            El middleware de resolución detecta automáticamente el subdominio de la petición o el parámetro de consulta. Selecciona un grupo para verificar el aislamiento y la reactividad cromática:
         </p>
-        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <a href="?tenant=lestonnac" class="scout-btn @(Tenant.TenantSlug != "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                <span>⚜️</span> Lestonnac 330 (?tenant=lestonnac)
+        <div style="display: flex; gap: 0.85rem; flex-wrap: wrap;">
+            <a href="?tenant=lestonnac" class="scout-btn scout-btn-sm @(Tenant.TenantSlug != "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
+                Lestonnac 330 (?tenant=lestonnac)
             </a>
-            <a href="?tenant=sanvicente" class="scout-btn @(Tenant.TenantSlug == "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                <span>⚜️</span> San Vicente 412 (?tenant=sanvicente)
+            <a href="?tenant=sanvicente" class="scout-btn scout-btn-sm @(Tenant.TenantSlug == "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
+                San Vicente 412 (?tenant=sanvicente)
             </a>
         </div>
     </div>
 
     @* Estado de la Arquitectura y Aislamiento *@
-    <div style="margin-top: 1.75rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+    <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
         <div class="scout-card">
             <div class="scout-card-body">
-                <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">🛡️ Aislamiento EF Core 10</div>
-                <p style="color: #475569; font-size: 0.88rem; margin: 0;">
-                    Global Query Filter activo: solo se consultan registros con <code>OrganizationId = @Tenant.CurrentTenantId</code>.
+                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Aislamiento Multitenant EF Core 10</div>
+                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
+                    Filtro global activo en consultas relacionales: <code>OrganizationId = @Tenant.CurrentTenantId</code>.
                 </p>
             </div>
         </div>
 
         <div class="scout-card">
             <div class="scout-card-body">
-                <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">👁️ Accesibilidad WCAG 2.2 AA</div>
-                <p style="color: #475569; font-size: 0.88rem; margin: 0;">
-                    Ratio de contraste verificado: <strong>@ContrastRatio.ToString("F2"):1</strong> (requisito mínimo: 4.5:1).
+                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Accesibilidad WCAG 2.2 Nivel AA</div>
+                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
+                    Ratio de contraste sobre color base: <strong>@ContrastRatio.ToString("F2"):1</strong> (requisito normativo: $\ge 4.5:1$).
                 </p>
             </div>
         </div>
 
         <div class="scout-card">
             <div class="scout-card-body">
-                <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">🍕 Vertical Slice Architecture</div>
-                <p style="color: #475569; font-size: 0.88rem; margin: 0;">
-                    Monolito modular con slices autocontenidos en <code>Features/</code> sin capas artificiales.
+                <div style="font-weight: 700; font-size: 0.9375rem; color: #0f172a; margin-bottom: 0.4rem;">Vertical Slice Architecture</div>
+                <p style="color: #475569; font-size: 0.8125rem; margin: 0; line-height: 1.5;">
+                    Monolito modular con slices funcionales autocontenidos en <code>Features/</code> sin acoplamiento artificial.
                 </p>
             </div>
         </div>
