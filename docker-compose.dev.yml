@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: webscout-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: webscout_dev
+      POSTGRES_USER: scout_admin
+      POSTGRES_PASSWORD: scout_dev_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scout_admin -d webscout_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: webscout-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    environment:
+      MP_MAX_MESSAGES: 1000
+
+  minio:
+    image: minio/minio:latest
+    container_name: webscout-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: scout_minio_admin
+      MINIO_ROOT_PASSWORD: scout_minio_secret_key
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # MinIO Console
+    volumes:
+      - minio-data:/data
+
+volumes:
+  postgres-data:
+  minio-data:

@@ -1,0 +1,108 @@
+{
+  "root": "C:\\backUp\\gts.erp",
+  "date": "2026-11-06",
+  "head_context": "46ebd8dc8aca67ab80d6e26cc8132b28e0c407cd",
+  "scope": "Huellas de archivos seleccionados; no certifica estado limpio ni auditoría integral.",
+  "files": [
+    {
+      "path": "docs/README.md",
+      "bytes": 7304,
+      "sha256": "1828effeec8f60eb529d72db3cbd88e7815ea6cff13f1e62308030e8900813a2"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 19741,
+      "sha256": "71fc1cf2fe58e2c30d4ef61b007c490039fb2519685119b2fbe0e33fc70fa5cc"
+    },
+    {
+      "path": "docs/estado-proyecto.md",
+      "bytes": 131058,
+      "sha256": "2dfae7f0a3b0ce92f2a3e70babba164c2da960379d8c9fbb4792b4c1ab9e73ea"
+    },
+    {
+      "path": "docs/glosario.md",
+      "bytes": 11310,
+      "sha256": "cc0968740c3a109aed0f0932667eeee272c2a6ed2bb072b76ebcfa986128616b"
+    },
+    {
+      "path": "docs/architecture/clean-architecture-modular.md",
+      "bytes": 30102,
+      "sha256": "c3af15f5f3f3510f8e5f29e30afa7b0e9c2fd0efa4100fb3d81f6706eb055a8e"
+    },
+    {
+      "path": "docs/architecture/mapa-funcional-erp.md",
+      "bytes": 5418,
+      "sha256": "6d722b8316b6d175c03bd89eed3c388303d9f136494a36a393a570b60b08b2ac"
+    },
+    {
+      "path": "docs/architecture/politica-modelo-organizativo.md",
+      "bytes": 9266,
+      "sha256": "2cd5c251a4a23b8f2c952bc67859f26a5b91b122ea03ce3fe561b03008494563"
+    },
+    {
+      "path": "docs/architecture/politica-seguridad-roles-empresa.md",
+      "bytes": 10544,
+      "sha256": "2f4e844421887ac1ccfb9085de6749bcc3d3654d04b314bdbd12d526585fd9ed"
+    },
+    {
+      "path": "docs/architecture/politica-ciclo-vida-entidades.md",
+      "bytes": 9880,
+      "sha256": "b25fd3ddf60c6b171880327233e253c28c9cc4081adf68f231beeaf24fe6b858"
+    },
+    {
+      "path": "docs/architecture/politica-auditoria-funcional.md",
+      "bytes": 11083,
+      "sha256": "f22333406766de0d345e9f744e1bfa3cc06a82b1aa687e43aa6da088b4badc74"
+    },
+    {
+      "path": "docs/architecture/migraciones-ef-core-host-tenants.md",
+      "bytes": 7772,
+      "sha256": "6d58aed6ff8c491be4dd36e756802185c5695e1fc03b6848c634e47ee3fea8cb"
+    },
+    {
+      "path": "docs/architecture/plan-migracion-strangler.md",
+      "bytes": 11272,
+      "sha256": "cd7a743bfb6dfcf668ea0552decd407c53c7e21b83e3c0ccfd82b2a6443a2193"
+    },
+    {
+      "path": "docs/architecture/validation-ux-xaf-blazor.md",
+      "bytes": 16313,
+      "sha256": "58aae1ddb18b6e930c5d649c75f8593c7e3a3aaf0d5ac6d8101d136b49615de8"
+    },
+    {
+      "path": "docs/architecture/pwa-y-acceso-recordado.md",
+      "bytes": 17808,
+      "sha256": "8fdcbfb2771dba65417d617815541afae8bcf432ca059a6ade4fe14317d6e3ab"
+    },
+    {
+      "path": "docs/multitenant/esquema-multitenant-aplicacion.md",
+      "bytes": 11446,
+      "sha256": "dafce0b9792ce5b363b7136a25ee4cd1cd97170dfce4306a8f3b3d31cb771bb8"
+    },
+    {
+      "path": "docs/requisitos/marco-normativo-y-privacidad.md",
+      "bytes": 8373,
+      "sha256": "07ec7fd3d8d437840136e6051f8b52e119775b118cf81bbc8e9b17874eac5aa4"
+    },
+    {
+      "path": "docs/desarrollo/onboarding-desarrolladores.md",
+      "bytes": 23261,
+      "sha256": "22337f82fab64a1a23f4af6bccf2e0a1c65abdcb7cbac8b0236eeccae1d9c983"
+    },
+    {
+      "path": "docs/deployment/guia-despliegue.md",
+      "bytes": 18864,
+      "sha256": "73eb9b934b60c62bfada2ea7a86f9cccd3b7247bef433381131a601a78af2456"
+    },
+    {
+      "path": "docs/testing/checklist-piloto-control-jornada.md",
+      "bytes": 10289,
+      "sha256": "a3e077b8e1cd5e164f034b3a48033289b587cd3b05f009e887b586b46c1d3b03"
+    },
+    {
+      "path": "docs/testing/guion-pruebas-visuales-alta-empleados.md",
+      "bytes": 17906,
+      "sha256": "4155f506d3a70a7f3219340c2a673c9cab2f7d2909a358b303daf1a08125288e"
+    }
+  ]
+}

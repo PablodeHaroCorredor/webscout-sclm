@@ -1,0 +1,59 @@
+## .NET / C# / Build Artifacts
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svclog
+*.sublime-project
+*.sublime-workspace
+
+## Test Results and Code Coverage
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.visualstate
+TestResults/
+coverage*.json
+coverage*.cobertura.xml
+*.coverage
+*.coveragexml
+
+## Visual Studio & VS Code & JetBrains
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.DotSettings.user
+
+## Environment, Secrets & Local Overrides
+.env
+.env.local
+.env.*.local
+appsettings.*.local.json
+appsettings.Development.local.json
+secrets.json
+
+## Docker & Local Dev Mounts
+docker-data/
+postgres-data/
+minio-data/
+mailpit-data/
+
+## OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+
+## Antigravity / Gemini scratch artifacts
+*.tmp
+*.bak

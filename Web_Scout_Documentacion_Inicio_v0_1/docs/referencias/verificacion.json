@@ -1,0 +1,126 @@
+{
+  "date": "2026-11-06",
+  "scope": "Verificación documental; sin compilación ni pruebas de aplicación",
+  "checks": [
+    {
+      "check": "Número de documentos Markdown",
+      "passed": true,
+      "detail": 34
+    },
+    {
+      "check": "Rutas de autoría únicas",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Enlaces locales válidos",
+      "passed": true,
+      "detail": {
+        "count": 226,
+        "broken": []
+      }
+    },
+    {
+      "check": "Marcadores y bloques de código",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "Tablas Markdown coherentes",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "UTF-8 sin caracteres de sustitución",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "Documentos con contenido",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "Identificadores dentro de catálogo",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "71 requisitos únicos",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Texto de RF y aceptación conservados",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "Prioridades 40 P0 y 31 P1",
+      "passed": true,
+      "detail": {
+        "P0": 40,
+        "P1": 31
+      }
+    },
+    {
+      "check": "12 requisitos no funcionales",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Backlog cubre RF01 a RF71",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "check": "19 PA conservados y checklist pendiente",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Índice registra cada documento temático",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Base original conservada",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Decisiones DC y ADR completas",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Guía paginada y sin páginas vacías",
+      "passed": true,
+      "detail": 6
+    },
+    {
+      "check": "Guía Word coincide con copia incluida",
+      "passed": true,
+      "detail": null
+    },
+    {
+      "check": "Guía visual revisada sobre archivo final",
+      "passed": true,
+      "detail": null
+    }
+  ],
+  "failures": [],
+  "markdown_documents": 34,
+  "words_approximate": 27523,
+  "guide_pages": 6,
+  "guide_sha256": "c17233a3b7f56e12972bb54fdc724480ac0bb164ea08b71038bcef3787c2a32b",
+  "a11y": {
+    "file": "outputs\\Guia_Inicio_Proyecto_Web_Scout_v0_1.docx",
+    "counts": {
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "findings": []
+  }
+}

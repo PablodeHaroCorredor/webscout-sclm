@@ -1,0 +1,259 @@
+{
+  "package": "Web Scout Lestonnac 330",
+  "version": "0.1",
+  "date": "2026-11-06",
+  "status": "Propuesta documental; aplicación no creada",
+  "markdown_documents": 34,
+  "requirements": 71,
+  "priorities": {
+    "P0": 40,
+    "P1": 31
+  },
+  "nonfunctional_requirements": 12,
+  "acceptance_scenarios": 19,
+  "baseline_sha256": "90da2fd32df44a97bb621e8fa38eb93419dfa5638a3a3f92fa4205926170dc5b",
+  "plugin_sha256": "3c30a96b61ab29aaa2f6e7056f6bc6f9d91313a1d06c0cc467ff22fb1f74c792",
+  "documents": [
+    {
+      "path": "README.md",
+      "title": "Inicio del proyecto Web Scout Lestonnac 330",
+      "purpose": "Entrada al paquete y orden recomendado para empezar.",
+      "owner": "Promotor y Coordinación",
+      "base": "Documento base versión 0.1"
+    },
+    {
+      "path": "AGENTS.md",
+      "title": "Guía de trabajo del proyecto Web Scout",
+      "purpose": "Reglas para agentes y personas que incorporen el paquete a un repositorio.",
+      "owner": "Responsable técnico",
+      "base": "Documento base versión 0.1"
+    },
+    {
+      "path": "docs/estado-proyecto.md",
+      "title": "Estado del proyecto Web Scout",
+      "purpose": "Estado inicial, pendientes y evidencias sin confundir diseño e implementación.",
+      "owner": "Responsable de producto",
+      "base": "Documento base versión 0.1"
+    },
+    {
+      "path": "docs/producto/vision-alcance-y-mvp.md",
+      "title": "Visión alcance y piloto de la web scout",
+      "purpose": "Objetivo, actores, alcance inicial y medida de éxito.",
+      "owner": "Promotor y Coordinación",
+      "base": "Base secciones 1, 3, 12 y 13"
+    },
+    {
+      "path": "docs/architecture/mapa-funcional-scout.md",
+      "title": "Mapa funcional de la web scout",
+      "purpose": "Fronteras de módulos, capacidades y propiedad funcional.",
+      "owner": "Responsable técnico",
+      "base": "Base secciones 4, 7 y 8"
+    },
+    {
+      "path": "docs/architecture/arquitectura-modular.md",
+      "title": "Arquitectura modular de la web scout",
+      "purpose": "Capas, dependencias, transacciones y composición del monolito.",
+      "owner": "Responsable técnico",
+      "base": "Base sección 7 y ADR iniciales"
+    },
+    {
+      "path": "docs/architecture/modelo-organizativo.md",
+      "title": "Modelo organizativo y de participantes",
+      "purpose": "Diferencia entre grupo, sección, cuenta y participante declarado.",
+      "owner": "Responsable técnico",
+      "base": "Base secciones 3 y 8"
+    },
+    {
+      "path": "docs/architecture/politica-seguridad-y-permisos.md",
+      "title": "Política de seguridad y permisos por recurso",
+      "purpose": "Autorización efectiva, concesiones, revocación y pruebas negativas.",
+      "owner": "Responsable técnico",
+      "base": "RF01 a RF08, RF18, RF21, RF31, RF32 y RF35 a RF38"
+    },
+    {
+      "path": "docs/architecture/politica-ciclo-vida-y-versiones.md",
+      "title": "Política de ciclo de vida y versiones",
+      "purpose": "Estados, archivo, correcciones, papelera y eliminación física.",
+      "owner": "Responsable técnico",
+      "base": "RF17, RF26 a RF33, RF38 y RF48 a RF60"
+    },
+    {
+      "path": "docs/architecture/politica-auditoria-funcional.md",
+      "title": "Política de auditoría funcional",
+      "purpose": "Eventos mínimos de negocio separados de logs y versiones documentales.",
+      "owner": "Responsable técnico",
+      "base": "RF60 y base secciones 7, 8 y 10"
+    },
+    {
+      "path": "docs/architecture/modelo-datos.md",
+      "title": "Modelo de datos y contratos de integridad",
+      "purpose": "Agregados, claves, versiones, importes y referencias compartidas.",
+      "owner": "Responsable técnico",
+      "base": "Base sección 8 y RF de documentos, archivos y migración"
+    },
+    {
+      "path": "docs/architecture/migraciones-ef-core.md",
+      "title": "Migraciones EF Core y evolución del esquema",
+      "purpose": "Una línea de esquema, revisión y recuperación con datos existentes.",
+      "owner": "Responsable técnico",
+      "base": "Base secciones 10 y 11; ADR09"
+    },
+    {
+      "path": "docs/architecture/decisiones-arquitectura.md",
+      "title": "Registro de decisiones de arquitectura",
+      "purpose": "Alternativas, consecuencias y evidencia para ratificar las ADR iniciales.",
+      "owner": "Responsable técnico",
+      "base": "Base sección 7, ADR01 a ADR08; concreción ADR09"
+    },
+    {
+      "path": "docs/planificacion/decisiones-y-riesgos.md",
+      "title": "Decisiones de arranque riesgos y responsabilidades",
+      "purpose": "Registro único de DC01 a DC10 y riesgos que condicionan las entregas.",
+      "owner": "Responsable de producto",
+      "base": "Base sección 14, DC01 a DC10"
+    },
+    {
+      "path": "docs/planificacion/plan-entregas-y-backlog.md",
+      "title": "Plan de entregas y backlog inicial",
+      "purpose": "Fases E0 a E5, épicas, primeras tareas y condiciones de cierre.",
+      "owner": "Responsable de producto",
+      "base": "Base secciones 12 y 13"
+    },
+    {
+      "path": "docs/diseno/experiencia-y-accesibilidad.md",
+      "title": "Experiencia de uso y accesibilidad",
+      "purpose": "Navegación, patrones de pantalla, mensajes y revisión móvil.",
+      "owner": "Diseño y QA",
+      "base": "RF09, RF20, RF41 a RF47, RF61 a RF67 y RNF02"
+    },
+    {
+      "path": "docs/integraciones/contratos-api-y-servicios.md",
+      "title": "Contratos de API archivos y servicios externos",
+      "purpose": "Casos de uso HTTP, archivos preparados, correo y comportamiento de error.",
+      "owner": "Responsable técnico",
+      "base": "Base secciones 5, 7 y 9"
+    },
+    {
+      "path": "docs/requisitos/casos-de-uso.md",
+      "title": "Casos de uso prioritarios del piloto",
+      "purpose": "Recorridos de negocio con variantes y requisitos asociados.",
+      "owner": "Producto y Coordinación",
+      "base": "RF01 a RF71 y PA del documento base"
+    },
+    {
+      "path": "docs/requisitos/privacidad-y-conservacion.md",
+      "title": "Privacidad conservación y contenido legal",
+      "purpose": "Tratamientos, minimización, decisiones de conservación y revisión previa al piloto.",
+      "owner": "Responsable del tratamiento y asesoría",
+      "base": "Base secciones 4 y 10; DC06"
+    },
+    {
+      "path": "docs/desarrollo/onboarding-desarrolladores.md",
+      "title": "Incorporación al desarrollo",
+      "purpose": "Preparación del entorno y primera contribución al futuro repositorio.",
+      "owner": "Responsable técnico",
+      "base": "Arquitectura propuesta y E1"
+    },
+    {
+      "path": "docs/desarrollo/convenciones-y-flujo.md",
+      "title": "Convenciones de desarrollo y flujo de cambios",
+      "purpose": "Reglas de código, revisión, configuración y documentación del repositorio.",
+      "owner": "Responsable técnico",
+      "base": "Criterio documental de GTS.ERP adaptado; DC10 pendiente"
+    },
+    {
+      "path": "docs/migracion/plan-migracion-wordpress.md",
+      "title": "Plan de migración desde WordPress",
+      "purpose": "Inventario, correspondencias, ensayos y corte con conciliación.",
+      "owner": "Responsable de migración y Secretaría",
+      "base": "RF68 a RF71; base sección 11"
+    },
+    {
+      "path": "docs/deployment/guia-despliegue.md",
+      "title": "Guía de despliegue y promoción",
+      "purpose": "Entornos, artefactos e instalación controlada del futuro sistema.",
+      "owner": "Operación y responsable técnico",
+      "base": "Base secciones 7, 10 y 12; DC03 y DC08"
+    },
+    {
+      "path": "docs/deployment/operacion-y-recuperacion.md",
+      "title": "Operación recuperación y continuidad",
+      "purpose": "Señales de salud, copias, incidentes y restauración verificable.",
+      "owner": "Operación",
+      "base": "RNF05, RNF06, RNF07, RNF09 y RNF12"
+    },
+    {
+      "path": "docs/evolucion/vision-multigrupo.md",
+      "title": "Evolución hacia varios grupos",
+      "purpose": "Límites entre piloto de un grupo y posible producto compartido.",
+      "owner": "Promotor y producto",
+      "base": "DC01 y base sección 14"
+    },
+    {
+      "path": "docs/testing/estrategia-y-trazabilidad.md",
+      "title": "Estrategia de pruebas y trazabilidad",
+      "purpose": "Capas de comprobación, escenarios de aceptación y evidencia requerida.",
+      "owner": "QA y responsable técnico",
+      "base": "Base sección 12, PA01 a PA19 y RNF01 a RNF12"
+    },
+    {
+      "path": "docs/testing/checklist-piloto.md",
+      "title": "Checklist de aceptación del piloto",
+      "purpose": "Plantilla de ejecución para un candidato concreto y decisión de salida.",
+      "owner": "Coordinación, QA y operación",
+      "base": "PA01 a PA19 y salida de E5"
+    },
+    {
+      "path": "docs/testing/guion-pruebas-visuales.md",
+      "title": "Guion de pruebas visuales y móviles",
+      "purpose": "Recorridos manuales de interfaz, accesibilidad y recuperación de errores.",
+      "owner": "QA y diseño",
+      "base": "RNF02, RNF04 y PA de interfaz"
+    },
+    {
+      "path": "docs/glosario.md",
+      "title": "Glosario de la web scout",
+      "purpose": "Términos comunes para producto, código, pruebas y operación.",
+      "owner": "Producto y responsable técnico",
+      "base": "Terminología del Core 1.29.0 y del documento base"
+    },
+    {
+      "path": "docs/referencias/correspondencia-gts-erp.md",
+      "title": "Correspondencia documental con GTS ERP",
+      "purpose": "Tipos adaptados del proyecto de referencia y límites de reutilización.",
+      "owner": "Responsable técnico",
+      "base": "Inventario y lectura documental de C:\\backUp\\gts.erp"
+    },
+    {
+      "path": "docs/referencias/fuentes.md",
+      "title": "Fuentes y procedencia del paquete",
+      "purpose": "Identificación de la base, código de origen y documentación de referencia.",
+      "owner": "Responsable técnico",
+      "base": "Documento base, fuentes C/D/T y documentación oficial"
+    },
+    {
+      "path": "docs/requisitos/catalogo-requisitos.md",
+      "title": "Catálogo de requisitos funcionales y no funcionales",
+      "purpose": "Transcripción trazable de los 71 RF y 12 RNF de la base.",
+      "owner": "Producto y responsable técnico",
+      "base": "Transcripción controlada de la base versión 0.1"
+    },
+    {
+      "path": "docs/referencias/verificacion-documental.md",
+      "title": "Verificación de la entrega documental",
+      "purpose": "Comprobaciones efectivamente realizadas sobre este paquete.",
+      "owner": "Autoría documental",
+      "base": "Comprobaciones del paquete"
+    },
+    {
+      "path": "docs/README.md",
+      "title": "Índice documental del proyecto Web Scout",
+      "purpose": "Entrada única a las guías temáticas y su responsabilidad.",
+      "owner": "Responsable técnico y producto",
+      "base": "Documento base versión 0.1"
+    }
+  ],
+  "guide_pages": 6,
+  "guide_sha256": "c17233a3b7f56e12972bb54fdc724480ac0bb164ea08b71038bcef3787c2a32b",
+  "documentary_checks_passed": 20
+}

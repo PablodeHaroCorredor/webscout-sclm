@@ -1,0 +1,48 @@
+# Reglas de Trabajo para Agentes en WebScout SCLM
+
+> Versión 1.0 · Noviembre de 2026.
+
+Este documento establece las instrucciones operativas obligatorias para cualquier agente o desarrollador que trabaje en el repositorio **WebScout SCLM**.
+
+---
+
+## 1. Reglas Innegociables de Seguridad y Protección de Datos
+
+1. **Datos de Menores y Familias:** Prohibido incorporar datos personales reales de menores (nombres, DNIs, números de teléfono, direcciones, alergias, historiales médicos). Todo dato de prueba en seeds o fixtures debe ser 100% sintético.
+2. **Secretos y Credenciales:** Nunca commitear cadenas de conexión, contraseñas, secretos de S3 o tokens. Usar `.env` (ignorado por Git) y `dotnet user-secrets`.
+3. **Inmutabilidad Documental:** Un PDF firmado o justificante adjunto nunca se sobrescribe. Una corrección añade un nuevo registro versionado con su hash SHA-256 correspondiente.
+
+---
+
+## 2. Límites y Reglas de Arquitectura
+
+1. **Capas y Dependencias:**
+   - `WebScout.Domain` no tiene dependencias externas (ni EF Core, ni ASP.NET, ni Identity).
+   - `WebScout.Application` orquesta casos de uso y define interfaces/puertos.
+   - `WebScout.Infrastructure` implementa persistencia, S3/MinIO y envío de correo Outbox.
+   - `WebScout.Web` gestiona HTTP, subdominios (`TenantResolutionMiddleware`) y layouts Razor.
+2. **Aislamiento Multitenant (`OrganizationId`):**
+   - Toda entidad de negocio debe implementar `ITenantScopedEntity`.
+   - `WebScoutDbContext` debe tener filtros globales (`HasQueryFilter`) configurados en todas las entidades multitenant.
+   - `SaveChangesAsync` estampa automáticamente el `OrganizationId` del tenant en curso.
+3. **Autorización:**
+   - La comprobación de permisos se realiza siempre en servidor y por recurso, también en descargas de archivos y exportaciones.
+
+---
+
+## 3. Pruebas y Trazabilidad
+
+1. **No usar `EF InMemory`** para validar integridad referencial, concurrencia o aislamiento entre organizaciones. Emplear PostgreSQL real (disponible en `docker-compose.dev.yml`).
+2. **Evidencia:** Un HTTP 200 no demuestra aceptación funcional completa. Se debe verificar la regla de negocio y el caso negativo (acceso denegado a otra organización o usuario no autorizado).
+3. **Actualización Documental:** Al completar hitos o resolver decisiones, actualizar [Estado del proyecto](Web_Scout_Documentacion_Inicio_v0_1/docs/estado-proyecto.md).
+
+---
+
+## 4. Skills Disponibles
+
+Consultar y utilizar las skills en `.agents/skills/`:
+- `scout-architecture-guard`: Reglas de arquitectura limpia y multitenancy.
+- `efcore-multitenant-migrations`: Migraciones EF Core con Npgsql y seeds sintéticos.
+- `scout-theming-wcag`: Fórmulas de contraste WCAG 2.2 AA y renderizado de pañoleta.
+- `scout-acceptance-testing`: Ejecución de PA01 a PA19.
+- `git-workflow-conventions`: Formato de commits y sincronización con GitHub.
