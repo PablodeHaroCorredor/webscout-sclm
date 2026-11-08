@@ -60,6 +60,24 @@
                             </MudChip>
                         }
                     </div>
+
+                    <MudDivider Class="my-3" />
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <AuthorizeView Roles="Familia" Context="famAuth">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ChildCare" Href="/familias/educandos">
+                                Mis Educandos
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EventAvailable" Href="/familias/actividades">
+                                Actividades y Salidas
+                            </MudButton>
+                        </AuthorizeView>
+                        <AuthorizeView Roles="Scouter,Coordinacion,Administracion" Context="kraalAuth">
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Hiking" Href="/kraal/actividades">
+                                Gestor de Actividades Kraal
+                            </MudButton>
+                        </AuthorizeView>
+                    </div>
                 </MudCardContent>
             </MudCard>
         </Authorized>
