@@ -3,380 +3,520 @@
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
 
-<PageTitle>Sistema de Diseño e Identidad Visual · @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
+<PageTitle>Sistema de Diseño (MudBlazor) · @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
 
-<div class="scout-container" style="padding-top: 2rem; padding-bottom: 4rem;">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
     <!-- ====================================================================
-         Cabecera Institucional y Selector de Contexto Federativo
+         Cabecera Hero del Sistema de Diseño
          ==================================================================== -->
-    <header class="scout-card" style="margin-bottom: 2rem; border-top: 5px solid var(--scout-primary);">
-        <div class="scout-card-body">
-            <div class="scout-flex-between">
-                <div>
-                    <div class="scout-flex-gap" style="margin-bottom: 0.5rem;">
-                        <span class="scout-badge scout-badge-neutral">Normativa SCLM-DIR-DIS-01</span>
-                        <span class="scout-badge scout-badge-info">WCAG 2.2 Nivel AA</span>
-                    </div>
-                    <h1 class="scout-title-xl" style="margin-bottom: 0.25rem;">
-                        Sistema de Diseño y Manual de Identidad Visual
-                    </h1>
-                    <p class="scout-text-muted" style="margin: 0; max-width: 680px;">
-                        Especificación técnica de tokens, accesibilidad algorítmica y componentes de interfaz para la plataforma federativa y los grupos scouts integrados.
-                    </p>
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6 mb-6 rounded-lg" Style="border-top: 5px solid var(--mud-palette-primary); background: #FFFFFF;">
+        <div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
+            <div>
+                <div class="d-flex align-center gap-2 mb-2">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                        MudBlazor 9 · Material Design 3
+                    </MudChip>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.CheckCircle">
+                        WCAG 2.2 Nivel AA
+                    </MudChip>
                 </div>
-
-                <!-- Bloque de Pañoleta Oficial del Grupo Activo -->
-                <div style="text-align: center; background: #F8FAFC; padding: 1rem 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--scout-border-subtle);">
-                    <PanoletaSvg Config="ActivePanoleta" Width="84" Height="66" Title="Pañoleta Oficial del Tenant" />
-                    <div style="font-size: 0.8125rem; font-weight: 700; color: var(--scout-text-main); margin-top: 0.35rem;">
-                        @(Tenant.IsResolved ? Tenant.GroupName : "Grupo Scout Lestonnac 330")
-                    </div>
-                    <div style="font-size: 0.75rem; color: var(--scout-text-muted);">
-                        Grupo Nº @(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "330") · SCLM
-                    </div>
-                </div>
+                <MudText Typo="Typo.h4" Style="font-weight: 800; letter-spacing: -0.02em;">
+                    Sistema de Diseño e Identidad Visual
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 650px;">
+                    Catálogo de componentes interactivos, tokens cromáticos y motor de accesibilidad adaptado para 
+                    <strong>@(Tenant.IsResolved ? Tenant.GroupName : "Grupo Scout Lestonnac 330")</strong>.
+                </MudText>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid var(--scout-border-subtle); margin: 1.5rem 0;" />
-
-            <!-- Selector de Contexto Organizativo (Tenant) -->
-            <div class="scout-flex-between">
-                <div class="scout-flex-gap">
-                    <span style="font-weight: 600; font-size: 0.875rem; color: var(--scout-text-main);">Contexto de Grupo Federado:</span>
-                    <a href="diseno?tenant=lestonnac" class="scout-btn scout-btn-sm @(Tenant.TenantSlug != "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                        Lestonnac 330 (Verde / Amarillo)
-                    </a>
-                    <a href="diseno?tenant=sanvicente" class="scout-btn scout-btn-sm @(Tenant.TenantSlug == "sanvicente" ? "scout-btn-primary" : "scout-btn-secondary")">
-                        San Vicente 412 (Azul / Rojo)
-                    </a>
-                </div>
-                <div>
-                    <a href="/" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Volver a Portada
-                    </a>
-                </div>
-            </div>
+            <!-- Previsualización de la Pañoleta Vectorial Oficial -->
+            <MudPaper Elevation="0" Outlined="true" Class="pa-3 d-flex flex-column align-center" Style="background: #F8FAFC; min-width: 160px;">
+                <PanoletaSvg Config="ActivePanoleta" Width="80" Height="64" />
+                <MudText Typo="Typo.subtitle2" Class="mt-2" Style="font-weight: 700;">
+                    @(Tenant.IsResolved ? Tenant.GroupName : "Lestonnac 330")
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Grupo Nº @(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "330") · SCLM
+                </MudText>
+            </MudPaper>
         </div>
-    </header>
 
-    <!-- ====================================================================
-         1. Identidad de Grupo y Verificación Algorítmica WCAG 2.2 AA
-         ==================================================================== -->
-    <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">1. Identidad de Grupo y Verificación de Contraste (WCAG 2.2 AA)</h2>
-        <p class="scout-text-body">
-            Cada grupo federado en SCLM proyecta su esquema cromático oficial. El motor en servidor evalúa la luminancia relativa y asegura que ninguna combinación infrinja el umbral mínimo de 4.5:1 para texto normal.
-        </p>
+        <MudDivider Class="my-4" />
 
-        <div class="scout-grid-3">
-            <!-- Color Base -->
-            <div class="scout-card" style="border-top: 4px solid @ActivePanoleta.BaseColorHex;">
-                <div class="scout-card-body">
-                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Color Principal (Base)</div>
-                    <div class="scout-code">@ActivePanoleta.BaseColorHex</div>
-                    <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BaseColorHex; border: 1px solid rgba(0,0,0,0.12);"></span>
-                        <div style="text-align: right;">
-                            <div style="font-size: 0.75rem; color: var(--scout-text-muted); text-transform: uppercase; font-weight: 600;">Texto Calculado</div>
-                            <strong style="color: @HeaderTextColor; background: @ActivePanoleta.BaseColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8125rem;">
-                                @HeaderTextColor
-                            </strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="scout-card-footer">
-                    <span style="font-size: 0.8125rem;">Ratio: <strong>@ContrastRatio.ToString("F2"):1</strong></span>
-                    <span class="scout-badge @(ContrastRatio >= 4.5 ? "scout-badge-success" : "scout-badge-danger")">
-                        @(ContrastRatio >= 4.5 ? "Conforme AA" : "No conforme")
-                    </span>
-                </div>
+        <!-- Selector en Caliente de Grupo Scout (Tenant) -->
+        <div class="d-flex flex-wrap justify-space-between align-center gap-3">
+            <div class="d-flex flex-wrap align-center gap-2">
+                <MudText Typo="Typo.body2" Style="font-weight: 600;">Simular Identidad de Grupo:</MudText>
+                <MudButton Variant="@(Tenant.TenantSlug != "sanvicente" ? Variant.Filled : Variant.Outlined)" 
+                           Color="Color.Primary" 
+                           Size="Size.Small"
+                           Href="diseno?tenant=lestonnac"
+                           StartIcon="@Icons.Material.Filled.Forest">
+                    Lestonnac 330 (Verde / Amarillo)
+                </MudButton>
+                <MudButton Variant="@(Tenant.TenantSlug == "sanvicente" ? Variant.Filled : Variant.Outlined)" 
+                           Color="Color.Primary" 
+                           Size="Size.Small"
+                           Href="diseno?tenant=sanvicente"
+                           StartIcon="@Icons.Material.Filled.WaterDrop">
+                    San Vicente 412 (Azul / Rojo)
+                </MudButton>
             </div>
-
-            <!-- Color Ribete -->
-            <div class="scout-card" style="border-top: 4px solid @ActivePanoleta.BorderColorHex;">
-                <div class="scout-card-body">
-                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Ribete Perimetral (Borde)</div>
-                    <div class="scout-code">@ActivePanoleta.BorderColorHex</div>
-                    <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: inline-block; width: 44px; height: 44px; border-radius: var(--radius-md); background: @ActivePanoleta.BorderColorHex; border: 1px solid rgba(0,0,0,0.12);"></span>
-                        <div style="text-align: right;">
-                            <div style="font-size: 0.75rem; color: var(--scout-text-muted); text-transform: uppercase; font-weight: 600;">Texto Calculado</div>
-                            <strong style="color: @BorderTextColor; background: @ActivePanoleta.BorderColorHex; padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8125rem;">
-                                @BorderTextColor
-                            </strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="scout-card-footer">
-                    <span style="font-size: 0.8125rem;">Ratio: <strong>@BorderContrastRatio.ToString("F2"):1</strong></span>
-                    <span class="scout-badge @(BorderContrastRatio >= 4.5 ? "scout-badge-success" : "scout-badge-danger")">
-                        @(BorderContrastRatio >= 4.5 ? "Conforme AA" : "No conforme")
-                    </span>
-                </div>
-            </div>
-
-            <!-- Elemento Vectorial -->
-            <div class="scout-card" style="border-top: 4px solid #4A148C;">
-                <div class="scout-card-body">
-                    <div style="font-weight: 700; font-size: 0.9375rem; margin-bottom: 0.25rem;">Cinta Central y Heráldica</div>
-                    <div class="scout-code">@(ActivePanoleta.CentralStripeColorHex ?? "Sin cinta central")</div>
-                    <div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
-                        <PanoletaSvg Config="ActivePanoleta" Width="54" Height="44" />
-                        <div style="font-size: 0.8125rem; color: var(--scout-text-muted);">
-                            Emblema: <strong>@(ActivePanoleta.HasEmblem ? "Flor de lis oficial" : "Sin emblema")</strong>
-                        </div>
-                    </div>
-                </div>
-                <div class="scout-card-footer">
-                    <span style="font-size: 0.8125rem; color: var(--scout-text-muted);">Renderizado:</span>
-                    <span class="scout-badge scout-badge-neutral">SVG Paramétrico</span>
-                </div>
-            </div>
+            
+            <MudButton Variant="Variant.Text" 
+                       Color="Color.Default" 
+                       Size="Size.Small" 
+                       Href="/" 
+                       StartIcon="@Icons.Material.Filled.ArrowBack">
+                Volver a Portada
+            </MudButton>
         </div>
-    </section>
+    </MudPaper>
 
     <!-- ====================================================================
-         2. Código Cromático Oficial de Ramas Pedagógicas
+         Pestañas Temáticas de Componentes MudBlazor
          ==================================================================== -->
-    <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">2. Ramas Pedagógicas (Código Cromático SCLM)</h2>
-        <p class="scout-text-body">
-            Valores cromáticos normalizados y contrastados para las cinco etapas educativas del escultismo, comunes a todos los grupos de la federación.
-        </p>
+    <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-6" Color="Color.Primary">
+        
+        <!-- PESTAÑA 1: PALETA Y ACCESIBILIDAD WCAG -->
+        <MudTabPanel Text="Identidad y Contraste WCAG" Icon="@Icons.Material.Filled.Palette">
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                1. Tokens Dinámicos del Tenant y Verificación WCAG 2.2 AA
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                El motor algorítmico calcula la luminancia relativa en el backend y asigna el texto contrastado automáticamente.
+            </MudText>
 
-        <div class="scout-grid-3">
-            <div class="scout-card">
-                <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-castores">Colonia de Castores</span>
-                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">6 a 8 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Compartir</em>. Gama cálida y celeste de ribera.</p>
-                </div>
-            </div>
+            <MudGrid Class="mb-6">
+                <!-- Color Base -->
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true" Elevation="0">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Color Base de Pañoleta</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Color primario del portal</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Style="@($"background: {ActivePanoleta.BaseColorHex}; color: {HeaderTextColor};")">
+                                    @ActivePanoleta.BaseColorHex
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <div class="d-flex align-center justify-space-between mb-3">
+                                <MudAvatar Rounded="true" Style="@($"background: {ActivePanoleta.BaseColorHex}; width: 52px; height: 52px; border: 1px solid rgba(0,0,0,0.1);")" />
+                                <div class="text-end">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Texto Asignado:</MudText>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                        @HeaderTextColor
+                                    </MudChip>
+                                </div>
+                            </div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                Ratio de Contraste: @ContrastRatio.ToString("F2"):1
+                            </MudText>
+                            <MudProgressLinear Color="@(ContrastRatio >= 4.5 ? Color.Success : Color.Error)" 
+                                               Value="@Math.Min(100, (int)(ContrastRatio / 21.0 * 100))" 
+                                               Class="my-2" />
+                            <MudChip T="string" Size="Size.Small" Color="@(ContrastRatio >= 4.5 ? Color.Success : Color.Error)" Variant="Variant.Filled" Icon="@(ContrastRatio >= 4.5 ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)">
+                                @(ContrastRatio >= 4.5 ? "Conforme WCAG AA" : "Incumple norma AA")
+                            </MudChip>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
 
-            <div class="scout-card">
-                <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-manada">Manada de Lobatos</span>
-                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">8 a 11 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Haremos lo mejor</em>. Amarillo y pardo selva.</p>
-                </div>
-            </div>
+                <!-- Color Ribete -->
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true" Elevation="0">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Ribete Perimetral</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Color secundario de acento</MudText>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Style="@($"background: {ActivePanoleta.BorderColorHex}; color: {BorderTextColor};")">
+                                    @ActivePanoleta.BorderColorHex
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <div class="d-flex align-center justify-space-between mb-3">
+                                <MudAvatar Rounded="true" Style="@($"background: {ActivePanoleta.BorderColorHex}; width: 52px; height: 52px; border: 1px solid rgba(0,0,0,0.1);")" />
+                                <div class="text-end">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Texto Asignado:</MudText>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                        @BorderTextColor
+                                    </MudChip>
+                                </div>
+                            </div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                Ratio de Contraste: @BorderContrastRatio.ToString("F2"):1
+                            </MudText>
+                            <MudProgressLinear Color="@(BorderContrastRatio >= 4.5 ? Color.Success : Color.Error)" 
+                                               Value="@Math.Min(100, (int)(BorderContrastRatio / 21.0 * 100))" 
+                                               Class="my-2" />
+                            <MudChip T="string" Size="Size.Small" Color="@(BorderContrastRatio >= 4.5 ? Color.Success : Color.Error)" Variant="Variant.Filled" Icon="@(BorderContrastRatio >= 4.5 ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)">
+                                @(BorderContrastRatio >= 4.5 ? "Conforme WCAG AA" : "Incumple norma AA")
+                            </MudChip>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
 
-            <div class="scout-card">
-                <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-tropa">Sección Scout / Tropa</span>
-                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">11 a 14 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Siempre listos</em>. Azul cielo y verde forestal.</p>
-                </div>
-            </div>
+                <!-- Cinta Central y Heráldica -->
+                <MudItem xs="12" md="4">
+                    <MudCard Outlined="true" Elevation="0">
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Heráldica y Cinta</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Detalles vectoriales oficiales</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <div class="d-flex align-center gap-4 mb-3">
+                                <PanoletaSvg Config="ActivePanoleta" Width="60" Height="48" />
+                                <div>
+                                    <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                        Cinta: @(ActivePanoleta.CentralStripeColorHex ?? "Sin cinta central")
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        Flor de lis heráldica: @(ActivePanoleta.HasEmblem ? "Sí (vectorial)" : "No aplica")
+                                    </MudText>
+                                </div>
+                            </div>
+                            <MudAlert Severity="Severity.Info" Dense="true" Class="mt-3">
+                                Renderizado paramétrico puro en SVG sin dependencias de imágenes bitmap.
+                            </MudAlert>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
 
-            <div class="scout-card">
-                <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-escultas">Unidad Esculta / Pioneros</span>
-                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">14 a 17 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Unidad</em>. Rojo valentía y neutro blanco.</p>
-                </div>
-            </div>
+            <!-- Código Cromático de Ramas -->
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                2. Código Cromático Oficial de Ramas Pedagógicas
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                Colores normalizados por franja de edad en toda la Federación SCLM.
+            </MudText>
 
-            <div class="scout-card">
-                <div class="scout-card-body">
-                    <span class="scout-branch-badge scout-branch-clan">Clan Rover / Rutas</span>
-                    <p style="font-size: 0.875rem; margin: 0.75rem 0 0.25rem 0; font-weight: 600; color: var(--scout-text-main);">17 a 21 años</p>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">Lema: <em>Servir</em>. Verde esperanza y burdeos de camino.</p>
-                </div>
-            </div>
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #FFF7ED; border-color: #FDBA74;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #9A3412;">Castores</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #9A3412;">6 a 8 años</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #C2410C; font-style: italic;">Compartir</MudText>
+                    </MudPaper>
+                </MudItem>
 
-            <div class="scout-card" style="background: #F8FAFC; border-style: dashed;">
-                <div class="scout-card-body" style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
-                    <div style="font-weight: 700; font-size: 0.875rem; color: #334155; margin-bottom: 0.25rem;">Kraal de Scouters</div>
-                    <p class="scout-text-muted" style="margin: 0; font-size: 0.8125rem;">
-                        Educadores scouts responsables. Acceso autorizado a expedientes, fichas médicas y actas.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #FEFCE8; border-color: #FDE047;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #854D0E;">Manada</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #854D0E;">8 a 11 años</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #A16207; font-style: italic;">Haremos lo mejor</MudText>
+                    </MudPaper>
+                </MudItem>
 
-    <!-- ====================================================================
-         3. Botones y Objetivos Táctiles Móviles (>= 44x44px)
-         ==================================================================== -->
-    <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">3. Controles Interactivos y Estados Semánticos</h2>
-        <p class="scout-text-body">
-            Dimensionados para interacción táctil en movilidad (norma WCAG 2.5.8, objetivo mínimo de $44 \times 44\text{ px}$). Toda indicación de estado incluye texto descriptivo explícito.
-        </p>
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #F0F9FF; border-color: #7DD3FC;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #075985;">Sección Scout</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #075985;">11 a 14 años</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #0284C7; font-style: italic;">Siempre listos</MudText>
+                    </MudPaper>
+                </MudItem>
 
-        <div class="scout-card">
-            <div class="scout-card-body">
-                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--scout-text-main);">
-                    Variantes de Botón:
-                </div>
-                <div class="scout-flex-gap" style="margin-bottom: 1.5rem;">
-                    <button type="button" class="scout-btn scout-btn-primary">
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #FEF2F2; border-color: #FCA5A5;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #991B1B;">Escultas</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #991B1B;">14 a 17 años</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #DC2626; font-style: italic;">Unidad</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #F0FDF4; border-color: #86EFAC;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #166534;">Clan Rover</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #166534;">17 a 21 años</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #15803D; font-style: italic;">Servir</MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" sm="6" md="4" lg="2">
+                    <MudPaper Outlined="true" Class="pa-3 text-center" Style="background: #F8FAFC; border-style: dashed;">
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #334155;">Kraal Scouter</MudText>
+                        <MudText Typo="Typo.caption" Class="d-block" Style="color: #475569;">Educadores</MudText>
+                        <MudText Typo="Typo.caption" Style="color: #64748B;">Revisión y firma</MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <!-- PESTAÑA 2: COMPONENTES Y BOTONES -->
+        <MudTabPanel Text="Botones y Alertas" Icon="@Icons.Material.Filled.SmartButton">
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                Jerarquía de Botones Táctiles Móviles (Objetivo $\ge 44 \times 44\text{px}$)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                Componentes MudBlazor estilizados automáticamente con las elevaciones y micro-interacciones de Material Design.
+            </MudText>
+
+            <MudPaper Outlined="true" Class="pa-4 mb-6">
+                <div class="d-flex flex-wrap align-center gap-3 mb-4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Draw">
                         Firmar Autorización
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-secondary">
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Download">
                         Descargar Modelo PDF
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-outline-primary">
-                        Solicitar Pedido
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-warning">
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ShoppingBag">
+                        Solicitar Uniformidad
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Edit">
                         Subsanar Expediente
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-danger">
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Cancel">
                         Anular Solicitud
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-primary" disabled>
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="true" StartIcon="@Icons.Material.Filled.Lock">
                         Plazo Cerrado
-                    </button>
+                    </MudButton>
                 </div>
 
-                <div style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--scout-text-main);">
-                    Insignias de Estado Semánticas (Cumplimiento de Independencia Cromática):
+                <MudDivider Class="my-3" />
+
+                <MudText Typo="Typo.subtitle2" Class="mb-2" Style="font-weight: 700;">
+                    Insignias de Estado Semánticas (Con Iconografía para Daltonismo):
+                </MudText>
+                <div class="d-flex flex-wrap gap-2">
+                    <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.CheckCircle">
+                        Confirmado por Tesorería
+                    </MudChip>
+                    <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.HourglassTop">
+                        Pendiente de Conciliación
+                    </MudChip>
+                    <MudChip T="string" Color="Color.Error" Variant="Variant.Filled" Icon="@Icons.Material.Filled.ErrorOutline">
+                        Requiere Subsanación
+                    </MudChip>
+                    <MudChip T="string" Color="Color.Info" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Info">
+                        En Revisión de Kraal
+                    </MudChip>
+                    <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Lock">
+                        Archivado / Cerrado
+                    </MudChip>
                 </div>
-                <div class="scout-flex-gap">
-                    <span class="scout-badge scout-badge-success">[✓ Confirmado por Tesorería]</span>
-                    <span class="scout-badge scout-badge-warning">[⏳ Pendiente de Conciliación]</span>
-                    <span class="scout-badge scout-badge-danger">[! Requiere Subsanación]</span>
-                    <span class="scout-badge scout-badge-info">[i En Revisión de Kraal]</span>
-                    <span class="scout-badge scout-badge-neutral">[Cerrado / Archivado]</span>
-                </div>
+            </MudPaper>
+
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                Banners de Alerta del Sistema
+            </MudText>
+            <div class="d-flex flex-column gap-3 mt-3">
+                <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Elevation="1">
+                    <strong>Inscripción registrada con éxito:</strong> Hemos recibido la documentación de Lucas. Se emitirá el aviso de pago en cuanto el Kraal verifique la plaza.
+                </MudAlert>
+
+                <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Elevation="1">
+                    <strong>Plazo próximo a finalizar:</strong> Quedan menos de 72 horas para adjuntar el justificante bancario de la Acampada de San Jorge.
+                </MudAlert>
+
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Elevation="1">
+                    <strong>Modelo no vigente:</strong> El documento adjunto pertenece a una versión obsoleta de la ficha médica. Descarga la plantilla vigente para tramitar la entrega.
+                </MudAlert>
             </div>
-        </div>
-    </section>
+        </MudTabPanel>
 
-    <!-- ====================================================================
-         4. Patrón Familiar: Expediente y Trámites del Educando
-         ==================================================================== -->
-    <section style="margin-bottom: 2.5rem;">
-        <h2 class="scout-title-lg">4. Patrón de Expediente Familiar (Zona Privada)</h2>
-        <p class="scout-text-body">
-            La vista para las familias estructura los trámites por participante, garantizando que expedientes de distintos educandos no se mezclen ni confundan sus estados documentales o bancarios.
-        </p>
+        <!-- PESTAÑA 3: PATRÓN FAMILIAR REAL -->
+        <MudTabPanel Text="Expediente Familiar (Simulación)" Icon="@Icons.Material.Filled.FamilyRestroom">
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                Patrón de Gestión Familiar: Aislamiento por Participante
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                Las familias visualizan los trámites ordenados por educando, evitando mezclar expedientes entre hermanos en ramas distintas.
+            </MudText>
 
-        <div class="scout-grid-2">
-            <!-- Educando 1 -->
-            <div class="scout-card">
-                <div class="scout-card-header">
-                    <div>
-                        <span class="scout-branch-badge scout-branch-manada" style="margin-bottom: 0.25rem;">Manada de Lobatos</span>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--scout-text-main);">
-                            Lucas Martín García
-                        </div>
-                    </div>
-                    <span class="scout-badge scout-badge-warning">1 Trámite Pendiente</span>
-                </div>
-                <div class="scout-card-body">
-                    <div style="background: #F8FAFC; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
-                        <div class="scout-flex-between" style="margin-bottom: 0.5rem;">
-                            <strong style="color: var(--scout-text-main); font-size: 0.9375rem;">Acampada de San Jorge 2027</strong>
-                            <span class="scout-badge scout-badge-danger" style="font-size: 0.6875rem;">Cierre en 3 días</span>
-                        </div>
-                        <p class="scout-text-muted" style="font-size: 0.8125rem; margin-bottom: 0.75rem;">
-                            Ubicación: Riópar (Albacete) · Cuota de actividad: 45,00 €
-                        </p>
-                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8125rem;">
-                            <div>Autorización firmada: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Entregada v1</strong></div>
-                            <div>Justificante de ingreso: <strong class="scout-badge scout-badge-warning" style="font-size: 0.6875rem;">Adjunto (en revisión)</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="scout-card-footer">
-                    <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Ficha Médica
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-sm scout-btn-primary">
-                        Gestionar Trámite
-                    </button>
-                </div>
-            </div>
+            <MudGrid>
+                <!-- Educando 1 -->
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="2" Outlined="true" Class="rounded-lg">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Warning" Variant="Variant.Filled">L</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Lucas Martín García</MudText>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning" Icon="@Icons.Material.Filled.Pets">
+                                    Manada de Lobatos
+                                </MudChip>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">
+                                    1 Pendiente
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="background: #F8FAFC;">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Acampada de San Jorge 2027</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">
+                                        Cierre en 3 días
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mb-3">
+                                    Lugar: Riópar (Albacete) · Cuota de actividad: 45,00 €
+                                </MudText>
+                                
+                                <MudTimeline TimelinePosition="TimelinePosition.Left" Class="pa-0">
+                                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                                        <MudText Typo="Typo.caption"><strong>Autorización legal:</strong> Entregada v1 firmada</MudText>
+                                    </MudTimelineItem>
+                                    <MudTimelineItem Color="Color.Warning" Size="Size.Small">
+                                        <MudText Typo="Typo.caption"><strong>Comprobante bancario:</strong> Adjunto (en revisión)</MudText>
+                                    </MudTimelineItem>
+                                </MudTimeline>
+                            </MudPaper>
+                        </MudCardContent>
+                        <MudCardActions Class="justify-end gap-2 pa-4">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small">
+                                Ficha Médica
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Assignment">
+                                Gestionar Trámite
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
 
-            <!-- Educando 2 -->
-            <div class="scout-card">
-                <div class="scout-card-header">
-                    <div>
-                        <span class="scout-branch-badge scout-branch-tropa" style="margin-bottom: 0.25rem;">Sección Scout / Tropa</span>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: var(--scout-text-main);">
-                            Lucía Martín García
-                        </div>
-                    </div>
-                    <span class="scout-badge scout-badge-success">Expediente al día</span>
-                </div>
-                <div class="scout-card-body">
-                    <div style="background: #F8FAFC; border: 1px solid var(--scout-border-subtle); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1rem;">
-                        <div class="scout-flex-between" style="margin-bottom: 0.5rem;">
-                            <strong style="color: var(--scout-text-main); font-size: 0.9375rem;">Campamento de Pascua 2027</strong>
-                            <span class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Plaza Confirmada</span>
-                        </div>
-                        <p class="scout-text-muted" style="font-size: 0.8125rem; margin-bottom: 0.75rem;">
-                            Ubicación: Sierra de Alcaraz · Cuota de actividad: 60,00 €
-                        </p>
-                        <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8125rem;">
-                            <div>Autorización firmada: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Verificada por Scouter</strong></div>
-                            <div>Abono bancario: <strong class="scout-badge scout-badge-success" style="font-size: 0.6875rem;">Conciliado</strong></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="scout-card-footer">
-                    <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Ficha Médica
-                    </button>
-                    <button type="button" class="scout-btn scout-btn-sm scout-btn-secondary">
-                        Descargar Comprobante
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
+                <!-- Educando 2 -->
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="2" Outlined="true" Class="rounded-lg">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Info" Variant="Variant.Filled">L</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Lucía Martín García</MudText>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info" Icon="@Icons.Material.Filled.Explore">
+                                    Sección Scout / Tropa
+                                </MudChip>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">
+                                    Al día
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <MudCardContent>
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4" Style="background: #F8FAFC;">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Campamento de Pascua 2027</MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">
+                                        Plaza Confirmada
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mb-3">
+                                    Lugar: Sierra de Alcaraz · Cuota de actividad: 60,00 €
+                                </MudText>
 
-    <!-- ====================================================================
-         5. Formularios Accesibles y Alertas del Sistema
-         ==================================================================== -->
-    <section>
-        <h2 class="scout-title-lg">5. Formularios y Retroalimentación del Sistema</h2>
-        <p class="scout-text-body">
-            Entradas estructuradas con etiquetas fijas, foco perimetral de contraste elevado y mensajes descriptivos de acción correctora.
-        </p>
+                                <MudTimeline TimelinePosition="TimelinePosition.Left" Class="pa-0">
+                                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                                        <MudText Typo="Typo.caption"><strong>Autorización legal:</strong> Verificada por Scouter</MudText>
+                                    </MudTimelineItem>
+                                    <MudTimelineItem Color="Color.Success" Size="Size.Small">
+                                        <MudText Typo="Typo.caption"><strong>Abono bancario:</strong> Conciliado por tesorería</MudText>
+                                    </MudTimelineItem>
+                                </MudTimeline>
+                            </MudPaper>
+                        </MudCardContent>
+                        <MudCardActions Class="justify-end gap-2 pa-4">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small">
+                                Ficha Médica
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Download">
+                                Descargar Comprobante
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
 
-        <!-- Banners de Alerta Formales -->
-        <div class="scout-alert scout-alert-success">
-            <div>
-                <strong>Inscripción registrada:</strong> La autorización ha sido recibida correctamente. El estado se actualizará cuando el equipo de scouters verifique la documentación.
-            </div>
-        </div>
+        <!-- PESTAÑA 4: FORMULARIOS Y TABLA DE PARTICIPANTES -->
+        <MudTabPanel Text="Formularios y Tablas" Icon="@Icons.Material.Filled.TableChart">
+            <MudText Typo="Typo.h6" Class="mb-1" Style="font-weight: 700;">
+                Mesa de Revisión y Formulario Accesible
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                Controles de formulario nativos de MudBlazor con validación de accesibilidad y tabla de datos con filtros.
+            </MudText>
 
-        <div class="scout-alert scout-alert-warning">
-            <div>
-                <strong>Plazo próximo de vencimiento:</strong> Restan menos de 72 horas para adjuntar el comprobante bancario para la Acampada de San Jorge.
-            </div>
-        </div>
+            <MudGrid Class="mb-6">
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="Nombre completo del educando" 
+                                  Variant="Variant.Outlined" 
+                                  Value="@("Lucas Martín García")" 
+                                  HelperText="Tal como figura en el documento nacional de identidad o tarjeta sanitaria." />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTextField Label="DNI / NIE del Titular Responsable" 
+                                  Variant="Variant.Outlined" 
+                                  Value="@("12345678")" 
+                                  Error="true" 
+                                  ErrorText="El formato no incluye el dígito de control reglamentario." />
+                </MudItem>
+            </MudGrid>
 
-        <div class="scout-alert scout-alert-danger">
-            <div>
-                <strong>Versión de modelo no vigente:</strong> El formulario entregado corresponde a una versión obsoleta de la ficha médica. Descarga el modelo vigente para formalizar la entrega.
-            </div>
-        </div>
-
-        <!-- Muestra de Formulario -->
-        <div class="scout-card" style="margin-top: 1.5rem;">
-            <div class="scout-card-body">
-                <div class="scout-grid-2">
-                    <div class="scout-form-group">
-                        <label class="scout-label" for="txtNombre">Nombre completo del educando:</label>
-                        <input id="txtNombre" class="scout-input" type="text" value="Lucas Martín García" />
-                        <span class="scout-helper-text">Tal como figura en la tarjeta de identificación sanitaria o DNI.</span>
-                    </div>
-
-                    <div class="scout-form-group">
-                        <label class="scout-label" for="txtDni">DNI / NIE de la persona tutora legal (con error simulado):</label>
-                        <input id="txtDni" class="scout-input scout-input-error" type="text" value="12345678" aria-invalid="true" aria-describedby="dniError" />
-                        <span id="dniError" class="scout-error-message">El formato introducido no incluye el dígito de control reglamentario.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-</div>
+            <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 700;">
+                Listado de Participantes en Actividad:
+            </MudText>
+            <MudSimpleTable Outlined="true" Dense="true" Hover="true" Striped="true">
+                <thead>
+                    <tr>
+                        <th>Educando</th>
+                        <th>Sección</th>
+                        <th>Actividad</th>
+                        <th>Autorización</th>
+                        <th>Estado de Pago</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Lucas Martín García</strong></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Manada</MudChip></td>
+                        <td>Acampada de San Jorge</td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Entregada v1</MudChip></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">Pendiente</MudChip></td>
+                        <td class="text-end">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Success" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lucía Martín García</strong></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">Sección Scout</MudChip></td>
+                        <td>Campamento de Pascua</td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Validada</MudChip></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled">Conciliado</MudChip></td>
+                        <td class="text-end">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Check" Size="Size.Small" Color="Color.Success" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mateo Ruiz Santos</strong></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">Escultas</MudChip></td>
+                        <td>Ruta de Supervivencia</td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">Subsanar v2</MudChip></td>
+                        <td><MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">Sin justificante</MudChip></td>
+                        <td class="text-end">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Primary" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" />
+                        </td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
 
 @code {
     private PanoletaConfig ActivePanoleta => Tenant.TenantSlug switch
