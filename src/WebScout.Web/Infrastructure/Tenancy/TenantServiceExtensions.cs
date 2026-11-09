@@ -33,4 +33,10 @@ public static class TenantServiceExtensions
         app.UseMiddleware<TenantResolutionMiddleware>();
         return app;
     }
+
+    public static IApplicationBuilder UseTenantSessionGuard(this IApplicationBuilder app)
+    {
+        app.UseMiddleware<TenantSessionGuardMiddleware>();
+        return app;
+    }
 }

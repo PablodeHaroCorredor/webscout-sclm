@@ -214,6 +214,15 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
     {
         if (string.IsNullOrWhiteSpace(texto)) return "";
         var limpio = texto.Replace(";", ",").Replace("\r", " ").Replace("\n", " ").Trim();
+
+        // Mitigación de CSV Formula Injection (CWE-1236):
+        // Desactiva la ejecución de fórmulas en hojas de cálculo (Excel, Calc) prefijando con apóstrofe
+        if (limpio.StartsWith('=') || limpio.StartsWith('+') || limpio.StartsWith('-') || 
+            limpio.StartsWith('@') || limpio.StartsWith('\t') || limpio.StartsWith('%'))
+        {
+            limpio = "'" + limpio;
+        }
+
         if (limpio.Contains('"'))
         {
             limpio = limpio.Replace("\"", "\"\"");

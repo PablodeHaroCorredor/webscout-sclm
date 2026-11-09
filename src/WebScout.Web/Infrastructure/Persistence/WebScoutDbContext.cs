@@ -2,11 +2,14 @@ using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
+using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Participants.Domain;
+using WebScout.Web.Infrastructure.Security;
 using WebScout.Web.Infrastructure.Tenancy;
 
 namespace WebScout.Web.Infrastructure.Persistence;
@@ -31,6 +34,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<Educando> Educandos => Set<Educando>();
     public DbSet<FichaMedica> FichasMedicas => Set<FichaMedica>();
     public DbSet<InscripcionActividad> Inscripciones => Set<InscripcionActividad>();
+    public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -128,17 +132,39 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // 6. Configuración de Ficha Médica Anual
+        // 6. Configuración de Ficha Médica Anual (Cifrado RGPD Art. 9/32)
+        var cifrador = new CifradorDatosSensibles();
+        var conversorCifradoNullable = new ValueConverter<string?, string?>(
+            v => cifrador.Cifrar(v),
+            v => cifrador.Descifrar(v));
+
+        var conversorCifradoRequerido = new ValueConverter<string, string>(
+            v => cifrador.Cifrar(v)!,
+            v => cifrador.Descifrar(v) ?? string.Empty);
+
         modelBuilder.Entity<FichaMedica>(b =>
         {
             b.ToTable("FichasMedicas");
             b.HasKey(h => h.Id);
-            b.Property(h => h.NumeroSeguridadSocial).HasMaxLength(50).IsRequired();
+            b.Property(h => h.NumeroSeguridadSocial)
+                .HasMaxLength(255)
+                .IsRequired()
+                .HasConversion(conversorCifradoRequerido);
+
             b.Property(h => h.EntidadAseguradora).HasMaxLength(100);
             b.Property(h => h.TelefonoEmergenciaPrincipal).HasMaxLength(30).IsRequired();
             b.Property(h => h.NombreContactoEmergenciaPrincipal).HasMaxLength(100);
             b.Property(h => h.TelefonoEmergenciaSecundario).HasMaxLength(30);
             b.Property(h => h.NombreContactoEmergenciaSecundario).HasMaxLength(100);
+
+            // Campos sanitarios sensibles protegidos con AES-256-GCM
+            b.Property(h => h.AlergiasAlimentarias).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.AlergiasMedicamentosas).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.AlergiasAmbientales).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.RegimenAlimenticio).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.EnfermedadesCronicas).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.MedicacionActiva).HasConversion(conversorCifradoNullable);
+            b.Property(h => h.ObservacionesAdicionales).HasConversion(conversorCifradoNullable);
 
             b.HasIndex(h => new { h.OrganizacionId, h.EducandoId }).IsUnique();
         });
@@ -178,6 +204,22 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
                 .WithMany()
                 .HasForeignKey(i => i.RevisadoPorUsuarioId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // 8. Configuración de Registros de Auditoría Inmutable (PA06 / RF40)
+        modelBuilder.Entity<RegistroAuditoria>(b =>
+        {
+            b.ToTable("RegistrosAuditoria");
+            b.HasKey(a => a.Id);
+            b.Property(a => a.Accion).HasMaxLength(100).IsRequired();
+            b.Property(a => a.TipoRecurso).HasMaxLength(100).IsRequired();
+            b.Property(a => a.RecursoId).HasMaxLength(100);
+            b.Property(a => a.EmailUsuario).HasMaxLength(256);
+            b.Property(a => a.DireccionIp).HasMaxLength(50);
+            b.Property(a => a.Detalles).HasMaxLength(2000);
+
+            b.HasIndex(a => new { a.OrganizacionId, a.FechaCreacionUtc });
+            b.HasIndex(a => new { a.OrganizacionId, a.Accion });
         });
 
         // 8. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
