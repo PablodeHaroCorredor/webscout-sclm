@@ -198,7 +198,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
         where TEntity : class, IEntidadOrganizacion
     {
         modelBuilder.Entity<TEntity>()
-            .HasQueryFilter(e => e.OrganizacionId == _tenantContext.CurrentTenantId);
+            .HasQueryFilter(e => _tenantContext.IsSuperAdmin || e.OrganizacionId == _tenantContext.CurrentTenantId);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -221,13 +221,20 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             {
                 if (entry.Entity.OrganizacionId == Guid.Empty)
                 {
-                    if (_tenantContext.CurrentTenantId == Guid.Empty)
+                    if (_tenantContext.CurrentTenantId != Guid.Empty)
+                    {
+                        entry.Entity.OrganizacionId = _tenantContext.CurrentTenantId;
+                    }
+                    else if (_tenantContext.IsSuperAdmin || entry.Entity is UsuarioScout)
+                    {
+                        // Permitido para administración federativa central (SuperAdmin / desarrolladores sin grupo fijado)
+                        continue;
+                    }
+                    else
                     {
                         throw new InvalidOperationException(
                             $"Operación bloqueada: No se puede persistir la entidad '{entry.Entity.GetType().Name}' sin una Organización activa en el contexto.");
                     }
-
-                    entry.Entity.OrganizacionId = _tenantContext.CurrentTenantId;
                 }
             }
         }

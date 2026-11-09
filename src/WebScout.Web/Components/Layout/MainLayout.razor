@@ -104,6 +104,16 @@
                     </MudNavGroup>
                 </Authorized>
             </AuthorizeView>
+
+            <AuthorizeView Roles="SuperAdmin">
+                <Authorized>
+                    <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                        <MudNavLink Href="/admin/grupos" Icon="@Icons.Material.Filled.Hub">
+                            Grupos y Tenants
+                        </MudNavLink>
+                    </MudNavGroup>
+                </Authorized>
+            </AuthorizeView>
         </MudNavMenu>
     </MudDrawer>
 
