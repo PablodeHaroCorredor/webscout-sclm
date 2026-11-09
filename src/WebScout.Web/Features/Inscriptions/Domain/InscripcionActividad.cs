@@ -73,6 +73,33 @@ public class InscripcionActividad : IEntidadOrganizacion
     public UsuarioScout? RevisadoPorUsuario { get; set; }
     public DateTime? FechaRevisionUtc { get; set; }
 
+    #region Control de Asistencia y Salida (Check-in)
+    /// <summary>
+    /// Indica si el educando se ha personado en el punto de encuentro de salida y se ha incorporado a la actividad.
+    /// </summary>
+    public bool PresenteEnSalida { get; set; } = false;
+
+    /// <summary>
+    /// Marca temporal exacta del check-in de salida en el punto de encuentro o autobús.
+    /// </summary>
+    public DateTime? FechaCheckInSalidaUtc { get; set; }
+
+    /// <summary>
+    /// Indica si el educando ha regresado de la actividad y ha sido entregado a su tutor legal o persona autorizada.
+    /// </summary>
+    public bool PresenteEnRegreso { get; set; } = false;
+
+    /// <summary>
+    /// Marca temporal exacta de la recogida del menor en el punto de llegada.
+    /// </summary>
+    public DateTime? FechaCheckInRegresoUtc { get; set; }
+
+    /// <summary>
+    /// Incidencias de recogida o notas de asistencia registradas por el Scouter (ej. "Recogido por abuelo con autorización").
+    /// </summary>
+    public string? ObservacionesAsistencia { get; set; }
+    #endregion
+
     /// <summary>
     /// Indica si la inscripción tiene un comprobante de pago bancario adjunto.
     /// </summary>

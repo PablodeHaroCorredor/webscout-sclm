@@ -153,6 +153,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.Property(i => i.RutaArchivoJustificante).HasMaxLength(500);
             b.Property(i => i.ObservacionesFamilia).HasMaxLength(1000);
             b.Property(i => i.NotasKraal).HasMaxLength(1000);
+            b.Property(i => i.ObservacionesAsistencia).HasMaxLength(500);
 
             b.HasIndex(i => new { i.OrganizacionId, i.ActividadId, i.EducandoId }).IsUnique();
             b.HasIndex(i => new { i.OrganizacionId, i.TutorLegalId });

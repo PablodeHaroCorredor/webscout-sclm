@@ -1,0 +1,673 @@
+@page "/kraal/actividades/{ActividadId:guid}/dossier"
+@using Microsoft.AspNetCore.Authorization
+@using System.Globalization
+@using WebScout.Web.Features.Dossier.Domain
+@using WebScout.Web.Features.Dossier.Services
+@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion}")]
+@inject IServicioDossierAsistencia ServicioDossier
+@inject ISnackbar Snackbar
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ITenantContext Tenant
+
+<PageTitle>Dossier Operativo — @(_dossier?.Actividad.Titulo ?? "Cargando...")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
+    @if (_cargando)
+    {
+        <div class="d-flex justify-center align-center pa-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else if (_dossier == null)
+    {
+        <MudAlert Severity="Severity.Error">No se ha podido localizar la actividad o no pertenece a este grupo scout.</MudAlert>
+    }
+    else
+    {
+        <!-- Cabecera no imprimible con botones de acción -->
+        <div class="no-print d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+            <div>
+                <MudButton Variant="Variant.Text" 
+                           Color="Color.Default" 
+                           StartIcon="@Icons.Material.Filled.ArrowBack" 
+                           Href="/kraal/actividades"
+                           Class="mb-1 pa-0">
+                    Volver al Gestor de Actividades
+                </MudButton>
+                <MudText Typo="Typo.h5" Style="font-weight: 700;">
+                    Dossier Operativo: @_dossier.Actividad.Titulo
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                    @_dossier.Actividad.Lugar | @_dossier.Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @_dossier.Actividad.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </MudText>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Download"
+                           Href="@($"/api/actividades/{ActividadId}/asistencia/csv")"
+                           Target="_blank">
+                    Exportar Asistencia (CSV)
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.Print"
+                           OnClick="ImprimirDossierAsync">
+                    Imprimir Dossier / Guardar PDF
+                </MudButton>
+            </div>
+        </div>
+
+        <!-- Métricas Rápidas de Campo (No imprimible) -->
+        <MudGrid Spacing="2" Class="no-print mb-4">
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Confirmados</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="Color.Primary">
+                        @_dossier.TotalConfirmados / @_dossier.TotalInscritos
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Check-in Salida</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="Color.Success">
+                        @_dossier.TotalPresentesSalida / @_dossier.Inscripciones.Count
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Check-in Regreso</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="Color.Info">
+                        @_dossier.TotalPresentesRegreso / @_dossier.Inscripciones.Count
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-3 text-center">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Alertas Intendencia</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="@(_dossier.AlertasIntendencia.Count > 0 ? Color.Warning : Color.Default)">
+                        @_dossier.AlertasIntendencia.Count
+                    </MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Bloque de Portada para Impresión (Solo visible al imprimir) -->
+        <div class="only-print mb-4 pb-2" style="border-bottom: 2px solid #0F172A;">
+            <div class="d-flex align-center justify-space-between">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold;">WebScout SCLM — Dossier Oficial de Actividad</h2>
+                    <p style="margin: 2px 0; color: #475569;">Grupo Scout: @(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-weight: bold;">Fecha Impresión: @DateTime.UtcNow.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                    <p style="margin: 2px 0; color: #475569;">Total Plazas: @_dossier.TotalInscritos</p>
+                </div>
+            </div>
+            <div style="margin-top: 10px; background: #F1F5F9; padding: 10px; border-radius: 4px;">
+                <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">@_dossier.Actividad.Titulo</p>
+                <p style="margin: 2px 0;"><strong>Lugar:</strong> @_dossier.Actividad.Lugar | <strong>Fechas:</strong> @_dossier.Actividad.FechaInicio.ToLocalTime():dd/MM/yyyy HH:mm - @_dossier.Actividad.FechaFin.ToLocalTime():dd/MM/yyyy HH:mm</p>
+                @if (!string.IsNullOrWhiteSpace(_dossier.Actividad.PuntoEncuentroSalida))
+                {
+                    <p style="margin: 2px 0;"><strong>Punto Salida:</strong> @_dossier.Actividad.PuntoEncuentroSalida | <strong>Punto Regreso:</strong> @_dossier.Actividad.PuntoEncuentroRegreso</p>
+                }
+            </div>
+        </div>
+
+        <!-- Pestañas Interactivas (Pantalla) -->
+        <div class="no-print">
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-3">
+                
+                <!-- TAB 1: Control de Asistencia y Salida -->
+                <MudTabPanel Text="Control de Asistencia" Icon="@Icons.Material.Filled.FactCheck">
+                    <MudPaper Elevation="0" Outlined="true" Class="pa-3 mb-3">
+                        <MudGrid Spacing="2" Class="align-center">
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudTextField @bind-Value="_filtroNombre" 
+                                              Placeholder="Buscar por nombre de educando..." 
+                                              Adornment="Adornment.Start" 
+                                              AdornmentIcon="@Icons.Material.Filled.Search" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              Clearable="true" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6" md="4">
+                                <MudSelect T="RamaScout?" @bind-Value="_filtroRama" Label="Filtrar por Rama" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true">
+                                    <MudSelectItem Value="@((RamaScout?)null)">Todas las ramas</MudSelectItem>
+                                    @foreach (var rama in Enum.GetValues<RamaScout>().Where(r => r != RamaScout.Ninguna))
+                                    {
+                                        <MudSelectItem Value="@((RamaScout?)rama)">@rama.ObtenerNombre()</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+                            <MudItem xs="12" md="4" Class="text-end">
+                                <MudChip T="string" Color="Color.Default" Variant="Variant.Text">
+                                    Mostrando @InscripcionesFiltradas.Count educandos
+                                </MudChip>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+
+                    <MudTable Items="@InscripcionesFiltradas" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                        <HeaderContent>
+                            <MudTh>Educando y Rama</MudTh>
+                            <MudTh>Tutor y Teléfono</MudTh>
+                            <MudTh Class="text-center">Check-in Salida</MudTh>
+                            <MudTh Class="text-center">Check-in Regreso</MudTh>
+                            <MudTh>Observaciones de Recogida</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Educando">
+                                <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.Educando.NombreCompleto</MudText>
+                                <div class="d-flex align-center gap-1">
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                        Rama @context.Educando.RamaActual.ObtenerNombre()
+                                    </MudChip>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Educando.CalcularEdad() años</MudText>
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Tutor">
+                                <MudText Typo="Typo.body2">@context.TutorLegal.NombreCompleto</MudText>
+                                <MudLink Href="@($"tel:{context.Educando.FichaMedica?.TelefonoEmergenciaPrincipal ?? context.TutorLegal.PhoneNumber}")" Typo="Typo.caption">
+                                    @(context.Educando.FichaMedica?.TelefonoEmergenciaPrincipal ?? context.TutorLegal.PhoneNumber ?? "Sin teléfono")
+                                </MudLink>
+                            </MudTd>
+                            <MudTd DataLabel="Salida" Class="text-center">
+                                @if (context.PresenteEnSalida)
+                                {
+                                    <MudButton Variant="Variant.Filled" 
+                                               Color="Color.Success" 
+                                               Size="Size.Small" 
+                                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                                               OnClick="@(() => CambiarCheckInSalidaAsync(context, false))">
+                                        Presente (@(context.FechaCheckInSalidaUtc?.ToLocalTime().ToString("HH:mm") ?? "OK"))
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Outlined" 
+                                               Color="Color.Default" 
+                                               Size="Size.Small" 
+                                               StartIcon="@Icons.Material.Filled.RadioButtonUnchecked"
+                                               OnClick="@(() => CambiarCheckInSalidaAsync(context, true))">
+                                        Ausente
+                                    </MudButton>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Regreso" Class="text-center">
+                                @if (context.PresenteEnRegreso)
+                                {
+                                    <MudButton Variant="Variant.Filled" 
+                                               Color="Color.Info" 
+                                               Size="Size.Small" 
+                                               StartIcon="@Icons.Material.Filled.AssignmentTurnedIn"
+                                               OnClick="@(() => CambiarCheckInRegresoAsync(context, false))">
+                                        Entregado (@(context.FechaCheckInRegresoUtc?.ToLocalTime().ToString("HH:mm") ?? "OK"))
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Outlined" 
+                                               Color="Color.Default" 
+                                               Size="Size.Small" 
+                                               StartIcon="@Icons.Material.Filled.RadioButtonUnchecked"
+                                               OnClick="@(() => CambiarCheckInRegresoAsync(context, true))">
+                                        En marcha
+                                    </MudButton>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Observaciones">
+                                <div class="d-flex align-center gap-1">
+                                    <MudTextField @bind-Value="context.ObservacionesAsistencia" 
+                                                  Placeholder="Notas (ej. recogida por tía)..." 
+                                                  Variant="Variant.Text" 
+                                                  Margin="Margin.Dense" 
+                                                  OnBlur="@(() => GuardarObservacionAsync(context))" />
+                                </div>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- TAB 2: Fichero Sanitario e Intendencia Alimentaria -->
+                <MudTabPanel Text="Fichero Sanitario e Intendencia" Icon="@Icons.Material.Filled.MedicalServices">
+                    @if (_dossier.AlertasIntendencia.Count > 0)
+                    {
+                        <div class="mb-4">
+                            <div class="d-flex align-center gap-2 mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Color="Color.Warning" />
+                                <MudText Typo="Typo.h6" Style="font-weight: 700;">Intendencia y Cocina: Alergias y Dietas Especiales</MudText>
+                            </div>
+                            <MudTable Items="@_dossier.AlertasIntendencia" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                                <HeaderContent>
+                                    <MudTh>Educando</MudTh>
+                                    <MudTh>Rama</MudTh>
+                                    <MudTh>Alergias / Intolerancias</MudTh>
+                                    <MudTh>Régimen Alimenticio</MudTh>
+                                    <MudTh>Observaciones Cocina</MudTh>
+                                </HeaderContent>
+                                <RowTemplate>
+                                    <MudTd DataLabel="Educando" Style="font-weight: 700;">@context.NombreEducando</MudTd>
+                                    <MudTd DataLabel="Rama">
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Rama.ObtenerNombre()</MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Alergias">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
+                                            @context.AlergiasAlimentarias
+                                        </MudChip>
+                                    </MudTd>
+                                    <MudTd DataLabel="Régimen">@(context.RegimenAlimenticio ?? "Estándar")</MudTd>
+                                    <MudTd DataLabel="Observaciones">@(context.ObservacionesIntendencia ?? "-")</MudTd>
+                                </RowTemplate>
+                            </MudTable>
+                        </div>
+                    }
+
+                    <div>
+                        <div class="d-flex align-center gap-2 mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Color="Color.Primary" />
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Fichero Sanitario Completo (Para Scouters y Sanitarios)</MudText>
+                        </div>
+                        <MudTable Items="@_dossier.RegistrosSanitarios" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                            <HeaderContent>
+                                <MudTh>Educando y Edad</MudTh>
+                                <MudTh>CIP / Seg. Social</MudTh>
+                                <MudTh>Aseguradora</MudTh>
+                                <MudTh>Nadar / Vacunas</MudTh>
+                                <MudTh>Enfermedades Crónicas</MudTh>
+                                <MudTh>Medicación Activa</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Educando">
+                                    <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.NombreEducando</MudText>
+                                    <div class="d-flex align-center gap-1">
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Rama.ObtenerNombre()</MudChip>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Edad años</MudText>
+                                    </div>
+                                </MudTd>
+                                <MudTd DataLabel="CIP">@context.NumeroSeguridadSocial</MudTd>
+                                <MudTd DataLabel="Aseguradora">@context.EntidadAseguradora</MudTd>
+                                <MudTd DataLabel="Nadar/Vacunas">
+                                    <div class="d-flex gap-1">
+                                        <MudChip T="string" Size="Size.Small" Color="@(context.SabeNadar ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                                            @(context.SabeNadar ? "Nada" : "No Nada")
+                                        </MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="@(context.VacunacionAlDia ? Color.Success : Color.Error)" Variant="Variant.Outlined">
+                                            @(context.VacunacionAlDia ? "Vacunas OK" : "Sin Vacunas")
+                                        </MudChip>
+                                    </div>
+                                </MudTd>
+                                <MudTd DataLabel="Crónicas">
+                                    @if (!string.IsNullOrWhiteSpace(context.EnfermedadesCronicas))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Error" Style="font-weight: 600;">@context.EnfermedadesCronicas</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Medicación">
+                                    @if (!string.IsNullOrWhiteSpace(context.MedicacionActiva))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Warning" Style="font-weight: 600;">@context.MedicacionActiva</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    </div>
+                </MudTabPanel>
+
+                <!-- TAB 3: Directorio de Emergencia -->
+                <MudTabPanel Text="Directorio de Contactos" Icon="@Icons.Material.Filled.ContactPhone">
+                    <MudTable Items="@_dossier.DirectorioEmergencia" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                        <HeaderContent>
+                            <MudTh>Educando</MudTh>
+                            <MudTh>Rama</MudTh>
+                            <MudTh>Tutor Legal</MudTh>
+                            <MudTh>Teléfono Principal</MudTh>
+                            <MudTh>Contacto Urgencias 1</MudTh>
+                            <MudTh>Teléfono Secundario</MudTh>
+                            <MudTh>Contacto Urgencias 2</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Educando" Style="font-weight: 700;">@context.NombreEducando</MudTd>
+                            <MudTd DataLabel="Rama">
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Rama.ObtenerNombre()</MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Tutor">@context.TutorLegalNombre</MudTd>
+                            <MudTd DataLabel="Teléfono 1">
+                                <MudButton Variant="Variant.Text" 
+                                           Color="Color.Primary" 
+                                           StartIcon="@Icons.Material.Filled.Phone" 
+                                           Size="Size.Small" 
+                                           Href="@($"tel:{context.TelefonoPrincipal}")">
+                                    @context.TelefonoPrincipal
+                                </MudButton>
+                            </MudTd>
+                            <MudTd DataLabel="Contacto 1">@(context.ContactoPrincipalNombre ?? "-")</MudTd>
+                            <MudTd DataLabel="Teléfono 2">
+                                @if (!string.IsNullOrWhiteSpace(context.TelefonoSecundario))
+                                {
+                                    <MudButton Variant="Variant.Text" 
+                                               Color="Color.Default" 
+                                               StartIcon="@Icons.Material.Filled.Phone" 
+                                               Size="Size.Small" 
+                                               Href="@($"tel:{context.TelefonoSecundario}")">
+                                        @context.TelefonoSecundario
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Contacto 2">@(context.ContactoSecundarioNombre ?? "-")</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+
+                <!-- TAB 4: Balance Económico y Conciliación de Justificantes -->
+                <MudTabPanel Text="Balance de Cuotas" Icon="@Icons.Material.Filled.Payments">
+                    <MudGrid Spacing="3" Class="mb-3">
+                        <MudItem xs="12" sm="4">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Cuota Total Presupuestada</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight: 700;">@_dossier.TotalPresupuestadoEuros.ToString("N2") €</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center bg-light">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Transferencias Verificadas</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="Color.Success">
+                                    @_dossier.TotalRecaudadoEuros.ToString("N2") €
+                                </MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Pendiente de Justificante</MudText>
+                                <MudText Typo="Typo.h5" Style="font-weight: 700;" Color="@(_dossier.TotalPendienteEuros > 0 ? Color.Warning : Color.Default)">
+                                    @_dossier.TotalPendienteEuros.ToString("N2") €
+                                </MudText>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                    <MudTable Items="@_dossier.Inscripciones" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                        <HeaderContent>
+                            <MudTh>Educando</MudTh>
+                            <MudTh>Tutor Legal</MudTh>
+                            <MudTh>Cuota</MudTh>
+                            <MudTh>Estado Justificante</MudTh>
+                            <MudTh>Comprobante Adjunto</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Educando" Style="font-weight: 700;">@context.Educando.NombreCompleto</MudTd>
+                            <MudTd DataLabel="Tutor">@context.TutorLegal.NombreCompleto</MudTd>
+                            <MudTd DataLabel="Cuota">@context.ImporteEuros.ToString("N2") €</MudTd>
+                            <MudTd DataLabel="Estado">
+                                <MudChip T="string" Size="Size.Small" Color="@(context.Estado == EstadoInscripcion.Confirmada ? Color.Success : Color.Warning)" Variant="Variant.Filled">
+                                    @context.Estado.ToString()
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Comprobante">
+                                @if (context.TieneJustificanteSubido)
+                                {
+                                    <MudButton Variant="Variant.Outlined" 
+                                               Color="Color.Primary" 
+                                               Size="Size.Small" 
+                                               Href="@($"/api/justificantes/{context.Id}")" 
+                                               Target="_blank"
+                                               StartIcon="@Icons.Material.Filled.Download">
+                                        Ver Justificante
+                                    </MudButton>
+                                }
+                                else if (context.ImporteEuros == 0)
+                                {
+                                    <span class="mud-text-secondary">Actividad gratuita</span>
+                                }
+                                else
+                                {
+                                    <span class="text-warning">Sin justificante subido</span>
+                                }
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudTabPanel>
+            </MudTabs>
+        </div>
+
+        <!-- SECCIONES COMPLETAS PARA IMPRESIÓN (Solo visibles en modo print) -->
+        <div class="only-print">
+            <h3 style="margin-top: 20px; font-weight: bold; border-bottom: 1px solid #94A3B8;">1. Lista de Asistencia y Check-in de Salida / Regreso</h3>
+            <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
+                <thead>
+                    <tr style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1;">
+                        <th style="padding: 6px; text-align: left;">#</th>
+                        <th style="padding: 6px; text-align: left;">Educando</th>
+                        <th style="padding: 6px; text-align: left;">Rama</th>
+                        <th style="padding: 6px; text-align: left;">Edad</th>
+                        <th style="padding: 6px; text-align: left;">Tutor Legal</th>
+                        <th style="padding: 6px; text-align: left;">Teléfono</th>
+                        <th style="padding: 6px; text-align: center;">Salida</th>
+                        <th style="padding: 6px; text-align: center;">Regreso</th>
+                        <th style="padding: 6px; text-align: left;">Observaciones / Firma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int idx = 1; }
+                    @foreach (var ins in _dossier.Inscripciones)
+                    {
+                        <tr style="border-bottom: 1px solid #E2E8F0;">
+                            <td style="padding: 6px;">@(idx++)</td>
+                            <td style="padding: 6px; font-weight: bold;">@ins.Educando.NombreCompleto</td>
+                            <td style="padding: 6px;">@ins.Educando.RamaActual.ObtenerNombre()</td>
+                            <td style="padding: 6px;">@ins.Educando.CalcularEdad()</td>
+                            <td style="padding: 6px;">@ins.TutorLegal.NombreCompleto</td>
+                            <td style="padding: 6px;">@(ins.Educando.FichaMedica?.TelefonoEmergenciaPrincipal ?? ins.TutorLegal.PhoneNumber)</td>
+                            <td style="padding: 6px; text-align: center;">@(ins.PresenteEnSalida ? "PRESENTE" : "[  ]")</td>
+                            <td style="padding: 6px; text-align: center;">@(ins.PresenteEnRegreso ? "ENTREGADO" : "[  ]")</td>
+                            <td style="padding: 6px;">@(ins.ObservacionesAsistencia ?? "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (_dossier.AlertasIntendencia.Count > 0)
+            {
+                <div style="page-break-before: auto; margin-top: 25px;">
+                    <h3 style="font-weight: bold; border-bottom: 1px solid #94A3B8;">2. Intendencia y Cocina: Alergias e Intolerancias</h3>
+                    <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
+                        <thead>
+                            <tr style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1;">
+                                <th style="padding: 6px; text-align: left;">Educando</th>
+                                <th style="padding: 6px; text-align: left;">Rama</th>
+                                <th style="padding: 6px; text-align: left;">Alergias Alimentarias</th>
+                                <th style="padding: 6px; text-align: left;">Régimen Alimenticio</th>
+                                <th style="padding: 6px; text-align: left;">Notas Cocina</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var alert in _dossier.AlertasIntendencia)
+                            {
+                                <tr style="border-bottom: 1px solid #E2E8F0;">
+                                    <td style="padding: 6px; font-weight: bold;">@alert.NombreEducando</td>
+                                    <td style="padding: 6px;">@alert.Rama.ObtenerNombre()</td>
+                                    <td style="padding: 6px; font-weight: bold; color: #DC2626;">@alert.AlergiasAlimentarias</td>
+                                    <td style="padding: 6px;">@(alert.RegimenAlimenticio ?? "Estándar")</td>
+                                    <td style="padding: 6px;">@(alert.ObservacionesIntendencia ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div style="page-break-before: auto; margin-top: 25px;">
+                <h3 style="font-weight: bold; border-bottom: 1px solid #94A3B8;">3. Fichero Médico y Sanitarios de Campamento</h3>
+                <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 10px;">
+                    <thead>
+                        <tr style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1;">
+                            <th style="padding: 5px; text-align: left;">Educando</th>
+                            <th style="padding: 5px; text-align: left;">CIP / Seg. Social</th>
+                            <th style="padding: 5px; text-align: left;">Aseguradora</th>
+                            <th style="padding: 5px; text-align: left;">Nadar</th>
+                            <th style="padding: 5px; text-align: left;">Vacunación</th>
+                            <th style="padding: 5px; text-align: left;">Enfermedades Crónicas</th>
+                            <th style="padding: 5px; text-align: left;">Medicación Activa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var med in _dossier.RegistrosSanitarios)
+                        {
+                            <tr style="border-bottom: 1px solid #E2E8F0;">
+                                <td style="padding: 5px; font-weight: bold;">@med.NombreEducando (@med.Rama.ObtenerNombre())</td>
+                                <td style="padding: 5px;">@med.NumeroSeguridadSocial</td>
+                                <td style="padding: 5px;">@med.EntidadAseguradora</td>
+                                <td style="padding: 5px;">@(med.SabeNadar ? "SÍ" : "NO")</td>
+                                <td style="padding: 5px;">@(med.VacunacionAlDia ? "Al día" : "Incompleta")</td>
+                                <td style="padding: 5px; color: #DC2626;">@(med.EnfermedadesCronicas ?? "Ninguna")</td>
+                                <td style="padding: 5px; font-weight: bold;">@(med.MedicacionActiva ?? "Ninguna")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</MudContainer>
+
+<style>
+    .only-print {
+        display: none !important;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+        .only-print {
+            display: block !important;
+        }
+        .mud-appbar, .mud-drawer, .mud-snackbar-provider, .mud-popover-provider {
+            display: none !important;
+        }
+        body {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .print-table th, .print-table td {
+            border: 1px solid #CBD5E1 !important;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public Guid ActividadId { get; set; }
+
+    private DossierOperativoActividad? _dossier;
+    private bool _cargando = true;
+    private string? _filtroNombre;
+    private RamaScout? _filtroRama;
+
+    private List<InscripcionActividad> InscripcionesFiltradas
+    {
+        get
+        {
+            if (_dossier == null) return [];
+            var query = _dossier.Inscripciones.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_filtroNombre))
+            {
+                query = query.Where(i => i.Educando.NombreCompleto.Contains(_filtroNombre, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (_filtroRama.HasValue)
+            {
+                query = query.Where(i => i.Educando.RamaActual == _filtroRama.Value);
+            }
+
+            return query.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDossierAsync();
+    }
+
+    private async Task CargarDossierAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _dossier = await ServicioDossier.ObtenerDossierActividadAsync(ActividadId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar el dossier: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task CambiarCheckInSalidaAsync(InscripcionActividad inscripcion, bool presente)
+    {
+        try
+        {
+            await ServicioDossier.RegistrarCheckInSalidaAsync(inscripcion.Id, presente);
+            inscripcion.PresenteEnSalida = presente;
+            inscripcion.FechaCheckInSalidaUtc = presente ? DateTime.UtcNow : null;
+            Snackbar.Add($"Salida registrada: {inscripcion.Educando.Nombre} {(presente ? "Presente" : "Ausente")}", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CambiarCheckInRegresoAsync(InscripcionActividad inscripcion, bool presente)
+    {
+        try
+        {
+            await ServicioDossier.RegistrarCheckInRegresoAsync(inscripcion.Id, presente);
+            inscripcion.PresenteEnRegreso = presente;
+            inscripcion.FechaCheckInRegresoUtc = presente ? DateTime.UtcNow : null;
+            Snackbar.Add($"Regreso registrado: {inscripcion.Educando.Nombre} {(presente ? "Entregado a la familia" : "En marcha")}", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task GuardarObservacionAsync(InscripcionActividad inscripcion)
+    {
+        try
+        {
+            await ServicioDossier.ActualizarObservacionAsistenciaAsync(inscripcion.Id, inscripcion.ObservacionesAsistencia);
+            Snackbar.Add("Observación de asistencia guardada", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ImprimirDossierAsync()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+}
