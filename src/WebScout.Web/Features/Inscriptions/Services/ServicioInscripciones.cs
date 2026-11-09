@@ -5,6 +5,8 @@ using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Inscriptions.Storage;
+using WebScout.Web.Infrastructure.Outbox.Services;
+using WebScout.Web.Infrastructure.Outbox.Templates;
 using WebScout.Web.Infrastructure.Persistence;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -19,18 +21,21 @@ public class ServicioInscripciones : IServicioInscripciones
     private readonly WebScoutDbContext _dbContext;
     private readonly ITenantContext _tenantContext;
     private readonly IAlmacenamientoJustificantes _almacenamientoJustificantes;
+    private readonly IServicioOutbox? _servicioOutbox;
     private readonly ILogger<ServicioInscripciones> _logger;
 
     public ServicioInscripciones(
         WebScoutDbContext dbContext,
         ITenantContext tenantContext,
         IAlmacenamientoJustificantes almacenamientoJustificantes,
-        ILogger<ServicioInscripciones> logger)
+        ILogger<ServicioInscripciones> logger,
+        IServicioOutbox? servicioOutbox = null)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _almacenamientoJustificantes = almacenamientoJustificantes;
         _logger = logger;
+        _servicioOutbox = servicioOutbox;
     }
 
     public async Task<InscripcionActividad> InscribirEducandoAsync(
@@ -131,6 +136,37 @@ public class ServicioInscripciones : IServicioInscripciones
             };
 
             _dbContext.Inscripciones.Add(inscripcion);
+        }
+
+        // Notificación Outbox atómica para acuse de recibo de inscripción
+        if (_servicioOutbox != null)
+        {
+            var tutor = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == tutorId);
+            var grupo = await _dbContext.GruposScout.FirstOrDefaultAsync(g => g.Id == _tenantContext.CurrentTenantId);
+            var nombreGrupo = grupo?.Nombre ?? "Grupo Scout";
+            var urlAcceso = "/familias/inscripciones";
+
+            if (tutor != null && !string.IsNullOrWhiteSpace(tutor.Email))
+            {
+                var contenido = PlantillasCorreo.InscripcionPresentada(
+                    educando.NombreCompleto,
+                    actividad.Titulo,
+                    urlAcceso,
+                    nombreGrupo);
+
+                await _servicioOutbox.EncolarMensajeAsync(
+                    organizacionId: inscripcion.OrganizacionId,
+                    tipoEvento: "InscripcionPresentada",
+                    destinatarioEmail: tutor.Email,
+                    destinatarioNombre: tutor.NombreCompleto,
+                    asunto: contenido.Asunto,
+                    cuerpoHtml: contenido.CuerpoHtml,
+                    cuerpoTextoPlano: contenido.CuerpoTextoPlano,
+                    claveDeduplicacion: $"inscripcion-presentada-{inscripcion.Id}",
+                    replyToEmail: grupo?.EmailContacto,
+                    remitenteNombre: nombreGrupo,
+                    guardarInmediatamente: false);
+            }
         }
 
         await _dbContext.SaveChangesAsync();
@@ -251,6 +287,70 @@ public class ServicioInscripciones : IServicioInscripciones
         inscripcion.NotasKraal = notasKraal;
         inscripcion.RevisadoPorUsuarioId = scouterId;
         inscripcion.FechaRevisionUtc = DateTime.UtcNow;
+
+        // Despacho transaccional Outbox según la resolución del Kraal (PA11 / ADR07)
+        if (_servicioOutbox != null)
+        {
+            var tutor = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == inscripcion.TutorLegalId);
+            var educando = await _dbContext.Educandos.FirstOrDefaultAsync(e => e.Id == inscripcion.EducandoId);
+            var actividad = await _dbContext.Actividades.FirstOrDefaultAsync(a => a.Id == inscripcion.ActividadId);
+            var grupo = await _dbContext.GruposScout.FirstOrDefaultAsync(g => g.Id == inscripcion.OrganizacionId);
+            var nombreGrupo = grupo?.Nombre ?? "Grupo Scout";
+            var urlAcceso = "/familias/inscripciones";
+
+            if (tutor != null && !string.IsNullOrWhiteSpace(tutor.Email) && educando != null && actividad != null)
+            {
+                if (nuevoEstado == EstadoInscripcion.RequiereSubsanacion)
+                {
+                    var contenido = PlantillasCorreo.SubsanacionRequerida(
+                        educando.NombreCompleto,
+                        actividad.Titulo,
+                        notasKraal,
+                        urlAcceso,
+                        nombreGrupo);
+
+                    var claveDeduplicacion = $"subsanacion-{inscripcion.Id}-{inscripcion.FechaRevisionUtc?.Ticks ?? DateTime.UtcNow.Ticks}";
+
+                    await _servicioOutbox.EncolarMensajeAsync(
+                        organizacionId: inscripcion.OrganizacionId,
+                        tipoEvento: "InscripcionSubsanacionRequerida",
+                        destinatarioEmail: tutor.Email,
+                        destinatarioNombre: tutor.NombreCompleto,
+                        asunto: contenido.Asunto,
+                        cuerpoHtml: contenido.CuerpoHtml,
+                        cuerpoTextoPlano: contenido.CuerpoTextoPlano,
+                        claveDeduplicacion: claveDeduplicacion,
+                        replyToEmail: grupo?.EmailContacto,
+                        remitenteNombre: nombreGrupo,
+                        guardarInmediatamente: false);
+                }
+                else if (nuevoEstado == EstadoInscripcion.Confirmada)
+                {
+                    var contenido = PlantillasCorreo.ConfirmacionInscripcion(
+                        educando.NombreCompleto,
+                        actividad.Titulo,
+                        actividad.FechaInicio,
+                        actividad.Lugar,
+                        urlAcceso,
+                        nombreGrupo);
+
+                    var claveDeduplicacion = $"confirmacion-{inscripcion.Id}";
+
+                    await _servicioOutbox.EncolarMensajeAsync(
+                        organizacionId: inscripcion.OrganizacionId,
+                        tipoEvento: "InscripcionConfirmada",
+                        destinatarioEmail: tutor.Email,
+                        destinatarioNombre: tutor.NombreCompleto,
+                        asunto: contenido.Asunto,
+                        cuerpoHtml: contenido.CuerpoHtml,
+                        cuerpoTextoPlano: contenido.CuerpoTextoPlano,
+                        claveDeduplicacion: claveDeduplicacion,
+                        replyToEmail: grupo?.EmailContacto,
+                        remitenteNombre: nombreGrupo,
+                        guardarInmediatamente: false);
+                }
+            }
+        }
 
         await _dbContext.SaveChangesAsync();
 
