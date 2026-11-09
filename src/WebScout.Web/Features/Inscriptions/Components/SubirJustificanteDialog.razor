@@ -1,0 +1,163 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Components.Forms
+@inject IServicioInscripciones ServicioInscripciones
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.UploadFile" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Justificante de Transferencia Bancaria</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-3 bg-light">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">@Inscripcion.Actividad?.Titulo</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                    Educando: <strong>@Inscripcion.Educando?.NombreCompleto</strong>
+                </MudText>
+                <div class="d-flex align-center justify-space-between mt-2 pt-2" style="border-top: 1px dashed #E2E8F0;">
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Importe a Justificar:</MudText>
+                    <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" Style="font-weight: 700;">
+                        @Inscripcion.ImporteEuros.ToString("N2") €
+                    </MudChip>
+                </div>
+            </MudPaper>
+
+            <!-- Datos bancarios -->
+            <MudAlert Severity="Severity.Info" Dense="true">
+                <MudText Typo="Typo.body2">
+                    <strong>Datos para realizar la transferencia:</strong>
+                </MudText>
+                <div class="mt-1">
+                    <MudText Typo="Typo.caption" Class="d-block">
+                        <strong>IBAN:</strong> @(!string.IsNullOrWhiteSpace(Inscripcion.Actividad?.IbanCuentaBancaria) ? Inscripcion.Actividad.IbanCuentaBancaria : "Consultar con Tesorería del grupo")
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="d-block">
+                        <strong>Concepto:</strong> @(!string.IsNullOrWhiteSpace(Inscripcion.Actividad?.ConceptoPagoSugerido) ? Inscripcion.Actividad.ConceptoPagoSugerido : $"{Inscripcion.Actividad?.Titulo} - {Inscripcion.Educando?.NombreCompleto}")
+                    </MudText>
+                </div>
+            </MudAlert>
+
+            @if (Inscripcion.Estado == EstadoInscripcion.RequiereSubsanacion && !string.IsNullOrWhiteSpace(Inscripcion.NotasKraal))
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    <strong>Motivo de subsanación indicado por el Kraal:</strong><br />
+                    @Inscripcion.NotasKraal
+                </MudAlert>
+            }
+
+            @if (Inscripcion.TieneJustificanteSubido)
+            {
+                <MudPaper Elevation="0" Outlined="true" Class="pa-2 d-flex align-center justify-space-between">
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Default" />
+                        <div>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">@Inscripcion.NombreArchivoJustificante</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Subido el @Inscripcion.FechaSubidaJustificanteUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        </div>
+                    </div>
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Primary" 
+                               Size="Size.Small" 
+                               Href="@($"/api/justificantes/{Inscripcion.Id}")" 
+                               Target="_blank"
+                               StartIcon="@Icons.Material.Filled.Download">
+                        Descargar
+                    </MudButton>
+                </MudPaper>
+            }
+
+            <!-- Selector de Archivo -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">
+                    @(Inscripcion.TieneJustificanteSubido ? "Reemplazar con nuevo archivo:" : "Seleccionar justificante:")
+                </MudText>
+                <div class="d-flex align-center gap-2">
+                    <MudFileUpload T="IBrowserFile" FilesChanged="OnArchivoCambiado" Accept=".pdf,.jpg,.jpeg,.png,.webp" MaximumFileCount="1">
+                        <CustomContent Context="fileUpload">
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       StartIcon="@Icons.Material.Filled.AttachFile"
+                                       OnClick="@fileUpload.OpenFilePickerAsync">
+                                @(_archivoSeleccionado != null ? "Cambiar Selección" : "Examinar Archivo...")
+                            </MudButton>
+                        </CustomContent>
+                    </MudFileUpload>
+
+                    @if (_archivoSeleccionado != null)
+                    {
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small" OnClose="@(() => _archivoSeleccionado = null)">
+                            @_archivoSeleccionado.Name (@((_archivoSeleccionado.Size / 1024.0).ToString("N1")) KB)
+                        </MudChip>
+                    }
+                </div>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">
+                    Formatos admitidos: PDF, JPG, PNG o WEBP (tamaño máximo 10 MB).
+                </MudText>
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cerrar</MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   Disabled="@(_archivoSeleccionado == null || _subiendo)" 
+                   OnClick="SubirAsync">
+            @if (_subiendo)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Subiendo comprobante...</span>
+            }
+            else
+            {
+                <span>Subir Justificante</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public InscripcionActividad Inscripcion { get; set; } = null!;
+
+    private IBrowserFile? _archivoSeleccionado;
+    private bool _subiendo = false;
+
+    private void OnArchivoCambiado(IBrowserFile? file)
+    {
+        _archivoSeleccionado = file;
+    }
+
+    private async Task SubirAsync()
+    {
+        if (_archivoSeleccionado == null) return;
+
+        _subiendo = true;
+        try
+        {
+            using var stream = _archivoSeleccionado.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await ServicioInscripciones.SubirJustificantePagoAsync(
+                Inscripcion.Id,
+                _archivoSeleccionado.Name,
+                stream);
+
+            Snackbar.Add("Justificante adjuntado correctamente. El Kraal procederá a su validación.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al subir el archivo: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _subiendo = false;
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}

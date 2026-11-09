@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -29,6 +30,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<ActividadScout> Actividades => Set<ActividadScout>();
     public DbSet<Educando> Educandos => Set<Educando>();
     public DbSet<FichaMedica> FichasMedicas => Set<FichaMedica>();
+    public DbSet<InscripcionActividad> Inscripciones => Set<InscripcionActividad>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -141,7 +143,43 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(h => new { h.OrganizacionId, h.EducandoId }).IsUnique();
         });
 
-        // 7. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
+        // 7. Configuración de Inscripciones a Actividades
+        modelBuilder.Entity<InscripcionActividad>(b =>
+        {
+            b.ToTable("Inscripciones");
+            b.HasKey(i => i.Id);
+            b.Property(i => i.ImporteEuros).HasPrecision(10, 2);
+            b.Property(i => i.NombreArchivoJustificante).HasMaxLength(255);
+            b.Property(i => i.RutaArchivoJustificante).HasMaxLength(500);
+            b.Property(i => i.ObservacionesFamilia).HasMaxLength(1000);
+            b.Property(i => i.NotasKraal).HasMaxLength(1000);
+
+            b.HasIndex(i => new { i.OrganizacionId, i.ActividadId, i.EducandoId }).IsUnique();
+            b.HasIndex(i => new { i.OrganizacionId, i.TutorLegalId });
+            b.HasIndex(i => new { i.OrganizacionId, i.Estado });
+
+            b.HasOne(i => i.Actividad)
+                .WithMany()
+                .HasForeignKey(i => i.ActividadId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(i => i.Educando)
+                .WithMany()
+                .HasForeignKey(i => i.EducandoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(i => i.TutorLegal)
+                .WithMany()
+                .HasForeignKey(i => i.TutorLegalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne(i => i.RevisadoPorUsuario)
+                .WithMany()
+                .HasForeignKey(i => i.RevisadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // 8. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))

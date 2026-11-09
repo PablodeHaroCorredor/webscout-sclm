@@ -1,0 +1,293 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Activities.Domain;
+using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Inscriptions.Domain;
+using WebScout.Web.Features.Inscriptions.Storage;
+using WebScout.Web.Infrastructure.Persistence;
+using WebScout.Web.Infrastructure.Tenancy;
+
+namespace WebScout.Web.Features.Inscriptions.Services;
+
+/// <summary>
+/// Implementación del servicio de inscripciones a actividades scout y trazabilidad de justificantes de pago bancario.
+/// Cumple aislamiento multitenant estricto y modelo de datos en castellano.
+/// </summary>
+public class ServicioInscripciones : IServicioInscripciones
+{
+    private readonly WebScoutDbContext _dbContext;
+    private readonly ITenantContext _tenantContext;
+    private readonly IAlmacenamientoJustificantes _almacenamientoJustificantes;
+    private readonly ILogger<ServicioInscripciones> _logger;
+
+    public ServicioInscripciones(
+        WebScoutDbContext dbContext,
+        ITenantContext tenantContext,
+        IAlmacenamientoJustificantes almacenamientoJustificantes,
+        ILogger<ServicioInscripciones> logger)
+    {
+        _dbContext = dbContext;
+        _tenantContext = tenantContext;
+        _almacenamientoJustificantes = almacenamientoJustificantes;
+        _logger = logger;
+    }
+
+    public async Task<InscripcionActividad> InscribirEducandoAsync(
+        Guid actividadId,
+        Guid educandoId,
+        Guid tutorId,
+        string? observaciones = null)
+    {
+        ValidarTenantActivo();
+
+        var actividad = await _dbContext.Actividades
+            .FirstOrDefaultAsync(a => a.Id == actividadId);
+
+        if (actividad == null)
+        {
+            throw new InvalidOperationException("La actividad no existe o no pertenece a este grupo scout.");
+        }
+
+        if (actividad.Estado != EstadoActividad.Publicada)
+        {
+            throw new InvalidOperationException("No se pueden tramitar inscripciones en una actividad que no se encuentra en estado Publicada.");
+        }
+
+        if (actividad.FechaLimiteInscripcion.HasValue && actividad.FechaLimiteInscripcion.Value.Date < DateTime.UtcNow.Date)
+        {
+            throw new InvalidOperationException("El plazo de inscripción para esta actividad ha expirado.");
+        }
+
+        var educando = await _dbContext.Educandos
+            .Include(e => e.FichaMedica)
+            .FirstOrDefaultAsync(e => e.Id == educandoId);
+
+        if (educando == null)
+        {
+            throw new InvalidOperationException("El educando no existe o no pertenece a este grupo scout.");
+        }
+
+        if (educando.TutorLegalId != tutorId)
+        {
+            throw new InvalidOperationException("No tiene autorización legal sobre el educando seleccionado.");
+        }
+
+        if (!educando.Activo)
+        {
+            throw new InvalidOperationException("El educando no se encuentra en estado activo en el censo del grupo.");
+        }
+
+        if (!actividad.AplicaARama(educando.RamaActual))
+        {
+            throw new InvalidOperationException($"La actividad no está dirigida a la rama {educando.RamaActual.ObtenerNombre()} a la que pertenece el educando.");
+        }
+
+        var inscripcionExistente = await _dbContext.Inscripciones
+            .FirstOrDefaultAsync(i => i.ActividadId == actividadId && i.EducandoId == educandoId);
+
+        if (inscripcionExistente != null && inscripcionExistente.Estado != EstadoInscripcion.Cancelada)
+        {
+            throw new InvalidOperationException("El educando ya cuenta con una inscripción activa o en trámite para esta actividad.");
+        }
+
+        var estadoInicial = actividad.Precio <= 0m
+            ? EstadoInscripcion.Confirmada
+            : EstadoInscripcion.PendienteJustificante;
+
+        InscripcionActividad inscripcion;
+
+        if (inscripcionExistente != null)
+        {
+            // Reactivación de inscripción previamente cancelada
+            inscripcion = inscripcionExistente;
+            inscripcion.Estado = estadoInicial;
+            inscripcion.ImporteEuros = actividad.Precio;
+            inscripcion.FechaInscripcionUtc = DateTime.UtcNow;
+            inscripcion.AutorizacionFirmada = true;
+            inscripcion.FechaAutorizacionUtc = DateTime.UtcNow;
+            inscripcion.ObservacionesFamilia = observaciones;
+            inscripcion.NotasKraal = null;
+            inscripcion.NombreArchivoJustificante = null;
+            inscripcion.RutaArchivoJustificante = null;
+            inscripcion.FechaSubidaJustificanteUtc = null;
+            inscripcion.RevisadoPorUsuarioId = null;
+            inscripcion.FechaRevisionUtc = null;
+        }
+        else
+        {
+            inscripcion = new InscripcionActividad
+            {
+                OrganizacionId = _tenantContext.CurrentTenantId,
+                ActividadId = actividadId,
+                EducandoId = educandoId,
+                TutorLegalId = tutorId,
+                ImporteEuros = actividad.Precio,
+                Estado = estadoInicial,
+                AutorizacionFirmada = true,
+                FechaAutorizacionUtc = DateTime.UtcNow,
+                FechaInscripcionUtc = DateTime.UtcNow,
+                ObservacionesFamilia = observaciones
+            };
+
+            _dbContext.Inscripciones.Add(inscripcion);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Inscripción registrada con éxito: Educando {EducandoId} en Actividad {ActividadId}. Estado: {Estado}. Importe: {Importe:C2}",
+            educandoId, actividadId, inscripcion.Estado, inscripcion.ImporteEuros);
+
+        return inscripcion;
+    }
+
+    public async Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesFamiliaAsync(Guid tutorId)
+    {
+        ValidarTenantActivo();
+
+        return await _dbContext.Inscripciones
+            .AsNoTracking()
+            .Include(i => i.Actividad)
+            .Include(i => i.Educando)
+            .Where(i => i.TutorLegalId == tutorId)
+            .OrderByDescending(i => i.FechaInscripcionUtc)
+            .ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesActividadAsync(Guid actividadId)
+    {
+        ValidarTenantActivo();
+
+        return await _dbContext.Inscripciones
+            .AsNoTracking()
+            .Include(i => i.Educando)
+                .ThenInclude(e => e.FichaMedica)
+            .Include(i => i.TutorLegal)
+            .Include(i => i.RevisadoPorUsuario)
+            .Where(i => i.ActividadId == actividadId)
+            .OrderBy(i => i.FechaInscripcionUtc)
+            .ToListAsync();
+    }
+
+    public async Task<InscripcionActividad?> ObtenerPorIdAsync(Guid inscripcionId)
+    {
+        ValidarTenantActivo();
+
+        return await _dbContext.Inscripciones
+            .Include(i => i.Actividad)
+            .Include(i => i.Educando)
+            .Include(i => i.TutorLegal)
+            .Include(i => i.RevisadoPorUsuario)
+            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
+    }
+
+    public async Task SubirJustificantePagoAsync(
+        Guid inscripcionId,
+        string nombreArchivoOriginal,
+        Stream streamContenido)
+    {
+        ValidarTenantActivo();
+
+        var inscripcion = await _dbContext.Inscripciones
+            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
+
+        if (inscripcion == null)
+        {
+            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
+        }
+
+        if (inscripcion.Estado == EstadoInscripcion.Cancelada)
+        {
+            throw new InvalidOperationException("No se puede adjuntar un comprobante de pago a una inscripción que ha sido cancelada.");
+        }
+
+        // Si ya tenía un justificante anterior, eliminar el archivo previo
+        if (!string.IsNullOrWhiteSpace(inscripcion.RutaArchivoJustificante))
+        {
+            try
+            {
+                await _almacenamientoJustificantes.EliminarJustificanteAsync(inscripcion.RutaArchivoJustificante);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo eliminar el justificante anterior {Ruta}", inscripcion.RutaArchivoJustificante);
+            }
+        }
+
+        var rutaRelativa = await _almacenamientoJustificantes.GuardarJustificanteAsync(
+            inscripcion.OrganizacionId,
+            inscripcion.Id,
+            nombreArchivoOriginal,
+            streamContenido);
+
+        inscripcion.NombreArchivoJustificante = nombreArchivoOriginal;
+        inscripcion.RutaArchivoJustificante = rutaRelativa;
+        inscripcion.FechaSubidaJustificanteUtc = DateTime.UtcNow;
+        inscripcion.Estado = EstadoInscripcion.EnRevision;
+
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Justificante adjuntado para inscripción {InscripcionId}. Estado actualizado a EnRevision.", inscripcionId);
+    }
+
+    public async Task RevisarInscripcionAsync(
+        Guid inscripcionId,
+        EstadoInscripcion nuevoEstado,
+        string? notasKraal,
+        Guid scouterId)
+    {
+        ValidarTenantActivo();
+
+        var inscripcion = await _dbContext.Inscripciones
+            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
+
+        if (inscripcion == null)
+        {
+            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
+        }
+
+        inscripcion.Estado = nuevoEstado;
+        inscripcion.NotasKraal = notasKraal;
+        inscripcion.RevisadoPorUsuarioId = scouterId;
+        inscripcion.FechaRevisionUtc = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Inscripción {InscripcionId} revisada por Scouter {ScouterId}: Nuevo estado {Estado}",
+            inscripcionId, scouterId, nuevoEstado);
+    }
+
+    public async Task CancelarInscripcionAsync(Guid inscripcionId, Guid tutorId)
+    {
+        ValidarTenantActivo();
+
+        var inscripcion = await _dbContext.Inscripciones
+            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
+
+        if (inscripcion == null)
+        {
+            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
+        }
+
+        if (inscripcion.TutorLegalId != tutorId)
+        {
+            throw new InvalidOperationException("No dispone de permisos para cancelar esta inscripción.");
+        }
+
+        inscripcion.Estado = EstadoInscripcion.Cancelada;
+
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Inscripción {InscripcionId} cancelada por el tutor {TutorId}.", inscripcionId, tutorId);
+    }
+
+    private void ValidarTenantActivo()
+    {
+        if (!_tenantContext.IsResolved || _tenantContext.CurrentTenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Operación no permitida sin una Organización activa.");
+        }
+    }
+}
