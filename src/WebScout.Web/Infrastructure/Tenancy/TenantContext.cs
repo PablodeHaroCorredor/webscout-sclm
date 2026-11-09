@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Identity.Domain;
 
 namespace WebScout.Web.Infrastructure.Tenancy;
@@ -25,6 +26,7 @@ public class TenantContext : ITenantContext
     private string _tenantSlug = string.Empty;
     private string _groupName = string.Empty;
     private int _groupNumber;
+    private PaletteConfig? _palette;
     private bool _isResolved;
     private bool _isSuperAdmin;
 
@@ -73,6 +75,15 @@ public class TenantContext : ITenantContext
         {
             EnsureResolved();
             return _groupNumber;
+        }
+    }
+
+    public PaletteConfig? Palette
+    {
+        get
+        {
+            EnsureResolved();
+            return _palette;
         }
     }
 
@@ -198,24 +209,33 @@ public class TenantContext : ITenantContext
     {
         if (slug.Equals("sanvicente", StringComparison.OrdinalIgnoreCase))
         {
-            SetTenant(OrgSanVicente, "sanvicente", "Grupo Scout San Vicente 412", 412);
+            SetTenant(OrgSanVicente, "sanvicente", "Grupo Scout San Vicente 412", 412, new PaletteConfig
+            {
+                PrimaryHex = "#0D47A1",
+                SecondaryHex = "#D32F2F",
+                AccentHex = "#F57C00",
+                TextOnPrimaryHex = "#FFFFFF",
+                TextOnSecondaryHex = "#FFFFFF",
+                SurfaceHeaderHex = "#0D47A1"
+            });
         }
         else if (slug.Equals("lestonnac", StringComparison.OrdinalIgnoreCase))
         {
-            SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
+            SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330, PaletteConfig.DefaultLestonnac);
         }
         else if (slug.Equals("admin", StringComparison.OrdinalIgnoreCase) || slug.Equals("sclm", StringComparison.OrdinalIgnoreCase))
         {
-            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
+            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0, null);
         }
     }
 
-    public void SetTenant(Guid tenantId, string slug, string groupName, int groupNumber)
+    public void SetTenant(Guid tenantId, string slug, string groupName, int groupNumber, PaletteConfig? palette = null)
     {
         _currentTenantId = tenantId;
         _tenantSlug = slug;
         _groupName = groupName;
         _groupNumber = groupNumber;
+        _palette = palette;
         _isResolved = true;
     }
 
@@ -225,6 +245,7 @@ public class TenantContext : ITenantContext
         _tenantSlug = string.Empty;
         _groupName = string.Empty;
         _groupNumber = 0;
+        _palette = null;
         _isResolved = false;
     }
 }
