@@ -85,6 +85,9 @@
             <AuthorizeView Roles="Familia">
                 <Authorized>
                     <MudNavGroup Title="Portal Familias" Icon="@Icons.Material.Filled.FamilyRestroom" Expanded="true">
+                        <MudNavLink Href="/familias" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                            Mi Espacio Familiar
+                        </MudNavLink>
                         <MudNavLink Href="/familias/educandos" Icon="@Icons.Material.Filled.ChildCare">
                             Educandos y Fichas Médicas
                         </MudNavLink>
@@ -101,6 +104,12 @@
             <AuthorizeView Roles="Scouter,Coordinacion,Administracion">
                 <Authorized>
                     <MudNavGroup Title="Gestión Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
+                        <MudNavLink Href="/kraal/inscripciones" Icon="@Icons.Material.Filled.FactCheck">
+                            Mesa de Inscripciones
+                        </MudNavLink>
+                        <MudNavLink Href="/kraal/educandos" Icon="@Icons.Material.Filled.Groups">
+                            Censo de Educandos
+                        </MudNavLink>
                         <MudNavLink Href="/kraal/actividades" Icon="@Icons.Material.Filled.Hiking">
                             Gestor de Actividades
                         </MudNavLink>

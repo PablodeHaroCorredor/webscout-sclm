@@ -1,0 +1,423 @@
+@page "/kraal/educandos"
+@attribute [Authorize(Roles = "Scouter,Coordinacion,Administracion,SuperAdmin")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Participants.Components
+@using WebScout.Web.Features.Participants.Domain
+@using WebScout.Web.Features.Participants.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@inject IServicioEducandos ServicioEducandos
+@inject ITenantContext Tenant
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+
+<PageTitle>Censo de Educandos por Rama · @Tenant.GroupName</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
+    
+    <!-- Cabecera de la Sección -->
+    <div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4 mb-6">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                    KRAAL DE SCOUTERS
+                </MudChip>
+                @if (_bloquearFiltroRama && _ramaAsignada != RamaScout.Ninguna)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Lock">
+                        Sección: @_ramaAsignada.ObtenerNombre()
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                        Censo General del Grupo
+                    </MudChip>
+                }
+            </div>
+            <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                Censo de Educandos por Rama
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Cuaderno de sección: listado nominal de educandos, contactos directos de emergencia y alertas sanitarias.
+            </MudText>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Default" 
+                       StartIcon="@Icons.Material.Filled.Refresh" 
+                       OnClick="CargarCensoAsync">
+                Actualizar
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.FactCheck" 
+                       Href="/kraal/inscripciones">
+                Mesa de Inscripciones
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Métricas Rápidas del Censo -->
+    <MudGrid Spacing="3" Class="mb-6">
+        <MudItem xs="12" sm="4">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700; text-transform: uppercase;">
+                            Educandos Censados
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A;">
+                            @_educandos.Count
+                        </MudText>
+                    </div>
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.Groups" />
+                    </MudAvatar>
+                </div>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700; text-transform: uppercase;">
+                            Alertas de Alergias / Intolerancias
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #DC2626;">
+                            @_educandos.Count(e => e.FichaMedica != null && (!string.IsNullOrWhiteSpace(e.FichaMedica.AlergiasAlimentarias) || !string.IsNullOrWhiteSpace(e.FichaMedica.RegimenAlimenticio)))
+                        </MudText>
+                    </div>
+                    <MudAvatar Color="Color.Error" Variant="Variant.Filled" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.NoMeals" />
+                    </MudAvatar>
+                </div>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" sm="4">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                <div class="d-flex align-center justify-space-between">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700; text-transform: uppercase;">
+                            Medicación en Salidas
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #D97706;">
+                            @_educandos.Count(e => e.FichaMedica != null && !string.IsNullOrWhiteSpace(e.FichaMedica.MedicacionActiva))
+                        </MudText>
+                    </div>
+                    <MudAvatar Color="Color.Warning" Variant="Variant.Filled" Size="Size.Medium">
+                        <MudIcon Icon="@Icons.Material.Filled.Medication" />
+                    </MudAvatar>
+                </div>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Filtros de Rama y Búsqueda -->
+    <MudCard Elevation="0" Outlined="true" Class="mb-6 rounded-xl" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        <MudCardContent Class="py-3">
+            <MudGrid Spacing="3" Class="align-center">
+                
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="RamaScout?" 
+                               Label="Filtrar por Rama" 
+                               Value="_ramaSeleccionada" 
+                               ValueChanged="OnRamaSeleccionadaChanged"
+                               Disabled="@_bloquearFiltroRama"
+                               Variant="Variant.Outlined" 
+                               Dense="true">
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)null)">Todas las ramas</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Castores)">Castores (6 a 8 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Manada)">Manada (8 a 11 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Tropa)">Tropa Scout (11 a 14 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Escultas)">Escultas (14 a 17 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Clan)">Clan Rover (17 a 21 años)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_textoBusqueda" 
+                                  Placeholder="Buscar por nombre, apellidos o tutor..." 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" 
+                                  Clearable="true" />
+                </MudItem>
+
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Tabla del Censo de Educandos -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        @if (_cargando)
+        {
+            <div class="pa-12 text-center">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-3">Cargando censo de educandos...</MudText>
+            </div>
+        }
+        else if (!EducandosFiltrados.Any())
+        {
+            <div class="pa-12 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Size="Size.Large" Style="color: #CBD5E1; font-size: 3.5rem;" />
+                <MudText Typo="Typo.h6" Class="mt-3 font-weight-bold" Style="color: #334155;">No se han encontrado educandos</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    No hay miembros juveniles registrados para esta sección o con los criterios indicados.
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="EducandosFiltrados" Hover="true" Elevation="0" Class="w-100">
+                <HeaderContent>
+                    <MudTh Style="font-weight: 700;">Educando</MudTh>
+                    <MudTh Style="font-weight: 700;">Rama</MudTh>
+                    <MudTh Style="font-weight: 700;">Alertas Médicas y Dietas</MudTh>
+                    <MudTh Style="font-weight: 700;">Contacto de Emergencia</MudTh>
+                    <MudTh Style="font-weight: 700; text-align: right;">Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <!-- Columna Educando -->
+                    <MudTd DataLabel="Educando">
+                        <div class="d-flex align-center gap-3">
+                            <MudAvatar Color="@ObtenerColorRama(context.RamaActual)" Size="Size.Medium" Style="font-weight: 800;">
+                                @(context.Nombre.FirstOrDefault())
+                            </MudAvatar>
+                            <div>
+                                <span style="font-weight: 700; color: #0F172A; display: block; font-size: 0.95rem;">
+                                    @context.NombreCompleto
+                                </span>
+                                <span style="font-size: 0.75rem; color: #64748B;">
+                                    @context.FechaNacimiento.ToString("dd/MM/yyyy") (@context.CalcularEdad() años)
+                                </span>
+                            </div>
+                        </div>
+                    </MudTd>
+
+                    <!-- Columna Rama -->
+                    <MudTd DataLabel="Rama">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorRama(context.RamaActual)" Style="font-weight: 700;">
+                            @context.RamaActual.ObtenerNombre()
+                        </MudChip>
+                    </MudTd>
+
+                    <!-- Columna Alertas Médicas -->
+                    <MudTd DataLabel="Alertas">
+                        @if (context.FichaMedica == null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Sin ficha médica</MudChip>
+                        }
+                        else
+                        {
+                            var tieneAlergias = !string.IsNullOrWhiteSpace(context.FichaMedica.AlergiasAlimentarias);
+                            var tieneDieta = !string.IsNullOrWhiteSpace(context.FichaMedica.RegimenAlimenticio);
+                            var tieneMed = !string.IsNullOrWhiteSpace(context.FichaMedica.MedicacionActiva);
+
+                            @if (!tieneAlergias && !tieneDieta && !tieneMed)
+                            {
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">
+                                    Sin alertas médicas
+                                </MudChip>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-wrap gap-1">
+                                    @if (tieneAlergias)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
+                                            @context.FichaMedica.AlergiasAlimentarias
+                                        </MudChip>
+                                    }
+                                    @if (tieneDieta)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">
+                                            @context.FichaMedica.RegimenAlimenticio
+                                        </MudChip>
+                                    }
+                                    @if (tieneMed)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
+                                            Medicación activa
+                                        </MudChip>
+                                    }
+                                </div>
+                            }
+                        }
+                    </MudTd>
+
+                    <!-- Columna Contacto Emergencia -->
+                    <MudTd DataLabel="Contacto">
+                        @if (context.FichaMedica != null && !string.IsNullOrWhiteSpace(context.FichaMedica.TelefonoEmergenciaPrincipal))
+                        {
+                            <div>
+                                <span style="font-weight: 600; color: #334155; display: block; font-size: 0.85rem;">
+                                    @context.FichaMedica.NombreContactoEmergenciaPrincipal
+                                </span>
+                                <MudButton Variant="Variant.Text" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           Href="@($"tel:{context.FichaMedica.TelefonoEmergenciaPrincipal}")"
+                                           StartIcon="@Icons.Material.Filled.Call"
+                                           Class="pa-0 mt-0.5"
+                                           Style="font-weight: 700; font-size: 0.85rem;">
+                                    @context.FichaMedica.TelefonoEmergenciaPrincipal
+                                </MudButton>
+                            </div>
+                        }
+                        else if (context.TutorLegal != null)
+                        {
+                            <div>
+                                <span style="font-weight: 600; color: #334155; display: block; font-size: 0.85rem;">
+                                    @context.TutorLegal.NombreCompleto (Tutor)
+                                </span>
+                                @if (!string.IsNullOrWhiteSpace(context.TutorLegal.PhoneNumber))
+                                {
+                                    <MudButton Variant="Variant.Text" 
+                                               Color="Color.Primary" 
+                                               Size="Size.Small" 
+                                               Href="@($"tel:{context.TutorLegal.PhoneNumber}")"
+                                               StartIcon="@Icons.Material.Filled.Call"
+                                               Class="pa-0 mt-0.5">
+                                        @context.TutorLegal.PhoneNumber
+                                    </MudButton>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <span style="color: #94A3B8; font-size: 0.8rem;">Sin contacto registrado</span>
+                        }
+                    </MudTd>
+
+                    <!-- Columna Acciones -->
+                    <MudTd DataLabel="Acciones" Class="text-end">
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small" 
+                                   StartIcon="@Icons.Material.Filled.HealthAndSafety"
+                                   OnClick="@(() => AbrirFichaSanitariaAsync(context))">
+                            Ficha Médica
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCard>
+
+</MudContainer>
+
+@code {
+    private bool _cargando = true;
+    private List<Educando> _educandos = new();
+    private RamaScout? _ramaSeleccionada;
+    private RamaScout _ramaAsignada = RamaScout.Ninguna;
+    private bool _bloquearFiltroRama = false;
+    private string? _textoBusqueda;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ConfigurarAlcanceUsuarioAsync();
+        await CargarCensoAsync();
+    }
+
+    private async Task ConfigurarAlcanceUsuarioAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var ramaClaim = user.FindFirst("RamaAsignada")?.Value;
+            if (Enum.TryParse<RamaScout>(ramaClaim, out var ramaParsed))
+            {
+                _ramaAsignada = ramaParsed;
+            }
+
+            // Si es Scouter con rama asignada, preseleccionar y bloquear a su sección
+            if (user.IsInRole(RolesScout.Scouter) && !user.IsInRole(RolesScout.Coordinacion) && !user.IsInRole(RolesScout.Administracion) && !user.IsInRole(RolesScout.SuperAdmin))
+            {
+                if (_ramaAsignada != RamaScout.Ninguna)
+                {
+                    _ramaSeleccionada = _ramaAsignada;
+                    _bloquearFiltroRama = true;
+                }
+            }
+        }
+    }
+
+    private async Task CargarCensoAsync()
+    {
+        _cargando = true;
+        try
+        {
+            if (_ramaSeleccionada.HasValue && _ramaSeleccionada.Value != RamaScout.Ninguna)
+            {
+                _educandos = await ServicioEducandos.ObtenerPorRamaAsync(_ramaSeleccionada.Value);
+            }
+            else
+            {
+                _educandos = await ServicioEducandos.ObtenerTodosDelTenantAsync();
+            }
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private IEnumerable<Educando> EducandosFiltrados
+    {
+        get
+        {
+            var items = _educandos.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(_textoBusqueda))
+            {
+                var q = _textoBusqueda.Trim().ToLowerInvariant();
+                items = items.Where(e =>
+                    e.NombreCompleto.ToLowerInvariant().Contains(q) ||
+                    (e.TutorLegal?.NombreCompleto.ToLowerInvariant().Contains(q) == true) ||
+                    (e.FichaMedica?.AlergiasAlimentarias?.ToLowerInvariant().Contains(q) == true));
+            }
+
+            return items;
+        }
+    }
+
+    private async Task OnRamaSeleccionadaChanged(RamaScout? nuevaRama)
+    {
+        if (!_bloquearFiltroRama)
+        {
+            _ramaSeleccionada = nuevaRama;
+            await CargarCensoAsync();
+        }
+    }
+
+    private async Task AbrirFichaSanitariaAsync(Educando educando)
+    {
+        var parameters = new DialogParameters<VerFichaSanitariaDialog>
+        {
+            { x => x.Educando, educando }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
+        await DialogService.ShowAsync<VerFichaSanitariaDialog>("Expediente Sanitario", parameters, options);
+    }
+
+    private Color ObtenerColorRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => Color.Warning,
+        RamaScout.Manada => Color.Tertiary,
+        RamaScout.Tropa => Color.Success,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Info,
+        _ => Color.Default
+    };
+}
