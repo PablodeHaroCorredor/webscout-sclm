@@ -1,12 +1,14 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Features.Activities;
+using WebScout.Web.Features.Audit;
 using WebScout.Web.Features.Dossier;
 using WebScout.Web.Features.Dossier.Endpoints;
 using WebScout.Web.Features.Identity;
 using WebScout.Web.Features.Inscriptions;
 using WebScout.Web.Features.Inscriptions.Endpoints;
 using WebScout.Web.Features.Participants;
+using WebScout.Web.Infrastructure.Security;
 using WebScout.Web.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,10 @@ builder.Services.AddScoutTenancy(builder.Configuration);
 // Registrar Identity, Roles y Cookies de Autenticación
 builder.Services.AddScoutIdentity();
 
+// Registrar Servicios de Seguridad y Cifrado RGPD (Art. 9)
+builder.Services.AddSingleton<IServicioCifrado, CifradorDatosSensibles>();
+builder.Services.AddScoutAudit();
+
 // Registrar Dominio de Educandos y Salud
 builder.Services.AddParticipantFeatures();
 
@@ -37,6 +43,16 @@ builder.Services.AddInscriptionFeatures();
 builder.Services.AddDossierFeatures();
 
 var app = builder.Build();
+
+// Cabeceras HTTP de Seguridad Defensiva (OWASP / Hardening)
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    await next();
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -53,6 +69,9 @@ app.UseScoutTenancy();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Guardia de sesión cross-tenant: previene manipulación o reutilización de cookies entre grupos
+app.UseTenantSessionGuard();
 
 app.UseAntiforgery();
 
