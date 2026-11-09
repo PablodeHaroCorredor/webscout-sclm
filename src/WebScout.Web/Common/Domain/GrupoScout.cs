@@ -33,11 +33,6 @@ public class GrupoScout
     public bool Activo { get; set; } = true;
 
     /// <summary>
-    /// Configuración visual de la pañoleta scout (Value Object).
-    /// </summary>
-    public PanoletaConfig Panoleta { get; set; } = null!;
-
-    /// <summary>
     /// Paleta de colores corporativos del grupo conforme a WCAG 2.2 AA (Value Object).
     /// </summary>
     public PaletteConfig Paleta { get; set; } = null!;

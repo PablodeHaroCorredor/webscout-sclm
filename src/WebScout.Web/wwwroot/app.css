@@ -17,11 +17,6 @@
     --scout-secondary-contrast: #1E293B;
     --scout-accent: #C25E00;
 
-    /* Tokens de Pañoleta Oficial */
-    --panoleta-base: #1B5E20;
-    --panoleta-ribete: #FBC02D;
-    --panoleta-cinta: #FFFFFF;
-
     /* Paleta Institucional SCLM */
     --sclm-purple-base: #4A148C;
     --sclm-purple-dark: #2A0845;
@@ -518,10 +513,4 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
-}
-
-/* Componente Pañoleta */
-.scout-panoleta-svg {
-    display: inline-block;
-    vertical-align: middle;
 }
