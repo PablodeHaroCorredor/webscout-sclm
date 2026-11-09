@@ -2,6 +2,8 @@ using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Features.Activities;
 using WebScout.Web.Features.Identity;
+using WebScout.Web.Features.Inscriptions;
+using WebScout.Web.Features.Inscriptions.Endpoints;
 using WebScout.Web.Features.Participants;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -25,6 +27,9 @@ builder.Services.AddParticipantFeatures();
 
 // Registrar Dominio de Actividades y Campamentos
 builder.Services.AddActivityFeatures();
+
+// Registrar Dominio de Inscripciones y Justificantes Bancarios
+builder.Services.AddInscriptionFeatures();
 
 var app = builder.Build();
 
@@ -50,6 +55,9 @@ app.MapStaticAssets();
 
 // Endpoints de autenticación (Login, Logout, QuickLogin)
 app.MapIdentityEndpoints();
+
+// Endpoints de descarga segura de justificantes bancarios
+app.MapJustificanteEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

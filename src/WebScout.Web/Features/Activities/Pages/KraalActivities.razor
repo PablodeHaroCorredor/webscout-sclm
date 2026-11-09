@@ -131,6 +131,9 @@
             </MudTd>
             <MudTd DataLabel="Acciones" Class="text-end">
                 <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
+                    <MudMenuItem Icon="@Icons.Material.Filled.PeopleAlt" IconColor="Color.Primary" OnClick="@(() => VerInscripcionesAsync(context))">
+                        Inscripciones y Plazas
+                    </MudMenuItem>
                     <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => VerDetalleAsync(context))">
                         Ver Detalles
                     </MudMenuItem>
@@ -253,6 +256,18 @@
         {
             await CargarActividadesAsync();
         }
+    }
+
+    private async Task VerInscripcionesAsync(ActividadScout actividad)
+    {
+        var parameters = new DialogParameters<KraalInscripcionesDialog>
+        {
+            { x => x.Actividad, actividad },
+            { x => x.ScouterId, _usuarioActualId }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<KraalInscripcionesDialog>(actividad.Titulo, parameters, options);
     }
 
     private async Task VerDetalleAsync(ActividadScout actividad)

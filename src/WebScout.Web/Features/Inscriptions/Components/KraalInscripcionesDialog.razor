@@ -1,0 +1,292 @@
+@using System.Globalization
+@using WebScout.Web.Features.Inscriptions.Domain
+@using WebScout.Web.Features.Inscriptions.Services
+@inject IServicioInscripciones ServicioInscripciones
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center justify-space-between w-100">
+            <div class="d-flex align-center gap-2">
+                <MudIcon Icon="@Icons.Material.Filled.PeopleAlt" Color="Color.Primary" />
+                <div>
+                    <MudText Typo="Typo.h6">Inscripciones y Plazas — @Actividad.Titulo</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        @Actividad.Lugar | Cuota: @(Actividad.Precio == 0 ? "Gratuita" : $"{Actividad.Precio:N2} €")
+                    </MudText>
+                </div>
+            </div>
+            <div class="d-flex align-center gap-2">
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small">
+                    Total: @_inscripciones.Count
+                </MudChip>
+                <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
+                    Confirmadas: @_inscripciones.Count(i => i.Estado == EstadoInscripcion.Confirmada)
+                </MudChip>
+                <MudChip T="string" Color="Color.Info" Variant="Variant.Filled" Size="Size.Small">
+                    En Revisión: @_inscripciones.Count(i => i.Estado == EstadoInscripcion.EnRevision)
+                </MudChip>
+            </div>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (_cargando)
+        {
+            <div class="d-flex justify-center align-center pa-8">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_inscripciones.Count == 0)
+        {
+            <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Color="Color.Default" Class="mb-2" />
+                <MudText Typo="Typo.h6">No hay educandos inscritos todavía</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    Las familias verán la convocatoria y podrán formalizar la plaza de sus educandos.
+                </MudText>
+            </MudPaper>
+        }
+        else
+        {
+            <MudTable Items="@_inscripciones" Dense="true" Hover="true" Elevation="0" Outlined="true">
+                <HeaderContent>
+                    <MudTh>Educando y Rama</MudTh>
+                    <MudTh>Ficha Médica</MudTh>
+                    <MudTh>Tutor Legal</MudTh>
+                    <MudTh>Cuota</MudTh>
+                    <MudTh>Justificante Bancario</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh Class="text-end">Acciones Kraal</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Educando">
+                        <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.Educando.NombreCompleto</MudText>
+                        <div class="d-flex align-center gap-1">
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+                                Rama @context.Educando.RamaActual.ObtenerNombre()
+                            </MudChip>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Educando.CalcularEdad() años</MudText>
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Salud">
+                        @if (context.Educando.FichaMedica != null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.CheckCircle">
+                                Ficha OK
+                            </MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Warning">
+                                Sin Ficha
+                            </MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Tutor">
+                        <MudText Typo="Typo.body2">@context.TutorLegal.NombreCompleto</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.TutorLegal.Email</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Cuota">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                            @(context.ImporteEuros == 0 ? "0,00 €" : $"{context.ImporteEuros:N2} €")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Justificante">
+                        @if (context.TieneJustificanteSubido)
+                        {
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       Href="@($"/api/justificantes/{context.Id}")" 
+                                       Target="_blank"
+                                       StartIcon="@Icons.Material.Filled.ReceiptLong">
+                                Ver Comprobante
+                            </MudButton>
+                            <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mt-1">
+                                @context.FechaSubidaJustificanteUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        }
+                        else if (context.ImporteEuros == 0)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">No requerido (Gratuita)</MudText>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">
+                                Pendiente Subida
+                            </MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                            @ObtenerNombreEstado(context.Estado)
+                        </MudChip>
+                        @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
+                        {
+                            <MudText Typo="Typo.caption" Class="d-block text-danger mt-1">
+                                Nota: @context.NotasKraal
+                            </MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Acciones" Class="text-end">
+                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
+                            @if (context.Estado != EstadoInscripcion.Confirmada)
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" 
+                                             IconColor="Color.Success"
+                                             OnClick="@(() => ConfirmarPlazaAsync(context))">
+                                    Confirmar Plaza
+                                </MudMenuItem>
+                            }
+                            @if (context.Estado != EstadoInscripcion.RequiereSubsanacion && context.Estado != EstadoInscripcion.Cancelada)
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Filled.Feedback" 
+                                             IconColor="Color.Warning"
+                                             OnClick="@(() => RequerirSubsanacionAsync(context))">
+                                    Requerir Subsanación
+                                </MudMenuItem>
+                            }
+                            @if (context.Estado != EstadoInscripcion.Cancelada)
+                            {
+                                <MudMenuItem Icon="@Icons.Material.Filled.Cancel" 
+                                             IconColor="Color.Error"
+                                             OnClick="@(() => CancelarPlazaAsync(context))">
+                                    Cancelar Inscripción
+                                </MudMenuItem>
+                            }
+                        </MudMenu>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cerrar">Cerrar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ActividadScout Actividad { get; set; } = null!;
+    [Parameter] public Guid ScouterId { get; set; }
+
+    private List<InscripcionActividad> _inscripciones = [];
+    private bool _cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInscripcionesAsync();
+    }
+
+    private async Task CargarInscripcionesAsync()
+    {
+        _cargando = true;
+        try
+        {
+            var res = await ServicioInscripciones.ObtenerInscripcionesActividadAsync(Actividad.Id);
+            _inscripciones = res.ToList();
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task ConfirmarPlazaAsync(InscripcionActividad inscripcion)
+    {
+        try
+        {
+            await ServicioInscripciones.RevisarInscripcionAsync(
+                inscripcion.Id,
+                EstadoInscripcion.Confirmada,
+                notasKraal: null,
+                scouterId: ScouterId);
+
+            Snackbar.Add($"Plaza de {inscripcion.Educando.Nombre} confirmada correctamente.", Severity.Success);
+            await CargarInscripcionesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RequerirSubsanacionAsync(InscripcionActividad inscripcion)
+    {
+        var respuesta = await DialogService.ShowMessageBoxAsync(
+            "Requerir Subsanación",
+            $"¿Deseas solicitar a la familia de {inscripcion.Educando.Nombre} que subsane el justificante bancario?",
+            yesText: "Sí, Solicitar Subsanación",
+            cancelText: "Volver");
+
+        if (respuesta == true)
+        {
+            try
+            {
+                await ServicioInscripciones.RevisarInscripcionAsync(
+                    inscripcion.Id,
+                    EstadoInscripcion.RequiereSubsanacion,
+                    notasKraal: "El comprobante adjuntado no es legible o no refleja el importe correcto de la cuota.",
+                    scouterId: ScouterId);
+
+                Snackbar.Add("Se ha notificado que la inscripción requiere subsanación.", Severity.Warning);
+                await CargarInscripcionesAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task CancelarPlazaAsync(InscripcionActividad inscripcion)
+    {
+        var confirmacion = await DialogService.ShowMessageBoxAsync(
+            "Cancelar Inscripción",
+            $"¿Estás seguro de que deseas cancelar la inscripción de {inscripcion.Educando.Nombre}?",
+            yesText: "Sí, Cancelar",
+            cancelText: "No");
+
+        if (confirmacion == true)
+        {
+            try
+            {
+                await ServicioInscripciones.RevisarInscripcionAsync(
+                    inscripcion.Id,
+                    EstadoInscripcion.Cancelada,
+                    notasKraal: "Cancelada por coordinación del Kraal.",
+                    scouterId: ScouterId);
+
+                Snackbar.Add("Inscripción cancelada.", Severity.Info);
+                await CargarInscripcionesAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
+    {
+        EstadoInscripcion.PendienteJustificante => Color.Warning,
+        EstadoInscripcion.EnRevision => Color.Info,
+        EstadoInscripcion.Confirmada => Color.Success,
+        EstadoInscripcion.RequiereSubsanacion => Color.Error,
+        EstadoInscripcion.Cancelada => Color.Default,
+        _ => Color.Default
+    };
+
+    private string ObtenerNombreEstado(EstadoInscripcion estado) => estado switch
+    {
+        EstadoInscripcion.PendienteJustificante => "Pendiente Justificante",
+        EstadoInscripcion.EnRevision => "En Revisión",
+        EstadoInscripcion.Confirmada => "Plaza Confirmada",
+        EstadoInscripcion.RequiereSubsanacion => "Requiere Subsanación",
+        EstadoInscripcion.Cancelada => "Cancelada",
+        _ => estado.ToString()
+    };
+
+    private void Cerrar() => MudDialog.Close();
+}
