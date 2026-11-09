@@ -29,4 +29,9 @@ public interface ITenantContext
     /// Indica si la petición fue resuelta a un grupo activo válido.
     /// </summary>
     bool IsResolved { get; }
+
+    /// <summary>
+    /// Indica si el contexto actual corresponde a un usuario con rol SuperAdmin de la federación.
+    /// </summary>
+    bool IsSuperAdmin { get; }
 }

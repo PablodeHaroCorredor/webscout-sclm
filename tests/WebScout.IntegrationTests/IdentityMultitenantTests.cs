@@ -107,6 +107,53 @@ public class IdentityMultitenantTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task Query_SuperAdmin_ShouldSeeUsersFromAllTenants()
+    {
+        // 1. Población con Lestonnac
+        var ctxLestonnac = new TenantContext();
+        ctxLestonnac.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
+
+        using (var db = new WebScoutDbContext(_options, ctxLestonnac))
+        {
+            db.Users.Add(new UsuarioScout
+            {
+                UserName = "scouter.l330@scoutsclm.org",
+                Email = "scouter.l330@scoutsclm.org",
+                NombreCompleto = "Scouter Lestonnac"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // 2. Población con San Vicente
+        var ctxSanVicente = new TenantContext();
+        ctxSanVicente.SetTenant(OrgSanVicente, "sanvicente", "San Vicente 412", 412);
+
+        using (var db = new WebScoutDbContext(_options, ctxSanVicente))
+        {
+            db.Users.Add(new UsuarioScout
+            {
+                UserName = "scouter.sv412@scoutsclm.org",
+                Email = "scouter.sv412@scoutsclm.org",
+                NombreCompleto = "Scouter San Vicente"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // 3. SuperAdmin desde portal central SCLM
+        var ctxSuperAdmin = new TenantContext();
+        ctxSuperAdmin.SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
+        ctxSuperAdmin.SetSuperAdmin(true);
+
+        using (var db = new WebScoutDbContext(_options, ctxSuperAdmin))
+        {
+            var allUsers = await db.Users.ToListAsync();
+            Assert.True(allUsers.Count >= 2);
+            Assert.Contains(allUsers, u => u.NombreCompleto == "Scouter Lestonnac");
+            Assert.Contains(allUsers, u => u.NombreCompleto == "Scouter San Vicente");
+        }
+    }
+
     public void Dispose()
     {
         _connection.Dispose();

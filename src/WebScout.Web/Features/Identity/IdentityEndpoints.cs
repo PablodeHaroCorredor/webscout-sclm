@@ -26,11 +26,17 @@ public static class IdentityEndpoints
         {
             var normalizedEmail = email.ToUpperInvariant();
             var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.OrganizacionId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
 
             if (user == null || !user.Activo)
             {
                 return Results.Redirect($"/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
+            }
+
+            var esSuperAdmin = await userManager.IsInRoleAsync(user, RolesScout.SuperAdmin);
+            if (!esSuperAdmin && tenantContext.CurrentTenantId != Guid.Empty && user.OrganizacionId != tenantContext.CurrentTenantId)
+            {
+                return Results.Redirect($"/login?error=wrong_tenant&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
             }
 
             var result = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
@@ -54,20 +60,22 @@ public static class IdentityEndpoints
         {
             var normalizedEmail = email.ToUpperInvariant();
             var user = await userManager.Users
-                .FirstOrDefaultAsync(u => u.OrganizacionId == tenantContext.CurrentTenantId && u.NormalizedEmail == normalizedEmail);
+                .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
 
-            if (user == null)
+            if (user == null || !user.Activo)
             {
-                // Si no se encuentra en el tenant activo, buscar en el tenant correspondiente al email
-                user = await userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail);
+                return Results.NotFound($"Usuario '{email}' no encontrado o inactivo.");
             }
 
-            if (user != null && user.Activo)
+            var esSuperAdmin = await userManager.IsInRoleAsync(user, RolesScout.SuperAdmin);
+            if (!esSuperAdmin && tenantContext.CurrentTenantId != Guid.Empty && user.OrganizacionId != tenantContext.CurrentTenantId)
             {
-                await signInManager.SignInAsync(user, isPersistent: true);
-                user.UltimoAccesoUtc = DateTime.UtcNow;
-                await userManager.UpdateAsync(user);
+                return Results.Redirect($"/login?error=wrong_tenant&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
             }
+
+            await signInManager.SignInAsync(user, isPersistent: true);
+            user.UltimoAccesoUtc = DateTime.UtcNow;
+            await userManager.UpdateAsync(user);
 
             return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
         });
