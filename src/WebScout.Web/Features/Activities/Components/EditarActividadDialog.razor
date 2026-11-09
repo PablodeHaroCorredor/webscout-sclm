@@ -1,0 +1,313 @@
+@inject IServicioActividades ServicioActividades
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@(EsNueva ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Edit)" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">@(EsNueva ? "Nueva Convocatoria de Actividad o Campamento" : "Editar Convocatoria")</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_formValido">
+            <MudGrid Spacing="2">
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Modelo.Titulo" 
+                                  Label="Título de la Convocatoria" 
+                                  Required="true" 
+                                  RequiredError="El título es obligatorio" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="TipoActividad" @bind-Value="Modelo.Tipo" Label="Tipo de Actividad" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="TipoActividad.Reunion">Reunión en Base / Local</MudSelectItem>
+                        <MudSelectItem Value="TipoActividad.Salida">Salida / Excursión de 1 Día</MudSelectItem>
+                        <MudSelectItem Value="TipoActividad.Acampada">Acampada de Fin de Semana</MudSelectItem>
+                        <MudSelectItem Value="TipoActividad.Campamento">Campamento Estacional</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="EstadoActividad" @bind-Value="Modelo.Estado" Label="Estado" Variant="Variant.Outlined" Margin="Margin.Dense">
+                        <MudSelectItem Value="EstadoActividad.Borrador">Borrador (Kraal)</MudSelectItem>
+                        <MudSelectItem Value="EstadoActividad.Publicada">Publicada (Visible para Familias)</MudSelectItem>
+                        <MudSelectItem Value="EstadoActividad.InscripcionesCerradas">Inscripciones Cerradas</MudSelectItem>
+                        <MudSelectItem Value="EstadoActividad.EnCurso">En Curso</MudSelectItem>
+                        <MudSelectItem Value="EstadoActividad.Finalizada">Finalizada</MudSelectItem>
+                        <MudSelectItem Value="EstadoActividad.Cancelada">Cancelada</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Ramas Destinatarias -->
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Ramas Convocadas (Dejar vacío para Grupo Completo):</MudText>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var rama in Enum.GetValues<RamaScout>().Where(r => r != RamaScout.Ninguna))
+                        {
+                            var r = rama;
+                            var seleccionada = Modelo.RamasDestinatarias.Contains(r);
+                            <MudChip T="string"
+                                     Variant="@(seleccionada ? Variant.Filled : Variant.Outlined)"
+                                     Color="@(seleccionada ? Color.Primary : Color.Default)"
+                                     OnClick="@(() => ToggleRama(r))">
+                                @r.ToString()
+                            </MudChip>
+                        }
+                    </div>
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Modelo.Lugar" 
+                                  Label="Lugar / Ubicación de la Actividad" 
+                                  Required="true" 
+                                  RequiredError="El lugar es obligatorio" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Fechas y Horas -->
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_fechaInicio" Label="Fecha de Inicio" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker @bind-Time="_horaInicio" Label="Hora de Inicio" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_fechaFin" Label="Fecha de Fin" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker @bind-Time="_horaFin" Label="Hora de Regreso" Variant="Variant.Outlined" Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_fechaLimiteInscripcion" 
+                                   Label="Fecha Límite de Inscripción (Opcional)" 
+                                   Variant="Variant.Outlined" 
+                                   Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Precio en Euros y Céntimos -->
+                <MudItem xs="12" sm="6">
+                    <MudNumericField @bind-Value="Modelo.Precio" 
+                                     Label="Cuota por Educando (€)" 
+                                     Variant="Variant.Outlined" 
+                                     Margin="Margin.Dense" 
+                                     Min="0.00m" 
+                                     Step="0.50m" 
+                                     Format="N2" 
+                                     Adornment="Adornment.End" 
+                                     AdornmentText="€" 
+                                     HelperText="Indica 0,00 si la actividad es gratuita" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Modelo.PuntoEncuentroSalida" 
+                                  Label="Punto de Encuentro (Salida)" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Modelo.PuntoEncuentroRegreso" 
+                                  Label="Punto de Encuentro (Llegada)" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Modelo.IbanCuentaBancaria" 
+                                  Label="IBAN para Transferencias" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Modelo.ConceptoPagoSugerido" 
+                                  Label="Concepto Sugerido de Pago" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Modelo.Descripcion" 
+                                  Label="Descripción de la Actividad y Objetivos" 
+                                  Lines="3" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Modelo.MaterialRequerido" 
+                                  Label="Material Necesario (Mochila, saco, muda, etc.)" 
+                                  Lines="2" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="Modelo.ObservacionesSanitarias" 
+                                  Label="Recomendaciones o Avisos Sanitarios" 
+                                  Lines="2" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" />
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="GuardarAsync" Disabled="@(!_formValido)">
+            @(EsNueva ? "Crear Convocatoria" : "Guardar Cambios")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public ActividadScout? ActividadExistente { get; set; }
+
+    [Parameter]
+    public Guid ScouterId { get; set; }
+
+    private ActividadScout Modelo { get; set; } = null!;
+    private bool EsNueva => ActividadExistente == null;
+    private MudForm? _form;
+    private bool _formValido;
+
+    private DateTime? _fechaInicio;
+    private TimeSpan? _horaInicio;
+    private DateTime? _fechaFin;
+    private TimeSpan? _horaFin;
+    private DateTime? _fechaLimiteInscripcion;
+
+    protected override void OnInitialized()
+    {
+        if (ActividadExistente != null)
+        {
+            Modelo = new ActividadScout
+            {
+                Id = ActividadExistente.Id,
+                OrganizacionId = ActividadExistente.OrganizacionId,
+                Titulo = ActividadExistente.Titulo,
+                Descripcion = ActividadExistente.Descripcion,
+                Tipo = ActividadExistente.Tipo,
+                Estado = ActividadExistente.Estado,
+                RamasDestinatarias = [.. ActividadExistente.RamasDestinatarias],
+                Lugar = ActividadExistente.Lugar,
+                PuntoEncuentroSalida = ActividadExistente.PuntoEncuentroSalida,
+                PuntoEncuentroRegreso = ActividadExistente.PuntoEncuentroRegreso,
+                FechaInicio = ActividadExistente.FechaInicio,
+                FechaFin = ActividadExistente.FechaFin,
+                FechaLimiteInscripcion = ActividadExistente.FechaLimiteInscripcion,
+                Precio = ActividadExistente.Precio,
+                IbanCuentaBancaria = ActividadExistente.IbanCuentaBancaria,
+                ConceptoPagoSugerido = ActividadExistente.ConceptoPagoSugerido,
+                MaterialRequerido = ActividadExistente.MaterialRequerido,
+                ObservacionesSanitarias = ActividadExistente.ObservacionesSanitarias,
+                CreadoPorUsuarioId = ActividadExistente.CreadoPorUsuarioId
+            };
+
+            _fechaInicio = Modelo.FechaInicio.ToLocalTime().Date;
+            _horaInicio = Modelo.FechaInicio.ToLocalTime().TimeOfDay;
+            _fechaFin = Modelo.FechaFin.ToLocalTime().Date;
+            _horaFin = Modelo.FechaFin.ToLocalTime().TimeOfDay;
+            _fechaLimiteInscripcion = Modelo.FechaLimiteInscripcion?.ToLocalTime().Date;
+        }
+        else
+        {
+            var ahora = DateTime.UtcNow.Date.AddDays(7);
+            _fechaInicio = ahora;
+            _horaInicio = new TimeSpan(9, 0, 0);
+            _fechaFin = ahora;
+            _horaFin = new TimeSpan(18, 0, 0);
+            _fechaLimiteInscripcion = ahora.AddDays(-3);
+
+            Modelo = new ActividadScout
+            {
+                Titulo = string.Empty,
+                Lugar = string.Empty,
+                Tipo = TipoActividad.Salida,
+                Estado = EstadoActividad.Borrador,
+                RamasDestinatarias = [],
+                Precio = 0.00m
+            };
+        }
+    }
+
+    private void ToggleRama(RamaScout rama)
+    {
+        if (Modelo.RamasDestinatarias.Contains(rama))
+        {
+            Modelo.RamasDestinatarias.Remove(rama);
+        }
+        else
+        {
+            Modelo.RamasDestinatarias.Add(rama);
+        }
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (_form != null)
+        {
+            await _form.ValidateAsync();
+            if (!_formValido) return;
+        }
+
+        var inicioDate = _fechaInicio ?? DateTime.UtcNow.Date;
+        var inicioTime = _horaInicio ?? TimeSpan.Zero;
+        Modelo.FechaInicio = DateTime.SpecifyKind(inicioDate.Add(inicioTime), DateTimeKind.Utc);
+
+        var finDate = _fechaFin ?? inicioDate;
+        var finTime = _horaFin ?? TimeSpan.FromHours(2);
+        Modelo.FechaFin = DateTime.SpecifyKind(finDate.Add(finTime), DateTimeKind.Utc);
+
+        if (Modelo.FechaFin < Modelo.FechaInicio)
+        {
+            Snackbar.Add("La fecha de fin no puede ser anterior a la de inicio.", Severity.Warning);
+            return;
+        }
+
+        if (_fechaLimiteInscripcion.HasValue)
+        {
+            Modelo.FechaLimiteInscripcion = DateTime.SpecifyKind(_fechaLimiteInscripcion.Value.Date, DateTimeKind.Utc);
+            if (Modelo.FechaLimiteInscripcion.Value > Modelo.FechaInicio)
+            {
+                Snackbar.Add("El plazo de inscripción debe finalizar antes o el mismo día del inicio.", Severity.Warning);
+                return;
+            }
+        }
+        else
+        {
+            Modelo.FechaLimiteInscripcion = null;
+        }
+
+        try
+        {
+            if (EsNueva)
+            {
+                await ServicioActividades.CrearActividadAsync(Modelo, ScouterId != Guid.Empty ? ScouterId : null);
+                Snackbar.Add("Convocatoria creada con éxito.", Severity.Success);
+            }
+            else
+            {
+                await ServicioActividades.ActualizarActividadAsync(Modelo);
+                Snackbar.Add("Convocatoria actualizada con éxito.", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(Modelo));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al guardar: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}
