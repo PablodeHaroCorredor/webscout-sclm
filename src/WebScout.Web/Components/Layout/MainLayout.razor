@@ -78,6 +78,9 @@
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
                 Inicio
             </MudNavLink>
+            <MudNavLink Href="/contacto" Icon="@Icons.Material.Filled.ContactMail">
+                Contacto y Admisiones
+            </MudNavLink>
 
             <AuthorizeView Roles="Familia">
                 <Authorized>
@@ -100,6 +103,9 @@
                     <MudNavGroup Title="Gestión Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
                         <MudNavLink Href="/kraal/actividades" Icon="@Icons.Material.Filled.Hiking">
                             Gestor de Actividades
+                        </MudNavLink>
+                        <MudNavLink Href="/kraal/admisiones" Icon="@Icons.Material.Filled.Inbox">
+                            Buzón y Admisiones
                         </MudNavLink>
                     </MudNavGroup>
                 </Authorized>

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
+using WebScout.Web.Features.Admissions.Domain;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
@@ -37,6 +38,8 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<InscripcionActividad> Inscripciones => Set<InscripcionActividad>();
     public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
     public DbSet<MensajeOutbox> MensajesOutbox => Set<MensajeOutbox>();
+    public DbSet<SolicitudAdmision> SolicitudesAdmision => Set<SolicitudAdmision>();
+    public DbSet<MensajeContacto> MensajesContacto => Set<MensajeContacto>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -244,7 +247,42 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(m => m.FechaCreacionUtc);
         });
 
-        // 10. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
+        // 10. Configuración de Solicitudes de Admisión (RF12 / BL03)
+        modelBuilder.Entity<SolicitudAdmision>(b =>
+        {
+            b.ToTable("SolicitudesAdmision");
+            b.HasKey(s => s.Id);
+            b.Property(s => s.NombreEducando).HasMaxLength(100).IsRequired();
+            b.Property(s => s.ApellidosEducando).HasMaxLength(150).IsRequired();
+            b.Property(s => s.NombreTutor).HasMaxLength(150).IsRequired();
+            b.Property(s => s.RelacionTutor).HasMaxLength(100).IsRequired();
+            b.Property(s => s.EmailTutor).HasMaxLength(256).IsRequired();
+            b.Property(s => s.TelefonoTutor).HasMaxLength(30).IsRequired();
+            b.Property(s => s.Observaciones).HasMaxLength(2000);
+            b.Property(s => s.NotasKraal).HasMaxLength(2000);
+
+            b.HasIndex(s => new { s.OrganizacionId, s.Estado });
+            b.HasIndex(s => new { s.OrganizacionId, s.RamaSugerida });
+            b.HasIndex(s => new { s.OrganizacionId, s.FechaSolicitudUtc });
+        });
+
+        // 11. Configuración de Mensajes de Contacto (RF11 / BL03)
+        modelBuilder.Entity<MensajeContacto>(b =>
+        {
+            b.ToTable("MensajesContacto");
+            b.HasKey(m => m.Id);
+            b.Property(m => m.NombreRemitente).HasMaxLength(150).IsRequired();
+            b.Property(m => m.EmailRemitente).HasMaxLength(256).IsRequired();
+            b.Property(m => m.TelefonoRemitente).HasMaxLength(30);
+            b.Property(m => m.Asunto).HasMaxLength(200).IsRequired();
+            b.Property(m => m.Mensaje).HasMaxLength(4000).IsRequired();
+            b.Property(m => m.NotasKraal).HasMaxLength(2000);
+
+            b.HasIndex(m => new { m.OrganizacionId, m.Leido });
+            b.HasIndex(m => new { m.OrganizacionId, m.FechaEnvioUtc });
+        });
+
+        // 12. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))
