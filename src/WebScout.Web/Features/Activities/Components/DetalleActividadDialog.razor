@@ -1,0 +1,181 @@
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@ObtenerIconoTipo(Actividad.Tipo)" Color="Color.Primary" />
+            <div>
+                <MudText Typo="Typo.h6">@Actividad.Titulo</MudText>
+                <div class="d-flex align-center gap-2 mt-1">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                        @Actividad.Tipo.ToString()
+                    </MudChip>
+                    @if (Actividad.RamasDestinatarias.Count == 0)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Grupo Completo</MudChip>
+                    }
+                    else
+                    {
+                        @foreach (var rama in Actividad.RamasDestinatarias)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@rama.ToString()</MudChip>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-3">
+            <!-- Pestaña 1: Logística y Horarios -->
+            <MudTabPanel Text="Convocatoria" Icon="@Icons.Material.Filled.Info">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">LUGAR Y FECHAS</MudText>
+                        <div class="d-flex align-center gap-2 mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Place" Color="Color.Primary" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">@Actividad.Lugar</MudText>
+                        </div>
+                        <div class="d-flex align-center gap-2 mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">
+                                @Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @Actividad.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Actividad.PuntoEncuentroSalida) || !string.IsNullOrWhiteSpace(Actividad.PuntoEncuentroRegreso))
+                    {
+                        <MudDivider />
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">PUNTOS DE ENCUENTRO</MudText>
+                            @if (!string.IsNullOrWhiteSpace(Actividad.PuntoEncuentroSalida))
+                            {
+                                <div class="d-flex align-center gap-2 mt-1">
+                                    <MudIcon Icon="@Icons.Material.Filled.DepartureBoard" Size="Size.Small" Color="Color.Info" />
+                                    <MudText Typo="Typo.body2"><strong>Salida:</strong> @Actividad.PuntoEncuentroSalida</MudText>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(Actividad.PuntoEncuentroRegreso))
+                            {
+                                <div class="d-flex align-center gap-2 mt-1">
+                                    <MudIcon Icon="@Icons.Material.Filled.MeetingRoom" Size="Size.Small" Color="Color.Info" />
+                                    <MudText Typo="Typo.body2"><strong>Llegada:</strong> @Actividad.PuntoEncuentroRegreso</MudText>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Actividad.Descripcion))
+                    {
+                        <MudDivider />
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">OBJETIVOS Y ACTIVIDADES</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-1">@Actividad.Descripcion</MudText>
+                        </div>
+                    }
+
+                    @if (Actividad.FechaLimiteInscripcion.HasValue)
+                    {
+                        <MudDivider />
+                        <MudAlert Severity="@(Actividad.AdmiteInscripciones ? Severity.Info : Severity.Warning)" Dense="true">
+                            <strong>Plazo de Inscripción:</strong> Hasta el @Actividad.FechaLimiteInscripcion.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                            @(Actividad.AdmiteInscripciones ? "(Abierto)" : "(Plazo Cerrado)")
+                        </MudAlert>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- Pestaña 2: Mochila y Material -->
+            <MudTabPanel Text="Mochila" Icon="@Icons.Material.Filled.Backpack">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">MATERIAL OBLIGATORIO Y RECOMENDADO</MudText>
+                    @if (string.IsNullOrWhiteSpace(Actividad.MaterialRequerido))
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            Llevar uniforme scout, pañoleta y calzado cómodo. Se darán más detalles en el local.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudCard Elevation="0" Outlined="true" Class="pa-3">
+                            <MudText Typo="Typo.body2" Style="white-space: pre-line;">@Actividad.MaterialRequerido</MudText>
+                        </MudCard>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- Pestaña 3: Pago y Cuota -->
+            <MudTabPanel Text="Cuota y Pago" Icon="@Icons.Material.Filled.Payment">
+                <MudStack Spacing="3">
+                    <div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">PRECIO POR EDUCANDO</MudText>
+                        <MudText Typo="Typo.h5" Color="Color.Primary" Class="mt-1 font-weight-bold">
+                            @(Actividad.Precio == 0 ? "Actividad Gratuita" : $"{Actividad.Precio:N2} €")
+                        </MudText>
+                    </div>
+
+                    @if (Actividad.Precio > 0)
+                    {
+                        <MudDivider />
+                        <div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">DATOS PARA TRANSFERENCIA BANCARIA</MudText>
+                            <div class="mt-2">
+                                <MudText Typo="Typo.body2"><strong>Cuenta IBAN:</strong></MudText>
+                                <MudText Typo="Typo.body1" Style="font-family: monospace; font-weight: 700;">
+                                    @(string.IsNullOrWhiteSpace(Actividad.IbanCuentaBancaria) ? "Consultar con el Kraal" : Actividad.IbanCuentaBancaria)
+                                </MudText>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Actividad.ConceptoPagoSugerido))
+                            {
+                                <div class="mt-2">
+                                    <MudText Typo="Typo.body2"><strong>Concepto sugerido:</strong></MudText>
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@Actividad.ConceptoPagoSugerido</MudText>
+                                </div>
+                            }
+                        </div>
+                    }
+                </MudStack>
+            </MudTabPanel>
+
+            <!-- Pestaña 4: Información Sanitaria -->
+            <MudTabPanel Text="Salud" Icon="@Icons.Material.Filled.HealthAndSafety">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">RECOMENDACIONES SANITARIAS ESPECÍFICAS</MudText>
+                    @if (string.IsNullOrWhiteSpace(Actividad.ObservacionesSanitarias))
+                    {
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            No se han indicado advertencias sanitarias extraordinarias para esta salida. Se aplicarán los datos de la Ficha Médica Anual del educando.
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-1">
+                            @Actividad.ObservacionesSanitarias
+                        </MudAlert>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Cerrar">Entendido</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public ActividadScout Actividad { get; set; } = null!;
+
+    private string ObtenerIconoTipo(TipoActividad tipo) => tipo switch
+    {
+        TipoActividad.Reunion => Icons.Material.Filled.Groups,
+        TipoActividad.Salida => Icons.Material.Filled.Hiking,
+        TipoActividad.Acampada => Icons.Material.Filled.Cabin,
+        TipoActividad.Campamento => Icons.Material.Filled.Forest,
+        _ => Icons.Material.Filled.Event
+    };
+
+    private void Cerrar() => MudDialog.Close();
+}

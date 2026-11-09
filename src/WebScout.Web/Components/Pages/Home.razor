@@ -1,85 +1,93 @@
 @page "/"
 @inject ITenantContext Tenant
 
-<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Federativa</PageTitle>
+<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Asociativa</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
-    <!-- Hero Banner del Grupo Activo -->
-    <MudPaper Elevation="2" Class="pa-6 pa-md-8 rounded-lg mb-6" Style="@($"background: {ActivePanoleta.BaseColorHex}; color: {HeaderTextColor}; border-bottom: 5px solid {ActivePanoleta.BorderColorHex};")">
-        <div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4">
+    <!-- Cabecera Limpia y Profesional -->
+    <MudPaper Elevation="0" Outlined="true" Class="pa-6 pa-md-8 mb-6 rounded-lg" Style="background: #FFFFFF;">
+        <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-4">
             <div>
-                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Style="background: rgba(255,255,255,0.2); color: inherit; font-weight: 700; text-transform: uppercase;">
-                    Scouts de Castilla-La Mancha · SCLM
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="mb-2">
+                    Scouts de Castilla-La Mancha (SCLM)
                 </MudChip>
-                <MudText Typo="Typo.h3" Class="mt-2" Style="font-weight: 800; letter-spacing: -0.02em;">
-                    @(Tenant.IsResolved ? Tenant.GroupName : "Portal Asociativo SCLM")
+                <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A;">
+                    @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")
                 </MudText>
-                <MudText Typo="Typo.body1" Style="opacity: 0.9;" Class="mt-1">
-                    Subdominio: <code style="background: rgba(0,0,0,0.25); color: #fff; padding: 0.15rem 0.45rem; border-radius: 4px; font-family: monospace;">@(Tenant.IsResolved ? Tenant.TenantSlug : "sin-tenant")</code>
-                    · Censo Oficial: <strong>@(Tenant.IsResolved ? Tenant.GroupNumber.ToString() : "-")</strong>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    Plataforma de gestión para grupos scout: censo, fichas médicas y convocatorias de actividades.
                 </MudText>
             </div>
-
-            <!-- Miniatura de Pañoleta Vectorial -->
-            <MudPaper Elevation="0" Class="pa-3 text-center rounded-lg" Style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3); min-width: 140px;">
-                <MudText Typo="Typo.caption" Style="text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">
-                    Pañoleta Oficial
-                </MudText>
-                <PanoletaSvg Config="ActivePanoleta" Width="76" Height="60" />
-            </MudPaper>
+            <div class="d-flex align-center gap-2">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="@(Tenant.TenantSlug == "lestonnac" ? Color.Primary : Color.Default)" 
+                           Size="Size.Small" 
+                           Href="?tenant=lestonnac">
+                    Lestonnac 330
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" 
+                           Color="@(Tenant.TenantSlug == "sanvicente" ? Color.Primary : Color.Default)" 
+                           Size="Size.Small" 
+                           Href="?tenant=sanvicente">
+                    San Vicente 412
+                </MudButton>
+            </div>
         </div>
     </MudPaper>
 
-    <!-- Estado de Usuario Autenticado / Invitado -->
+    <!-- Estado de Usuario Autenticado / Acceso Rápido -->
     <AuthorizeView>
         <Authorized>
-            <MudCard Elevation="2" Class="mb-6 rounded-lg" Style="border-left: 6px solid var(--mud-palette-success);">
+            <MudCard Elevation="0" Outlined="true" Class="mb-6 rounded-lg" Style="border-left: 5px solid #2563EB;">
                 <MudCardContent Class="pa-6">
                     <div class="d-flex align-center gap-3 mb-2">
-                        <MudAvatar Color="Color.Success" Variant="Variant.Filled" Size="Size.Medium">
-                            <MudIcon Icon="@Icons.Material.Filled.Check" />
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" />
                         </MudAvatar>
                         <div>
-                            <MudText Typo="Typo.h5" Style="font-weight: 700;">
-                                ¡Bienvenido/a de nuevo, @context.User.Identity?.Name!
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                                Sesión iniciada como @context.User.Identity?.Name
                             </MudText>
                             <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                                Tienes una sesión activa con permisos de grupo en <strong>@(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</strong>.
+                                Pertenencia: <strong>@(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</strong>
                             </MudText>
                         </div>
                     </div>
 
                     <MudDivider Class="my-3" />
 
-                    <div class="d-flex flex-wrap gap-2 align-center">
-                        <span style="font-size: 0.875rem; font-weight: 600;">Tus roles asignados:</span>
-                        @foreach (var claim in context.User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role))
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
-                                @claim.Value
-                            </MudChip>
-                        }
+                    <div class="d-flex flex-wrap gap-2">
+                        <AuthorizeView Roles="Familia" Context="fam">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ChildCare" Href="/familias/educandos">
+                                Fichas de Educandos
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EventAvailable" Href="/familias/actividades">
+                                Convocatorias y Salidas
+                            </MudButton>
+                        </AuthorizeView>
+
+                        <AuthorizeView Roles="Scouter,Coordinacion,Administracion" Context="kraal">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Hiking" Href="/kraal/actividades">
+                                Gestor de Actividades Kraal
+                            </MudButton>
+                        </AuthorizeView>
                     </div>
                 </MudCardContent>
             </MudCard>
         </Authorized>
         <NotAuthorized>
-            <MudCard Elevation="2" Class="mb-6 rounded-lg" Style="border-left: 6px solid var(--mud-palette-primary);">
-                <MudCardContent Class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4 pa-6">
+            <MudCard Elevation="0" Outlined="true" Class="mb-6 rounded-lg">
+                <MudCardContent Class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-4 pa-6">
                     <div>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Class="mb-2">
-                            Paso 1: Identidad y Pertenencia Activo
-                        </MudChip>
-                        <MudText Typo="Typo.h5" Style="font-weight: 700;">
-                            Acceso al Portal Scout
+                        <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                            Acceso al Portal
                         </MudText>
                         <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
-                            Inicia sesión con tu cuenta de familia o scouter para acceder a los trámites, expedientes y revisiones de tu sección.
+                            Inicia sesión con tu cuenta de familia o scouter para gestionar educandos o publicar actividades.
                         </MudText>
                     </div>
                     <MudButton Variant="Variant.Filled" 
                                Color="Color.Primary" 
-                               Size="Size.Large"
                                Href="/login"
                                StartIcon="@Icons.Material.Filled.Login">
                         Iniciar Sesión
@@ -88,105 +96,4 @@
             </MudCard>
         </NotAuthorized>
     </AuthorizeView>
-
-    <!-- Simulación de Tenant (Subdominios) y Acceso Rápido -->
-    <MudPaper Elevation="0" Outlined="true" Class="pa-6 rounded-lg mb-6" Style="background: #FFFFFF;">
-        <MudText Typo="Typo.h6" Style="font-weight: 700;" Class="mb-1">
-            Simulador de Contexto Multitenant
-        </MudText>
-        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
-            El middleware de resolución detecta automáticamente el subdominio del grupo. Cambia de grupo para comprobar cómo el aislamiento de cuentas y la pañoleta se transforman:
-        </MudText>
-
-        <div class="d-flex flex-wrap gap-3">
-            <MudButton Variant="@(Tenant.TenantSlug != "sanvicente" ? Variant.Filled : Variant.Outlined)" 
-                       Color="Color.Primary" 
-                       Href="?tenant=lestonnac"
-                       StartIcon="@Icons.Material.Filled.Forest">
-                Lestonnac 330 (?tenant=lestonnac)
-            </MudButton>
-            <MudButton Variant="@(Tenant.TenantSlug == "sanvicente" ? Variant.Filled : Variant.Outlined)" 
-                       Color="Color.Primary" 
-                       Href="?tenant=sanvicente"
-                       StartIcon="@Icons.Material.Filled.WaterDrop">
-                San Vicente 412 (?tenant=sanvicente)
-            </MudButton>
-        </div>
-    </MudPaper>
-
-    <!-- Pilares de la Arquitectura de Identidad -->
-    <MudGrid>
-        <MudItem xs="12" md="4">
-            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Primary" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Security" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">ASP.NET Core Identity</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Autenticación Segura</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        Usuarios y roles gestionados mediante cookies cifradas, con hashes PBKDF2 y protección anti-falsificación.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" md="4">
-            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Success" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Lock" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Aislamiento por Tenant</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">OrganizationId Forzado</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        Los usuarios de Lestonnac no pueden autenticarse ni consultar datos en San Vicente. El filtro en base de datos es automático.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" md="4">
-            <MudCard Elevation="0" Outlined="true" Class="h-100 rounded-lg">
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Secondary" Variant="Variant.Outlined">
-                            <MudIcon Icon="@Icons.Material.Filled.Badge" />
-                        </MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">Roles y Secciones</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Familia, Scouter, Coordinación</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudText Typo="Typo.body2">
-                        El menú lateral y las vistas se adaptan dinámicamente según la pertenencia y la rama educativa asignada.
-                    </MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-    </MudGrid>
 </MudContainer>
-
-@code {
-    private PanoletaConfig ActivePanoleta => Tenant.TenantSlug switch
-    {
-        "sanvicente" => PanoletaConfig.SanVicente412,
-        _ => PanoletaConfig.Lestonnac330
-    };
-
-    private string HeaderTextColor => WcagContrastCalculator.GetAccessibleTextColor(ActivePanoleta.BaseColorHex);
-}
