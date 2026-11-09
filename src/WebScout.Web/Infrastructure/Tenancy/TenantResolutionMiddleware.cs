@@ -32,8 +32,6 @@ public class TenantResolutionMiddleware
 
         if (!string.IsNullOrWhiteSpace(tenantSlug))
         {
-            // Nota: En la fase inicial se resuelve con presets conocidos.
-            // Al conectar la base de datos se resuelve contra el caché / WebScoutDbContext.
             if (tenantSlug.Equals("lestonnac", StringComparison.OrdinalIgnoreCase))
             {
                 tenantContext.SetTenant(
@@ -52,10 +50,30 @@ public class TenantResolutionMiddleware
                     groupNumber: 412
                 );
             }
+            else if (tenantSlug.Equals("admin", StringComparison.OrdinalIgnoreCase) || tenantSlug.Equals("sclm", StringComparison.OrdinalIgnoreCase))
+            {
+                // Dominio de administración central o federación SCLM
+                tenantContext.SetTenant(
+                    tenantId: Guid.Empty,
+                    slug: "sclm",
+                    groupName: "Scouts de Castilla-La Mancha (SCLM)",
+                    groupNumber: 0
+                );
+            }
             else
             {
                 _logger.LogWarning("Se solicitó un subdominio no reconocido: {TenantSlug}", tenantSlug);
             }
+        }
+        else
+        {
+            // Petición a dominio raíz sin subdominio (portal federativo)
+            tenantContext.SetTenant(
+                tenantId: Guid.Empty,
+                slug: "sclm",
+                groupName: "Scouts de Castilla-La Mancha (SCLM)",
+                groupNumber: 0
+            );
         }
 
         await _next(context);
@@ -64,9 +82,8 @@ public class TenantResolutionMiddleware
     /// <summary>
     /// Algoritmo de extracción de slug según el orden:
     /// 1. Cabecera HTTP X-Tenant-Slug (pruebas e integraciones)
-    /// 2. Query string ?tenant=xxx (facilidad en desarrollo)
-    /// 3. Subdominio en el Host (producción: {slug}.scoutsclm.org o local: {slug}.localhost)
-    /// 4. Fallback configurado para entorno Development
+    /// 2. Subdominio en el Host (ej. lestonnac.localhost o {slug}.scoutsclm.org)
+    /// 3. Parámetro de consulta '?tenant=' (para pruebas o desarrollo sin selector en UI)
     /// </summary>
     public string? ExtractTenantSlug(HttpContext context)
     {
@@ -76,27 +93,7 @@ public class TenantResolutionMiddleware
             return headerSlug.ToString().Trim().ToLowerInvariant();
         }
 
-        // 2. Query parameter (y guardar en cookie de sesión para persistencia en Blazor SignalR)
-        if (context.Request.Query.TryGetValue("tenant", out var querySlug) && !string.IsNullOrWhiteSpace(querySlug))
-        {
-            var slug = querySlug.ToString().Trim().ToLowerInvariant();
-            context.Response.Cookies.Append(".WebScout.Tenant", slug, new CookieOptions
-            {
-                Path = "/",
-                HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddDays(14)
-            });
-            return slug;
-        }
-
-        // 3. Cookie de tenant persistida
-        if (context.Request.Cookies.TryGetValue(".WebScout.Tenant", out var cookieSlug) && !string.IsNullOrWhiteSpace(cookieSlug))
-        {
-            return cookieSlug.Trim().ToLowerInvariant();
-        }
-
-        // 4. Subdominio en Host
+        // 2. Subdominio en Host
         var host = context.Request.Host.Host;
 
         // Caso desarrollo: {slug}.localhost
@@ -115,16 +112,15 @@ public class TenantResolutionMiddleware
             var prefix = host.Substring(0, host.Length - _baseDomain.Length).TrimEnd('.');
             if (!string.IsNullOrWhiteSpace(prefix) && !prefix.Equals("www", StringComparison.OrdinalIgnoreCase))
             {
-                // Si viene como lestonnac.scoutsclm.org -> prefix = lestonnac
                 var parts = prefix.Split('.');
                 return parts[^1].ToLowerInvariant();
             }
         }
 
-        // 4. Fallback en desarrollo si se accede a localhost sin subdominio
-        if (context.RequestServices.GetService(typeof(Microsoft.AspNetCore.Hosting.IWebHostEnvironment)) is Microsoft.AspNetCore.Hosting.IWebHostEnvironment env && env.EnvironmentName == "Development")
+        // 3. Parámetro de consulta '?tenant=' para pruebas / enlaces directos
+        if (context.Request.Query.TryGetValue("tenant", out var querySlug) && !string.IsNullOrWhiteSpace(querySlug))
         {
-            return _fallbackTenant;
+            return querySlug.ToString().Trim().ToLowerInvariant();
         }
 
         return null;

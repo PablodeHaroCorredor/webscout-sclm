@@ -9,8 +9,9 @@ public static class RolesScout
     public const string Scouter = "Scouter";
     public const string Coordinacion = "Coordinacion";
     public const string Administracion = "Administracion";
+    public const string SuperAdmin = "SuperAdmin";
 
-    public static readonly string[] Todos = [Familia, Scouter, Coordinacion, Administracion];
+    public static readonly string[] Todos = [Familia, Scouter, Coordinacion, Administracion, SuperAdmin];
 }
 
 /// <summary>
@@ -22,6 +23,7 @@ public static class ScoutRoles
     public const string Scouter = RolesScout.Scouter;
     public const string Coordinacion = RolesScout.Coordinacion;
     public const string Administracion = RolesScout.Administracion;
+    public const string SuperAdmin = RolesScout.SuperAdmin;
 
     public static readonly string[] All = RolesScout.Todos;
 }

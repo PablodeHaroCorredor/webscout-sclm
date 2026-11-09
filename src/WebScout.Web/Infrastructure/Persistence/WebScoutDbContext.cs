@@ -198,7 +198,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
         where TEntity : class, IEntidadOrganizacion
     {
         modelBuilder.Entity<TEntity>()
-            .HasQueryFilter(e => e.OrganizacionId == _tenantContext.CurrentTenantId);
+            .HasQueryFilter(e => _tenantContext.IsSuperAdmin || e.OrganizacionId == _tenantContext.CurrentTenantId);
     }
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
