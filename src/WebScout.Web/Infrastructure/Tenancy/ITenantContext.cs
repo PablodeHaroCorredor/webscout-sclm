@@ -1,3 +1,5 @@
+using WebScout.Web.Common.Domain;
+
 namespace WebScout.Web.Infrastructure.Tenancy;
 
 /// <summary>
@@ -24,6 +26,11 @@ public interface ITenantContext
     /// Número de grupo federado en SCLM (ej. 330, 412).
     /// </summary>
     int GroupNumber { get; }
+
+    /// <summary>
+    /// Paleta de colores identificativos del grupo conforme a WCAG 2.2 AA.
+    /// </summary>
+    PaletteConfig? Palette { get; }
 
     /// <summary>
     /// Indica si la petición fue resuelta a un grupo activo válido.
