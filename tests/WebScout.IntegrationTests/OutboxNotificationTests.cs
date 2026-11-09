@@ -79,7 +79,6 @@ public class OutboxNotificationTests : IDisposable
             NumeroGrupo = 330,
             EmailContacto = "kraal@lestonnac.org",
             Activo = true,
-            Panoleta = PanoletaConfig.Lestonnac330,
             Paleta = PaletteConfig.DefaultLestonnac
         });
 

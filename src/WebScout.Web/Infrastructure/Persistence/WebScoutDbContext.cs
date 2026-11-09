@@ -60,7 +60,6 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.Property(t => t.EmailContacto).HasMaxLength(256).IsRequired();
 
             // Mapeo de Value Objects de identidad
-            b.OwnsOne(t => t.Panoleta);
             b.OwnsOne(t => t.Paleta);
         });
 

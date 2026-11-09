@@ -853,43 +853,7 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("GrupoScoutId");
                         });
 
-                    b.OwnsOne("WebScout.Web.Common.Domain.PanoletaConfig", "Panoleta", b1 =>
-                        {
-                            b1.Property<Guid>("GrupoScoutId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("BaseColorHex")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("BorderColorHex")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("CentralStripeColorHex")
-                                .HasColumnType("text");
-
-                            b1.Property<bool>("HasEmblem")
-                                .HasColumnType("boolean");
-
-                            b1.Property<string>("SecondaryBorderColorHex")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("ShieldUrl")
-                                .HasColumnType("text");
-
-                            b1.HasKey("GrupoScoutId");
-
-                            b1.ToTable("GruposScout");
-
-                            b1.WithOwner()
-                                .HasForeignKey("GrupoScoutId");
-                        });
-
                     b.Navigation("Paleta")
-                        .IsRequired();
-
-                    b.Navigation("Panoleta")
                         .IsRequired();
                 });
 

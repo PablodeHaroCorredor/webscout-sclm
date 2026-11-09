@@ -43,7 +43,6 @@ public static class DatabaseInitializer
                     Lema = "Siempre Listos para Servir",
                     EmailContacto = "coordinacion@scoutslestonnac.es",
                     Activo = true,
-                    Panoleta = PanoletaConfig.Lestonnac330,
                     Paleta = PaletteConfig.DefaultLestonnac
                 };
 
@@ -56,7 +55,6 @@ public static class DatabaseInitializer
                     Lema = "Por la senda del deber",
                     EmailContacto = "coordinacion@scoutssanvicente.org",
                     Activo = true,
-                    Panoleta = PanoletaConfig.SanVicente412,
                     Paleta = new PaletteConfig
                     {
                         PrimaryHex = "#0D47A1",

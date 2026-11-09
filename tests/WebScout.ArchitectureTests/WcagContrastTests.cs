@@ -17,11 +17,11 @@ public class WcagContrastTests
     [Fact]
     public void Lestonnac330_WhiteTextOnGreenBackground_ShouldComplyWithWcagAa()
     {
-        var lestonnac = PanoletaConfig.Lestonnac330;
+        var primaryColor = PaletteConfig.DefaultLestonnac.PrimaryHex;
         
         // Texto blanco sobre verde bosque #1B5E20
-        var ratio = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", lestonnac.BaseColorHex);
-        var passes = WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", lestonnac.BaseColorHex);
+        var ratio = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", primaryColor);
+        var passes = WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", primaryColor);
 
         Assert.True(passes, $"El ratio de contraste {ratio:F2}:1 debe ser >= 4.5:1 para cumplir WCAG 2.2 AA");
     }
@@ -29,11 +29,11 @@ public class WcagContrastTests
     [Fact]
     public void SanVicente412_WhiteTextOnNavyBackground_ShouldComplyWithWcagAa()
     {
-        var sanVicente = PanoletaConfig.SanVicente412;
+        const string navyColor = "#0D47A1";
         
         // Texto blanco sobre azul marino #0D47A1
-        var ratio = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", sanVicente.BaseColorHex);
-        var passes = WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", sanVicente.BaseColorHex);
+        var ratio = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", navyColor);
+        var passes = WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", navyColor);
 
         Assert.True(passes, $"El ratio de contraste {ratio:F2}:1 debe ser >= 4.5:1");
     }
@@ -41,8 +41,8 @@ public class WcagContrastTests
     [Fact]
     public void YellowBackground_ShouldAutomaticallySelectDarkText()
     {
-        // Fondo amarillo #FBC02D (ribete Lestonnac)
-        var recommendedText = WcagContrastCalculator.GetAccessibleTextColor("#FBC02D");
+        // Fondo amarillo #FBC02D (secundario Lestonnac)
+        var recommendedText = WcagContrastCalculator.GetAccessibleTextColor(PaletteConfig.DefaultLestonnac.SecondaryHex);
 
         Assert.Equal("#1A1A1A", recommendedText);
     }
