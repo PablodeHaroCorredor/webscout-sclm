@@ -1,6 +1,8 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Features.Activities;
+using WebScout.Web.Features.Dossier;
+using WebScout.Web.Features.Dossier.Endpoints;
 using WebScout.Web.Features.Identity;
 using WebScout.Web.Features.Inscriptions;
 using WebScout.Web.Features.Inscriptions.Endpoints;
@@ -31,6 +33,9 @@ builder.Services.AddActivityFeatures();
 // Registrar Dominio de Inscripciones y Justificantes Bancarios
 builder.Services.AddInscriptionFeatures();
 
+// Registrar Dominio de Dossier Operativo y Asistencia
+builder.Services.AddDossierFeatures();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -58,6 +63,9 @@ app.MapIdentityEndpoints();
 
 // Endpoints de descarga segura de justificantes bancarios
 app.MapJustificanteEndpoints();
+
+// Endpoints de exportación de asistencia
+app.MapDossierEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
