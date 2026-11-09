@@ -9,6 +9,7 @@ using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Participants.Domain;
+using WebScout.Web.Infrastructure.Outbox.Domain;
 using WebScout.Web.Infrastructure.Security;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -35,6 +36,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<FichaMedica> FichasMedicas => Set<FichaMedica>();
     public DbSet<InscripcionActividad> Inscripciones => Set<InscripcionActividad>();
     public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
+    public DbSet<MensajeOutbox> MensajesOutbox => Set<MensajeOutbox>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -222,7 +224,28 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(a => new { a.OrganizacionId, a.Accion });
         });
 
-        // 8. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
+        // 9. Configuración del Buzón de Salida Transaccional (Outbox - ADR07 / PA11)
+        modelBuilder.Entity<MensajeOutbox>(b =>
+        {
+            b.ToTable("MensajesOutbox");
+            b.HasKey(m => m.Id);
+            b.Property(m => m.TipoEvento).HasMaxLength(100).IsRequired();
+            b.Property(m => m.ClaveDeduplicacion).HasMaxLength(150).IsRequired();
+            b.Property(m => m.DestinatarioEmail).HasMaxLength(256).IsRequired();
+            b.Property(m => m.DestinatarioNombre).HasMaxLength(150).IsRequired();
+            b.Property(m => m.Asunto).HasMaxLength(250).IsRequired();
+            b.Property(m => m.ReplyToEmail).HasMaxLength(256);
+            b.Property(m => m.RemitenteNombre).HasMaxLength(150);
+            b.Property(m => m.CuerpoHtml).IsRequired();
+            b.Property(m => m.CuerpoTextoPlano).IsRequired();
+            b.Property(m => m.ErrorUltimoReintento).HasMaxLength(2000);
+
+            b.HasIndex(m => new { m.OrganizacionId, m.ClaveDeduplicacion }).IsUnique();
+            b.HasIndex(m => new { m.Estado, m.ProximoReintentoUtc });
+            b.HasIndex(m => m.FechaCreacionUtc);
+        });
+
+        // 10. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))

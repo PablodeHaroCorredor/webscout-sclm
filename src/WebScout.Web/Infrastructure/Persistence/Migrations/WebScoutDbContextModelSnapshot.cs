@@ -679,6 +679,90 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("FichasMedicas", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Infrastructure.Outbox.Domain.MensajeOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("ClaveDeduplicacion")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CuerpoHtml")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CuerpoTextoPlano")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DestinatarioEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("DestinatarioNombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ErrorUltimoReintento")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaCreacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaProcesadoUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MaxReintentos")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ProximoReintentoUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Reintentos")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RemitenteNombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ReplyToEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FechaCreacionUtc");
+
+                    b.HasIndex("Estado", "ProximoReintentoUtc");
+
+                    b.HasIndex("OrganizacionId", "ClaveDeduplicacion")
+                        .IsUnique();
+
+                    b.ToTable("MensajesOutbox", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("WebScout.Web.Features.Identity.Domain.RolScout", null)
