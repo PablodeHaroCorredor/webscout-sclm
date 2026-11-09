@@ -19,14 +19,15 @@ Esta skill establece y verifica los límites de arquitectura del proyecto **WebS
    - `src/WebScout.Web/Common/`: Entidades compartidas, Value Objects (`PanoletaConfig`), políticas de autorización y fórmulas WCAG.
    - `tools/WebScout.Migration`: Herramientas de seed de tenants y scripts de migración aislados.
 
-2. **Aislamiento Multitenant Estricto (`OrganizationId`)**:
-   - Toda entidad de negocio perteneciente a un grupo debe implementar la interfaz `ITenantScopedEntity` (con propiedad `Guid OrganizationId`).
+2. **Aislamiento Multitenant Estricto (`OrganizacionId`)**:
+   - Toda entidad de negocio perteneciente a un grupo debe implementar la interfaz `IEntidadOrganizacion` (con propiedad `Guid OrganizacionId`).
    - El `WebScoutDbContext` debe aplicar **Global Query Filters** automáticamente a todas las entidades multitenant:
      ```csharp
-     modelBuilder.Entity<T>().HasQueryFilter(e => e.OrganizationId == _tenantContext.CurrentTenantId);
+     modelBuilder.Entity<T>().HasQueryFilter(e => _tenantContext.IsSuperAdmin || e.OrganizacionId == _tenantContext.CurrentTenantId);
      ```
-   - Al guardar cambios (`SaveChangesAsync`), el contexto debe interceptar la llamada y estampar automáticamente el `OrganizationId` del tenant activo a entidades añadidas o modificadas.
-   - Solo procesos federativos auditados de SCLM pueden invocar `.IgnoreQueryFilters()` justificadamente y registrando un `AuditEvent`.
+   - Al guardar cambios (`SaveChangesAsync`), el contexto debe interceptar la llamada y estampar automáticamente el `OrganizacionId` del tenant activo a entidades añadidas o modificadas.
+   - Solo procesos federativos auditados de SCLM o usuarios con rol `SuperAdmin` pueden operar sin fijar un grupo específico o consultar datos globales.
+   - **Validación Cross-Tenant en Peticiones:** Todo usuario autenticado debe pertenecer al `CurrentTenantId` del subdominio en el que navega, bloqueando peticiones con credenciales de otros grupos (`wrong_tenant`).
 
 3. **Autorización Basada en Recursos y Capacidades**:
    - No utilizar roles globales planos sin alcance.
