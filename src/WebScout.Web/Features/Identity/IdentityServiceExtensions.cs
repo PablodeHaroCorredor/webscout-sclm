@@ -20,6 +20,7 @@ public static class IdentityServiceExtensions
             options.SignIn.RequireConfirmedAccount = false;
         })
         .AddEntityFrameworkStores<WebScoutDbContext>()
+        .AddClaimsPrincipalFactory<ScoutUserClaimsPrincipalFactory>()
         .AddDefaultTokenProviders();
 
         services.ConfigureApplicationCookie(options =>

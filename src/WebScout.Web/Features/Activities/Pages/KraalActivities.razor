@@ -1,0 +1,325 @@
+@page "/kraal/actividades"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion}")]
+@inject IServicioActividades ServicioActividades
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ITenantContext Tenant
+
+<PageTitle>Gestor de Actividades — Kraal</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-3 mb-4">
+        <div>
+            <MudText Typo="Typo.h5" Style="font-weight: 700;">Gestor de Actividades y Campamentos</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Convocatorias por ramas pedagógicas y salidas para @(Tenant.IsResolved ? Tenant.GroupName : "el grupo scout").
+            </MudText>
+        </div>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="AbrirDialogoNuevaActividadAsync">
+            Nueva Convocatoria
+        </MudButton>
+    </div>
+
+    <!-- Barra de Filtros -->
+    <MudPaper Elevation="0" Outlined="true" Class="pa-3 mb-4">
+        <MudGrid Spacing="2" Class="align-center">
+            <MudItem xs="12" sm="4">
+                <MudSelect T="EstadoActividad?" 
+                           Label="Filtrar por Estado" 
+                           Value="_estadoFiltro" 
+                           ValueChanged="OnEstadoFiltroChangedAsync"
+                           Variant="Variant.Outlined" 
+                           Margin="Margin.Dense" 
+                           Clearable="true">
+                    <MudSelectItem Value="@((EstadoActividad?)null)">Todos los estados</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.Borrador)">Borrador (Kraal)</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.Publicada)">Publicada (Familias)</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.InscripcionesCerradas)">Inscripciones Cerradas</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.EnCurso)">En Curso</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.Finalizada)">Finalizada</MudSelectItem>
+                    <MudSelectItem Value="@((EstadoActividad?)EstadoActividad.Cancelada)">Cancelada</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4">
+                <MudSelect T="RamaScout?" 
+                           Label="Filtrar por Rama" 
+                           Value="_ramaFiltro" 
+                           ValueChanged="OnRamaFiltroChangedAsync"
+                           Variant="Variant.Outlined" 
+                           Margin="Margin.Dense" 
+                           Clearable="true">
+                    <MudSelectItem Value="@((RamaScout?)null)">Todas las ramas</MudSelectItem>
+                    <MudSelectItem Value="@((RamaScout?)RamaScout.Castores)">Castores</MudSelectItem>
+                    <MudSelectItem Value="@((RamaScout?)RamaScout.Manada)">Manada</MudSelectItem>
+                    <MudSelectItem Value="@((RamaScout?)RamaScout.Tropa)">Tropa</MudSelectItem>
+                    <MudSelectItem Value="@((RamaScout?)RamaScout.Escultas)">Escultas</MudSelectItem>
+                    <MudSelectItem Value="@((RamaScout?)RamaScout.Clan)">Clan</MudSelectItem>
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" sm="4" Class="text-sm-end">
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Total: <strong>@_actividades.Count</strong> actividades encontradas
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Tabla de Actividades -->
+    <MudTable Items="@_actividades" 
+              Dense="true" 
+              Hover="true" 
+              Elevation="0" 
+              Outlined="true" 
+              Loading="@_cargando" 
+              LoadingProgressColor="Color.Primary">
+        <HeaderContent>
+            <MudTh>Tipo</MudTh>
+            <MudTh>Título y Lugar</MudTh>
+            <MudTh>Ramas</MudTh>
+            <MudTh>Fechas</MudTh>
+            <MudTh>Cuota (€)</MudTh>
+            <MudTh>Estado</MudTh>
+            <MudTh Class="text-end">Acciones</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Tipo">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorTipo(context.Tipo)">
+                    @context.Tipo.ToString()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Título">
+                <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.Titulo</MudText>
+                <div class="d-flex align-center gap-1 mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" Style="font-size: 0.9rem;" />
+                    <MudText Typo="Typo.caption">@context.Lugar</MudText>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Ramas">
+                @if (context.RamasDestinatarias.Count == 0)
+                {
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Grupo Completo</MudChip>
+                }
+                else
+                {
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var rama in context.RamasDestinatarias)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@rama.ToString()</MudChip>
+                        }
+                    </div>
+                }
+            </MudTd>
+            <MudTd DataLabel="Fechas">
+                <MudText Typo="Typo.body2">@context.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Hasta @context.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Cuota">
+                <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                    @(context.Precio == 0 ? "Gratuita" : $"{context.Precio:N2} €")
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Estado">
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(context.Estado)">
+                    @context.Estado.ToString()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Acciones" Class="text-end">
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
+                    <MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => VerDetalleAsync(context))">
+                        Ver Detalles
+                    </MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Edit" OnClick="@(() => EditarActividadAsync(context))">
+                        Editar Convocatoria
+                    </MudMenuItem>
+                    @if (context.Estado == EstadoActividad.Borrador)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.Publish" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.Publicada))">
+                            Publicar para Familias
+                        </MudMenuItem>
+                    }
+                    else if (context.Estado == EstadoActividad.Publicada)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.LockClock" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.InscripcionesCerradas))">
+                            Cerrar Plazo Inscripción
+                        </MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Drafts" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.Borrador))">
+                            Volver a Borrador
+                        </MudMenuItem>
+                    }
+                    @if (context.Estado != EstadoActividad.Cancelada)
+                    {
+                        <MudMenuItem Icon="@Icons.Material.Filled.Cancel" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.Cancelada))">
+                            Cancelar Actividad
+                        </MudMenuItem>
+                    }
+                    @if (context.Estado == EstadoActividad.Borrador || context.Estado == EstadoActividad.Cancelada)
+                    {
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" OnClick="@(() => EliminarActividadAsync(context))">
+                            Eliminar Definitivamente
+                        </MudMenuItem>
+                    }
+                </MudMenu>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <div class="pa-4 text-center">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">No se han encontrado convocatorias con los filtros seleccionados.</MudText>
+            </div>
+        </NoRecordsContent>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private IReadOnlyList<ActividadScout> _actividades = [];
+    private bool _cargando = true;
+    private EstadoActividad? _estadoFiltro;
+    private RamaScout? _ramaFiltro;
+    private Guid _usuarioActualId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (Guid.TryParse(idClaim, out var parsedId))
+        {
+            _usuarioActualId = parsedId;
+        }
+
+        await CargarActividadesAsync();
+    }
+
+    private async Task CargarActividadesAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _actividades = await ServicioActividades.ObtenerActividadesKraalAsync(_estadoFiltro, _ramaFiltro);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task OnEstadoFiltroChangedAsync(EstadoActividad? nuevoEstado)
+    {
+        _estadoFiltro = nuevoEstado;
+        await CargarActividadesAsync();
+    }
+
+    private async Task OnRamaFiltroChangedAsync(RamaScout? nuevaRama)
+    {
+        _ramaFiltro = nuevaRama;
+        await CargarActividadesAsync();
+    }
+
+    private async Task AbrirDialogoNuevaActividadAsync()
+    {
+        var parameters = new DialogParameters<EditarActividadDialog>
+        {
+            { x => x.ScouterId, _usuarioActualId }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<EditarActividadDialog>("Nueva Convocatoria", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await CargarActividadesAsync();
+        }
+    }
+
+    private async Task EditarActividadAsync(ActividadScout actividad)
+    {
+        var parameters = new DialogParameters<EditarActividadDialog>
+        {
+            { x => x.ActividadExistente, actividad },
+            { x => x.ScouterId, _usuarioActualId }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<EditarActividadDialog>("Editar Convocatoria", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await CargarActividadesAsync();
+        }
+    }
+
+    private async Task VerDetalleAsync(ActividadScout actividad)
+    {
+        var parameters = new DialogParameters<DetalleActividadDialog>
+        {
+            { x => x.Actividad, actividad }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<DetalleActividadDialog>(actividad.Titulo, parameters, options);
+    }
+
+    private async Task CambiarEstadoAsync(ActividadScout actividad, EstadoActividad nuevoEstado)
+    {
+        try
+        {
+            await ServicioActividades.CambiarEstadoActividadAsync(actividad.Id, nuevoEstado);
+            Snackbar.Add($"Estado cambiado a {nuevoEstado}", Severity.Success);
+            await CargarActividadesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task EliminarActividadAsync(ActividadScout actividad)
+    {
+        bool? confirmar = await DialogService.ShowMessageBoxAsync(
+            "Eliminar Actividad",
+            $"¿Estás seguro de que deseas eliminar permanentemente la actividad '{actividad.Titulo}'?",
+            yesText: "Sí, eliminar",
+            cancelText: "Cancelar");
+
+        if (confirmar == true)
+        {
+            try
+            {
+                await ServicioActividades.EliminarActividadAsync(actividad.Id);
+                Snackbar.Add("Actividad eliminada", Severity.Success);
+                await CargarActividadesAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private Color ObtenerColorTipo(TipoActividad tipo) => tipo switch
+    {
+        TipoActividad.Reunion => Color.Default,
+        TipoActividad.Salida => Color.Info,
+        TipoActividad.Acampada => Color.Primary,
+        TipoActividad.Campamento => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private Color ObtenerColorEstado(EstadoActividad estado) => estado switch
+    {
+        EstadoActividad.Borrador => Color.Default,
+        EstadoActividad.Publicada => Color.Success,
+        EstadoActividad.InscripcionesCerradas => Color.Warning,
+        EstadoActividad.EnCurso => Color.Info,
+        EstadoActividad.Finalizada => Color.Default,
+        EstadoActividad.Cancelada => Color.Error,
+        _ => Color.Default
+    };
+}

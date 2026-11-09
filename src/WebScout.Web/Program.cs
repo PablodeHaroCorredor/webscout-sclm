@@ -1,5 +1,6 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
+using WebScout.Web.Features.Activities;
 using WebScout.Web.Features.Identity;
 using WebScout.Web.Features.Participants;
 using WebScout.Web.Infrastructure.Tenancy;
@@ -21,6 +22,9 @@ builder.Services.AddScoutIdentity();
 
 // Registrar Dominio de Educandos y Salud
 builder.Services.AddParticipantFeatures();
+
+// Registrar Dominio de Actividades y Campamentos
+builder.Services.AddActivityFeatures();
 
 var app = builder.Build();
 

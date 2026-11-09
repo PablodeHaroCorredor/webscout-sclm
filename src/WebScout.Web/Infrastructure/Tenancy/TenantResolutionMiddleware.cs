@@ -76,13 +76,27 @@ public class TenantResolutionMiddleware
             return headerSlug.ToString().Trim().ToLowerInvariant();
         }
 
-        // 2. Query parameter
+        // 2. Query parameter (y guardar en cookie de sesión para persistencia en Blazor SignalR)
         if (context.Request.Query.TryGetValue("tenant", out var querySlug) && !string.IsNullOrWhiteSpace(querySlug))
         {
-            return querySlug.ToString().Trim().ToLowerInvariant();
+            var slug = querySlug.ToString().Trim().ToLowerInvariant();
+            context.Response.Cookies.Append(".WebScout.Tenant", slug, new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(14)
+            });
+            return slug;
         }
 
-        // 3. Subdominio en Host
+        // 3. Cookie de tenant persistida
+        if (context.Request.Cookies.TryGetValue(".WebScout.Tenant", out var cookieSlug) && !string.IsNullOrWhiteSpace(cookieSlug))
+        {
+            return cookieSlug.Trim().ToLowerInvariant();
+        }
+
+        // 4. Subdominio en Host
         var host = context.Request.Host.Host;
 
         // Caso desarrollo: {slug}.localhost
