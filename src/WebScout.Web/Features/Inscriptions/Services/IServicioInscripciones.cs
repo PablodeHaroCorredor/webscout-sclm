@@ -28,6 +28,15 @@ public interface IServicioInscripciones
     Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesActividadAsync(Guid actividadId);
 
     /// <summary>
+    /// Obtiene la lista de inscripciones para la mesa unificada de revisión del Kraal (PA02/PA04),
+    /// con filtros opcionales por rama pedagógica, actividad y estado.
+    /// </summary>
+    Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesMesaKraalAsync(
+        WebScout.Web.Features.Identity.Domain.RamaScout? ramaFiltro = null,
+        Guid? actividadIdFiltro = null,
+        EstadoInscripcion? estadoFiltro = null);
+
+    /// <summary>
     /// Obtiene una inscripción por su identificador único dentro del tenant activo.
     /// </summary>
     Task<InscripcionActividad?> ObtenerPorIdAsync(Guid inscripcionId);

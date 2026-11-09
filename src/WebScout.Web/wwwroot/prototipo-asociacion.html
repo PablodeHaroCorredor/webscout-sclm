@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grupo Scout Lestonnac 330 · Asociación Juvenil</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Lestonnac 330 - Verde Bosque Natural (Astra Love Nature) */
+      --color-brand: #1B5E20;
+      --color-brand-dark: #0f3817;
+      --color-brand-deep: #0a2610;
+      --color-brand-light: #2e7d32;
+      --color-brand-soft: #f2f8f3;
+      --color-brand-border: #d4e5d6;
+      --color-accent: #EAB308;
+      --color-accent-text: #1A1A1A;
+      --color-surface-warm: #FAF9F5;
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    }
+
+    .theme-sanvicente {
+      /* San Vicente 412 - Azul Marino Océano (Astra Planet Earth) */
+      --color-brand: #0D47A1;
+      --color-brand-dark: #072b64;
+      --color-brand-deep: #04193b;
+      --color-brand-light: #1565C0;
+      --color-brand-soft: #eff6ff;
+      --color-brand-border: #bfdbfe;
+      --color-accent: #E53935;
+      --color-accent-text: #FFFFFF;
+      --color-surface-warm: #F8FAFC;
+    }
+
+    /* Calibración milimétrica para navegación fija: 5.5rem (88px) garantiza 24px de respiro sobre el navbar de 64px */
+    html {
+      scroll-padding-top: 5.5rem;
+    }
+
+    .font-serif-nature {
+      font-family: 'Lora', Georgia, serif;
+    }
+
+    /* Fondo con textura orgánica de bosque estilo Astra Love Nature */
+    .nature-hero-bg {
+      background: linear-gradient(175deg, var(--color-brand-deep) 0%, var(--color-brand-dark) 55%, var(--color-brand) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nature-hero-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Sombra suave y natural para tarjetas estilo Astra */
+    .nature-card-shadow {
+      box-shadow: 0 10px 30px -10px rgba(18, 54, 25, 0.08), 0 4px 6px -2px rgba(18, 54, 25, 0.04);
+    }
+
+    .nature-overlap-shadow {
+      box-shadow: 0 20px 45px -12px rgba(10, 38, 16, 0.16), 0 8px 16px -6px rgba(10, 38, 16, 0.08);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF9F5] text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+
+  <!-- =========================================================================
+       SELECTOR MULTITENANT DE PREVISUALIZACIÓN (Barra informativa superior)
+       ========================================================================= -->
+  <aside class="bg-slate-950 text-slate-300 px-4 py-2 text-xs border-b border-slate-800">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span class="font-semibold text-slate-200">Enfoque Astra "Love Nature / Planet Earth"</span>
+        <span class="text-slate-400 hidden sm:inline">· Scroll anclado sin solapamientos (88px offset)</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400">Paleta del grupo:</span>
+        <button onclick="setTheme('lestonnac')" id="tab-lestonnac" class="px-2.5 py-1 rounded text-xs font-semibold bg-emerald-700 text-white transition">
+          Lestonnac 330 (Verde Bosque)
+        </button>
+        <button onclick="setTheme('sanvicente')" id="tab-sanvicente" class="px-2.5 py-1 rounded text-xs font-semibold text-slate-400 hover:text-white transition">
+          San Vicente 412 (Azul Marino)
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       1. CABECERA NAVEGACIÓN FIJA (NAVBAR 64px CON CRISTAL TRANSLÚCIDO)
+       ========================================================================= -->
+  <header class="bg-white/95 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-40 h-16 shadow-2xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-full">
+      <div class="flex items-center justify-between h-full">
+        
+        <!-- Logotipo y Nombre del Grupo -->
+        <a href="#inicio" class="flex items-center gap-3 shrink-0 group">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs transition-transform group-hover:scale-105" 
+               style="background-color: var(--color-brand);">
+            <!-- Flor de Lis / Emblema scout estilizado -->
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C11.5 5 9.5 8 7 9c2 1 3 3 3 5 0 2-1 3-2 3s-2-1-2-3c0-3 2-5 3-7-3 1-5 4-5 7 0 3.3 2.7 6 6 6 1 0 2-.3 3-.7 1 .4 2 .7 3 .7 3.3 0 6-2.7 6-6 0-3-2-6-5-7 1 2 3 4 3 7 0 2-1 3-2 3s-2-1-2-3c0-2 1-4 3-5-2.5-1-4.5-4-5-7z"/>
+            </svg>
+          </div>
+          <div>
+            <span id="txt-nombre-grupo" class="font-extrabold text-slate-900 text-base sm:text-lg tracking-tight block leading-tight">
+              Grupo Scout Lestonnac 330
+            </span>
+            <span id="txt-subtitulo-grupo" class="text-[11px] text-slate-500 font-medium block">
+              Albacete · Scouts de Castilla-La Mancha (SCLM)
+            </span>
+          </div>
+        </a>
+
+        <!-- Enlaces de Navegación Fluidos (Astra style) -->
+        <nav class="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600">
+          <a href="#quienes-somos" class="hover:text-slate-900 transition">Quiénes somos</a>
+          <a href="#como-trabajamos" class="hover:text-slate-900 transition">Método</a>
+          <a href="#ramas" class="hover:text-slate-900 transition">Ramas y Edades</a>
+          <a href="#dia-a-dia" class="hover:text-slate-900 transition">El Día a Día</a>
+          <a href="#contacto" class="hover:text-slate-900 transition">Contacto</a>
+        </nav>
+
+        <!-- Acciones Directas y Menú Móvil -->
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+          <a href="#contacto" 
+             class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-lg shadow-xs transition hover:brightness-110"
+             style="background-color: var(--color-brand);">
+            <span>Admisiones</span>
+          </a>
+          <a href="/login" 
+             class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-stone-100 hover:bg-stone-200 rounded-lg transition border border-stone-200">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <span>Acceso Familias</span>
+          </a>
+          <!-- Botón Hamburguesa Móvil -->
+          <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-stone-100 transition" aria-label="Abrir menú">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Menú desplegable para móviles -->
+    <div id="mobile-menu" class="hidden lg:hidden bg-white/98 backdrop-blur-md border-b border-stone-200 px-4 py-4 space-y-3 text-sm font-semibold text-slate-700 shadow-md">
+      <a href="#quienes-somos" onclick="toggleMobileMenu()" class="block py-1 hover:text-emerald-700">Quiénes somos</a>
+      <a href="#como-trabajamos" onclick="toggleMobileMenu()" class="block py-1 hover:text-emerald-700">Método Scout</a>
+      <a href="#ramas" onclick="toggleMobileMenu()" class="block py-1 hover:text-emerald-700">Ramas y Edades</a>
+      <a href="#dia-a-dia" onclick="toggleMobileMenu()" class="block py-1 hover:text-emerald-700">El Día a Día</a>
+      <a href="#contacto" onclick="toggleMobileMenu()" class="block py-1 text-emerald-800">Contacto y Admisiones</a>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       2. HERO NATURAL INMERSIVO (ASTRA LOVE NATURE / PLANET EARTH)
+       ========================================================================= -->
+  <main id="inicio">
+    <section class="nature-hero-bg text-white pt-16 pb-28 md:pt-20 md:pb-36 relative">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+        
+        <div class="max-w-3xl space-y-6">
+          
+          <!-- Píldora de identidad asociativa -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/10 backdrop-blur-md text-emerald-200 border border-white/15">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Asociación Juvenil sin ánimo de lucro · Albacete desde 1978</span>
+          </div>
+
+          <!-- Lema Baden-Powell con tipografía Lora -->
+          <p id="txt-lema-hero" class="font-serif-nature italic text-xl sm:text-2xl text-emerald-100/90 leading-snug">
+            «Dejad el mundo en mejores condiciones de cómo lo encontrasteis»
+          </p>
+
+          <!-- Título Principal de Alto Impacto Editorial -->
+          <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.12]">
+            Educación en la naturaleza, el juego y la amistad.
+          </h1>
+
+          <!-- Descripción cercana y humana -->
+          <p class="text-base sm:text-lg text-emerald-50/90 leading-relaxed font-normal max-w-2xl">
+            Acompañamos a niños, niñas y jóvenes de <strong>6 a 21 años</strong> en su crecimiento personal. Aprendemos a convivir, a cuidar nuestro entorno natural y a ser personas libres, críticas y solidarias a través del escultismo.
+          </p>
+
+          <!-- Botones de Acción Naturales -->
+          <div class="pt-2 flex flex-wrap items-center gap-4 text-sm font-bold">
+            <a href="#contacto" 
+               class="px-6 py-3.5 rounded-xl text-slate-900 bg-amber-400 hover:bg-amber-300 shadow-md transition flex items-center gap-2">
+              <span>Solicitar plaza (Lista de espera)</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </a>
+            <a href="#ramas" 
+               class="px-5 py-3.5 rounded-xl text-white bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-xs transition">
+              Descubrir las 5 Ramas
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Silueta vectorizada orgánica de bosque/montaña al pie del hero -->
+      <div class="absolute bottom-0 left-0 right-0 pointer-events-none opacity-20">
+        <svg viewBox="0 0 1440 120" fill="none" class="w-full h-16 md:h-24 object-cover" preserveAspectRatio="none">
+          <path d="M0 120L60 105C120 90 240 60 360 50C480 40 600 50 720 65C840 80 960 100 1080 100C1200 100 1320 80 1380 70L1440 60V120H0Z" fill="#FAF9F5"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+       3. TARJETA SOLAPADA FLOTANTE (SIGNATURE ASTRA OVERLAPPING CARD)
+       ========================================================================= -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 relative z-20 -mt-16 sm:-mt-20">
+      <div class="bg-white rounded-2xl nature-overlap-shadow border border-stone-200/90 p-6 sm:p-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-stone-100">
+          
+          <!-- Hito 1 -->
+          <div class="flex items-start gap-4 pt-4 sm:pt-0 sm:px-3 first:pt-0 first:px-0">
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0 border border-emerald-100 text-xl font-bold">
+              🌲
+            </div>
+            <div>
+              <p class="font-extrabold text-slate-900 text-base">+45 años</p>
+              <p class="text-xs text-slate-500 font-medium">Fundado en Albacete en 1978</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Trayectoria educativa consolidada</p>
+            </div>
+          </div>
+
+          <!-- Hito 2 -->
+          <div class="flex items-start gap-4 pt-4 sm:pt-0 sm:px-4">
+            <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center shrink-0 border border-amber-100 text-xl font-bold">
+              🎒
+            </div>
+            <div>
+              <p class="font-extrabold text-slate-900 text-base">5 Secciones</p>
+              <p class="text-xs text-slate-500 font-medium">De 6 a 21 años de edad</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Grupos por etapas de desarrollo</p>
+            </div>
+          </div>
+
+          <!-- Hito 3 -->
+          <div class="flex items-start gap-4 pt-4 sm:pt-0 sm:px-4">
+            <div class="w-11 h-11 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center shrink-0 border border-sky-100 text-xl font-bold">
+              ⛺
+            </div>
+            <div>
+              <p class="font-extrabold text-slate-900 text-base">Vida en la naturaleza</p>
+              <p class="text-xs text-slate-500 font-medium">Salidas y campamentos</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Desconexión sana de pantallas</p>
+            </div>
+          </div>
+
+          <!-- Hito 4 -->
+          <div class="flex items-start gap-4 pt-4 sm:pt-0 sm:px-4">
+            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-800 flex items-center justify-center shrink-0 border border-purple-100 text-xl font-bold">
+              🤝
+            </div>
+            <div>
+              <p class="font-extrabold text-slate-900 text-base">100% Voluntariado</p>
+              <p class="text-xs text-slate-500 font-medium">Kraal de educadores titulados</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">Asociación sin ánimo de lucro</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+       4. QUIÉNES SOMOS (DISPOSICIÓN ASIMÉTRICA CON CUADERNO DE CAMPO)
+       ========================================================================= -->
+    <section id="quienes-somos" class="py-16 md:py-24">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+          
+          <!-- Columna Izquierda: Manifiesto / Cuaderno de Campo (5 cols) -->
+          <div class="lg:col-span-5 bg-gradient-to-br from-emerald-900 to-emerald-950 text-white rounded-3xl p-8 sm:p-10 relative overflow-hidden shadow-xl">
+            <div class="absolute -right-6 -bottom-6 w-36 h-36 rounded-full bg-emerald-700/20 blur-2xl"></div>
+            
+            <div class="space-y-6 relative z-10">
+              <span class="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-emerald-800 text-emerald-200 border border-emerald-700">
+                Nuestra Identidad
+              </span>
+              
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                Más que una actividad de fin de semana, una forma de crecer.
+              </h2>
+              
+              <p class="text-sm text-emerald-100/80 leading-relaxed font-normal">
+                En el Grupo Scout Lestonnac 330 creemos en la educación activa en el tiempo libre. Los jóvenes aprenden a convivir en pequeños grupos donde cada voz cuenta y cada uno asume responsabilidades reales.
+              </p>
+
+              <!-- Cita Baden-Powell -->
+              <blockquote class="p-4 rounded-xl bg-white/5 border-l-4 border-amber-400 space-y-2">
+                <p class="font-serif-nature italic text-sm text-emerald-100 leading-relaxed">
+                  «El escultismo es un juego para muchachos dirigido por ellos mismos, en el que los hermanos mayores ofrecen un ambiente sano y entusiasta.»
+                </p>
+                <footer class="text-xs text-emerald-300 font-semibold">— Robert Baden-Powell, Fundador</footer>
+              </blockquote>
+
+              <div class="pt-2 border-t border-emerald-800/80 flex items-center justify-between text-xs text-emerald-300">
+                <span>Colegio Compañía de María, Albacete</span>
+                <span class="font-bold text-amber-300">Lestonnac 330</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Explicación de los 3 pilares con paso 01, 02, 03 (7 cols) -->
+          <div class="lg:col-span-7 space-y-8" id="como-trabajamos">
+            
+            <div>
+              <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase block mb-1">
+                Pedagogía Activa
+              </span>
+              <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                ¿Cómo educamos en el Grupo Scout?
+              </h3>
+              <p class="text-slate-600 text-sm mt-2">
+                El método scout es un sistema de autoeducación progresiva reconocido internacionalmente, adaptado a la realidad de nuestra juventud en Albacete.
+              </p>
+            </div>
+
+            <div class="space-y-6">
+              
+              <!-- Pilar 01 -->
+              <div class="flex items-start gap-5 p-5 rounded-2xl bg-white border border-stone-200/80 nature-card-shadow transition hover:border-emerald-200">
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-800 font-extrabold text-lg flex items-center justify-center shrink-0 border border-emerald-100 font-mono">
+                  01
+                </div>
+                <div class="space-y-1">
+                  <h4 class="font-bold text-slate-900 text-base">La naturaleza como marco de vida</h4>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Salimos al monte para aprender a respetarlo y disfrutar de la sencillez. El campamento enseña austeridad, trabajo físico saludable, autonomía y desconexión de pantallas.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Pilar 02 -->
+              <div class="flex items-start gap-5 p-5 rounded-2xl bg-white border border-stone-200/80 nature-card-shadow transition hover:border-amber-200">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-800 font-extrabold text-lg flex items-center justify-center shrink-0 border border-amber-100 font-mono">
+                  02
+                </div>
+                <div class="space-y-1">
+                  <h4 class="font-bold text-slate-900 text-base">El sistema de patrullas (El pequeño grupo)</h4>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Democracia real y responsabilidad. En equipos de 6 a 8 personas, los chavales eligen a sus responsables, debaten sus proyectos por consenso y se cuidan mutuamente.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Pilar 03 -->
+              <div class="flex items-start gap-5 p-5 rounded-2xl bg-white border border-stone-200/80 nature-card-shadow transition hover:border-sky-200">
+                <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-800 font-extrabold text-lg flex items-center justify-center shrink-0 border border-sky-100 font-mono">
+                  03
+                </div>
+                <div class="space-y-1">
+                  <h4 class="font-bold text-slate-900 text-base">Aprender haciendo (Educación activa por proyectos)</h4>
+                  <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    No impartimos clases magistrales ni sermones. Los propios jóvenes diseñan sus salidas, preparan sus menús de acampada y construyen sus vivencias mediante la acción práctica.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================================
+       5. RAMAS EDUCATIVAS: SELECTOR INTERACTIVO & FICHAS DE CAMPO ORIGINALES
+       ========================================================================= -->
+    <section id="ramas" class="py-16 bg-white border-y border-stone-200/80">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase block mb-1">
+            Etapas Pedagógicas
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Nuestras Ramas Educativas
+          </h2>
+          <p class="text-slate-600 text-sm mt-2">
+            Cada sección responde al momento evolutivo de los chavales, adaptando el marco simbólico, las responsabilidades y las actividades a su edad escolar.
+          </p>
+        </div>
+
+        <!-- Selector de Ramas tipo Pestañas Astra -->
+        <div class="flex flex-wrap justify-center gap-2 mb-10">
+          <button onclick="selectBranch('castores')" id="tab-branch-castores" class="branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-amber-500 text-white border-amber-600 shadow-xs">
+            <span>🦫 Castores</span>
+            <span class="text-[10px] opacity-80">(6-8 años)</span>
+          </button>
+          <button onclick="selectBranch('lobatos')" id="tab-branch-lobatos" class="branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-stone-100 text-slate-700 border-stone-200 hover:bg-stone-200">
+            <span>🐺 Lobatos</span>
+            <span class="text-[10px] opacity-70">(8-11 años)</span>
+          </button>
+          <button onclick="selectBranch('scouts')" id="tab-branch-scouts" class="branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-stone-100 text-slate-700 border-stone-200 hover:bg-stone-200">
+            <span>🏕️ Tropa Scout</span>
+            <span class="text-[10px] opacity-70">(11-14 años)</span>
+          </button>
+          <button onclick="selectBranch('escultas')" id="tab-branch-escultas" class="branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-stone-100 text-slate-700 border-stone-200 hover:bg-stone-200">
+            <span>🧭 Escultas</span>
+            <span class="text-[10px] opacity-70">(14-17 años)</span>
+          </button>
+          <button onclick="selectBranch('rovers')" id="tab-branch-rovers" class="branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-stone-100 text-slate-700 border-stone-200 hover:bg-stone-200">
+            <span>🥾 Clan Rover</span>
+            <span class="text-[10px] opacity-70">(17-21 años)</span>
+          </button>
+        </div>
+
+        <!-- Panel de Detalle Dinámico de Rama (Visualmente rico, estilo Astra) -->
+        <div id="branch-display-card" class="bg-[#FAF9F5] rounded-3xl p-6 sm:p-10 border border-stone-200 nature-overlap-shadow transition-all">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <div class="lg:col-span-8 space-y-4">
+              <div class="flex flex-wrap items-center gap-3">
+                <span id="branch-badge-age" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                  6 a 8 años (1º a 3º Primaria)
+                </span>
+                <span id="branch-badge-motto" class="font-serif-nature italic text-sm text-slate-600">
+                  Lema: «Compartir»
+                </span>
+              </div>
+
+              <h3 id="branch-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+                Colonia de Castores (Chikichuasi)
+              </h3>
+
+              <p id="branch-desc" class="text-sm text-slate-600 leading-relaxed">
+                La entrada al escultismo. A través del juego cooperativo y la fantasía del Gran Bosque, los castores descubren la alegría de compartir, el amor a la naturaleza y sus primeros pasos de convivencia en grupo fuera del entorno familiar y escolar.
+              </p>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div class="bg-white p-4 rounded-xl border border-stone-200/80 text-xs text-slate-600 space-y-1">
+                  <p class="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>🌱</span> ¿Qué aprenden en esta etapa?
+                  </p>
+                  <p id="branch-learnings">Compartir juguetes y merienda, ordenar su mochila, perder el miedo a la noche en campamento y colaborar en equipo.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-stone-200/80 text-xs text-slate-600 space-y-1">
+                  <p class="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>⛺</span> Actividades habituales
+                  </p>
+                  <p id="branch-activities">Talleres manuales, canciones de bosque, excursiones diurnas a parques naturales y acampadas de fin de semana en albergue con camas.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-stone-200 text-center space-y-4">
+              <div id="branch-icon-box" class="w-16 h-16 mx-auto rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center text-3xl font-bold">
+                🦫
+              </div>
+              <div>
+                <p id="branch-group-name" class="font-bold text-slate-900 text-sm">Colonia Chikichuasi</p>
+                <p class="text-xs text-slate-500">Grupo Scout Lestonnac 330</p>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Plazas limitadas por ratio de seguridad (1 monitor por cada 6-8 castores).
+              </p>
+              <a href="#contacto" 
+                 class="block w-full py-2.5 rounded-xl font-bold text-xs text-white shadow-xs transition"
+                 style="background-color: var(--color-brand);">
+                Consultar vacantes en esta rama
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Mosaico Comparativo de las 5 Ramas (Diseño Planet Earth con identidades visuales reales) -->
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          
+          <!-- Rama 1: Castores -->
+          <div onclick="selectBranch('castores')" class="cursor-pointer bg-[#FAF9F5] p-5 rounded-2xl border border-stone-200 hover:border-amber-400 hover:shadow-md transition text-center space-y-2 group">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900">6 a 8 años</span>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-amber-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              🦫
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Castores</p>
+            <p class="text-[11px] text-slate-500">Colonia Chikichuasi</p>
+            <p class="font-serif-nature italic text-[11px] text-amber-800">«Compartir»</p>
+          </div>
+
+          <!-- Rama 2: Lobatos -->
+          <div onclick="selectBranch('lobatos')" class="cursor-pointer bg-[#FAF9F5] p-5 rounded-2xl border border-stone-200 hover:border-yellow-400 hover:shadow-md transition text-center space-y-2 group">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-yellow-100 text-yellow-900">8 a 11 años</span>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-yellow-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              🐺
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Lobatos</p>
+            <p class="text-[11px] text-slate-500">Manada Hiawatha</p>
+            <p class="font-serif-nature italic text-[11px] text-yellow-800">«Haremos lo mejor»</p>
+          </div>
+
+          <!-- Rama 3: Tropa -->
+          <div onclick="selectBranch('scouts')" class="cursor-pointer bg-[#FAF9F5] p-5 rounded-2xl border border-stone-200 hover:border-emerald-400 hover:shadow-md transition text-center space-y-2 group">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-900">11 a 14 años</span>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              🏕️
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Tropa Scout</p>
+            <p class="text-[11px] text-slate-500">Brownsea</p>
+            <p class="font-serif-nature italic text-[11px] text-emerald-800">«Siempre Listos»</p>
+          </div>
+
+          <!-- Rama 4: Escultas -->
+          <div onclick="selectBranch('escultas')" class="cursor-pointer bg-[#FAF9F5] p-5 rounded-2xl border border-stone-200 hover:border-red-400 hover:shadow-md transition text-center space-y-2 group">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-900">14 a 17 años</span>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-red-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              🧭
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Escultas</p>
+            <p class="text-[11px] text-slate-500">Unidad Ázimut</p>
+            <p class="font-serif-nature italic text-[11px] text-red-800">«Unidad»</p>
+          </div>
+
+          <!-- Rama 5: Rovers -->
+          <div onclick="selectBranch('rovers')" class="cursor-pointer bg-[#FAF9F5] p-5 rounded-2xl border border-stone-200 hover:border-teal-400 hover:shadow-md transition text-center space-y-2 group">
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-900">17 a 21 años</span>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-teal-50 text-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              🥾
+            </div>
+            <p class="font-bold text-slate-900 text-sm">Clan Rover</p>
+            <p class="text-[11px] text-slate-500">Iriakener</p>
+            <p class="font-serif-nature italic text-[11px] text-teal-800">«Servir»</p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================================
+       6. EL DÍA A DÍA: CRONOGRAMA DE UN SÁBADO SCOUT & CALENDARIO ANUAL
+       ========================================================================= -->
+    <section id="dia-a-dia" class="py-16 md:py-24">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase block mb-1">
+            Vida Comunitaria
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            El Día a Día en el Grupo Scout
+          </h2>
+          <p class="text-slate-600 text-sm mt-2">
+            La actividad scout sigue el ritmo del curso escolar (de octubre a julio). Combinamos reuniones formativas de fin de semana con salidas de aventura al campo.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Tarjeta 1: Línea de tiempo de un Sábado habitual -->
+          <div class="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 nature-card-shadow space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-lg">Un Sábado Típico de Ronda</h3>
+                <p class="text-xs text-slate-500">Colegio Compañía de María, Albacete</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900">
+                16:30 a 19:00 h
+              </span>
+            </div>
+
+            <!-- Pasos cronológicos -->
+            <div class="space-y-5 text-xs text-slate-600">
+              
+              <div class="flex items-start gap-4">
+                <span class="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">16:30</span>
+                <div>
+                  <p class="font-bold text-slate-900 text-sm">Acogida e Inicio de Grupo</p>
+                  <p class="mt-0.5">Llegada de familias, izada de bandera comunitaria y avisos generales de secretaría y coordinadores.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <span class="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-1 rounded border border-amber-100">17:00</span>
+                <div>
+                  <p class="font-bold text-slate-900 text-sm">Actividades y Proyectos por Sección</p>
+                  <p class="mt-0.5">Juegos formativos, talleres de pionerismo y cabuyería, orientación con brújula y asambleas de patrulla.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <span class="font-mono font-bold text-sky-800 bg-sky-50 px-2 py-1 rounded border border-sky-100">18:15</span>
+                <div>
+                  <p class="font-bold text-slate-900 text-sm">Merienda y Convivencia Libre</p>
+                  <p class="mt-0.5">Pausa para compartir la merienda con los compañeros en el patio y fortalecer los lazos de amistad.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <span class="font-mono font-bold text-purple-800 bg-purple-50 px-2 py-1 rounded border border-purple-100">18:50</span>
+                <div>
+                  <p class="font-bold text-slate-900 text-sm">Círculo de Despedida y Oración Scout</p>
+                  <p class="mt-0.5">Recogida de locales, canción scout final y despedida con las familias hasta la próxima cita.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Tarjeta 2: Calendario y Grandes Hitos del Año -->
+          <div class="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/90 nature-card-shadow space-y-6">
+            <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+              <div>
+                <h3 class="font-extrabold text-slate-900 text-lg">El Ritmo del Año Scout</h3>
+                <p class="text-xs text-slate-500">De octubre a julio (Ronda Solar)</p>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
+                Curso Escolar
+              </span>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-600">
+              
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1">
+                <p class="font-bold text-slate-900 text-sm flex items-center justify-between">
+                  <span>🍂 Trimestre 1 (Octubre - Diciembre)</span>
+                  <span class="text-[11px] font-semibold text-emerald-800">Campamento de Navidad</span>
+                </p>
+                <p>Acogida de nuevos miembros, pase de rama, formación de patrullas y acampada invernal de 3 días en albergue rural.</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1">
+                <p class="font-bold text-slate-900 text-sm flex items-center justify-between">
+                  <span>🌱 Trimestre 2 (Enero - Marzo)</span>
+                  <span class="text-[11px] font-semibold text-sky-800">Senderismo & San Jorge</span>
+                </p>
+                <p>Salidas a la Sierra de Alcaraz y Cazorla. Celebración del patrón scout San Jorge junto a otros grupos de Castilla-La Mancha.</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+                <p class="font-bold text-slate-900 text-sm flex items-center justify-between">
+                  <span>⛺ Trimestre 3 y Verano (Abril - Julio)</span>
+                  <span class="text-[11px] font-bold text-emerald-900">Gran Campamento de Verano</span>
+                </p>
+                <p class="text-slate-700">El momento culminante: 15 días en tiendas de campaña en alta montaña (Gredos, Pirineos). Construcciones de madera, cocina de campaña y autonomía total.</p>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================================
+       7. CONTACTO & ADMISIÓN (FORMATO ACCESIBLE Y EQUILIBRADO)
+       ========================================================================= -->
+    <section id="contacto" class="py-16 md:py-24 bg-white border-t border-stone-200/80">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <span class="text-xs font-bold tracking-widest text-emerald-700 uppercase block mb-1">
+            Admisiones e Información
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            ¿Quieres formar parte del Grupo?
+          </h2>
+          <p class="text-slate-600 text-sm mt-2">
+            Como asociación juvenil gestionada por educadores voluntarios, el número de plazas en cada sección depende de los ratios oficiales para garantizar la máxima seguridad y calidad pedagógica.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Bloque 1: Solicitud de Admisión / Lista de Espera -->
+          <div class="bg-[#FAF9F5] p-6 sm:p-8 rounded-3xl border border-stone-200 nature-card-shadow flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                Lista de Espera Ronda Solar
+              </span>
+              <h3 class="text-xl font-extrabold text-slate-900">
+                Inscripción de nuevos educandos
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Rellena el formulario oficial de secretaría. Tu solicitud quedará registrada por estricto orden cronológico. En cuanto se produzca una vacante en la sección correspondiente a la edad escolar, te llamaremos para una entrevista presencial.
+              </p>
+              
+              <ul class="space-y-2 text-xs text-slate-600 pt-1">
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-700 font-bold text-sm">✓</span>
+                  <span>Sin compromiso económico ni cuota de inscripción previa</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-700 font-bold text-sm">✓</span>
+                  <span>Protección estricta de datos (RGPD)</span>
+                </li>
+                <li class="flex items-center gap-2">
+                  <span class="text-emerald-700 font-bold text-sm">✓</span>
+                  <span>Asignación automática a la sección según año de nacimiento</span>
+                </li>
+              </ul>
+            </div>
+
+            <a href="/contacto" 
+               class="w-full py-3.5 rounded-xl font-bold text-sm text-white text-center shadow-xs transition hover:brightness-110 flex items-center justify-center gap-2"
+               style="background-color: var(--color-brand);">
+              <span>Abrir formulario de admisión</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </a>
+          </div>
+
+          <!-- Bloque 2: Consultas directas a Secretaría y Voluntariado Kraal -->
+          <div class="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 nature-card-shadow flex flex-col justify-between space-y-6">
+            <div class="space-y-4">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
+                Buzón General & Scouters
+              </span>
+              <h3 class="text-xl font-extrabold text-slate-900">
+                ¿Tienes dudas o quieres ser monitor voluntario?
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Si deseas consultar dudas sobre cuotas solidarias, campamentos, material o si eres mayor de edad con vocación educativa y quieres unirte a nuestro equipo de educadores voluntarios (Kraal), escríbenos directamente.
+              </p>
+              
+              <div class="p-4 rounded-xl bg-stone-50 border border-stone-200/80 text-xs text-slate-600 space-y-1.5">
+                <p class="font-bold text-slate-900">Correo oficial de atención:</p>
+                <p class="text-slate-800 font-mono text-xs" id="txt-correo-contacto">coordinacion@scoutslestonnac.es</p>
+                <p class="text-slate-400 text-[11px]">Respondemos habitualmente en 48-72 horas hábiles.</p>
+              </div>
+            </div>
+
+            <a href="mailto:coordinacion@scoutslestonnac.es" 
+               id="lnk-email-contacto"
+               class="w-full py-3.5 rounded-xl font-bold text-sm text-slate-700 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-center transition">
+              Escribir consulta por email
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- =========================================================================
+       8. PIE DE PÁGINA ASOCIATIVO Y ACCESIBLE (WCAG 2.2 AA)
+       ========================================================================= -->
+  <footer class="bg-slate-950 text-slate-400 py-12 text-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-8">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-slate-800">
+        <div class="space-y-1">
+          <p class="font-bold text-white text-base" id="txt-footer-nombre">Grupo Scout Lestonnac 330</p>
+          <p class="text-slate-400">Asociación Juvenil de Educación en el Tiempo Libre · Albacete · Castilla-La Mancha</p>
+          <p class="text-[11px] text-slate-500">Colegio Compañía de María / Marqués de Villores, Albacete</p>
+        </div>
+        <div class="flex flex-wrap gap-6 text-slate-300 font-semibold text-xs">
+          <a href="#quienes-somos" class="hover:text-white transition">Quiénes somos</a>
+          <a href="#como-trabajamos" class="hover:text-white transition">Método</a>
+          <a href="#ramas" class="hover:text-white transition">Ramas</a>
+          <a href="#dia-a-dia" class="hover:text-white transition">El Día a Día</a>
+          <a href="#contacto" class="hover:text-white transition">Contacto</a>
+          <a href="/login" class="hover:text-white transition text-emerald-400">Portal Familias</a>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-slate-500 text-[11px]">
+        <p>© 2026 Grupo Scout Lestonnac 330 · Scouts de Castilla-La Mancha (SCLM). Accesibilidad WCAG 2.2 Nivel AA.</p>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-slate-400 transition">Protección de Datos (RGPD)</a>
+          <span>·</span>
+          <a href="#" class="hover:text-slate-400 transition">Aviso Legal</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- =========================================================================
+       SCRIPTS DE INTERACTIVIDAD (CAMBIO DE RAMAS Y TEMA MULTITENANT)
+       ========================================================================= -->
+  <script>
+    // Datos de las Ramas Educativas del Grupo
+    const branches = {
+      castores: {
+        title: "Colonia de Castores (Chikichuasi)",
+        age: "6 a 8 años (1º a 3º Primaria)",
+        motto: "Lema: «Compartir»",
+        desc: "La entrada al escultismo. A través del juego cooperativo y la fantasía del Gran Bosque, los castores descubren la alegría de compartir, el amor a la naturaleza y sus primeros pasos de convivencia en grupo fuera del entorno familiar y escolar.",
+        learnings: "Compartir juguetes y merienda, ordenar su mochila, perder el miedo a la noche en campamento y colaborar en equipo.",
+        activities: "Talleres manuales, canciones de bosque, excursiones diurnas a parques naturales y acampadas de fin de semana en albergue con camas.",
+        icon: "🦫",
+        groupName: "Colonia Chikichuasi",
+        accentBg: "bg-amber-100",
+        accentText: "text-amber-900"
+      },
+      lobatos: {
+        title: "Manada de Lobatos (Hiawatha)",
+        age: "8 a 11 años (3º a 6º Primaria)",
+        motto: "Lema: «Haremos lo mejor»",
+        desc: "Inspirada en el marco simbólico de El Libro de la Selva de Rudyard Kipling. Los lobatos se organizan en seisenas, aprenden hábitos de higiene y autonomía, superan 'rastreos' y aprenden las leyes de la selva para convivir en armonía.",
+        learnings: "Autonomía en aseo personal y orden de tienda, respeto a las normas comunitarias y trabajo cooperativo en la seisena.",
+        activities: "Juegos de pistas y rastreo, cabuyería elemental, salidas con mochila pequeña y veladas nocturnas junto al fuego de campamento.",
+        icon: "🐺",
+        groupName: "Manada Hiawatha",
+        accentBg: "bg-yellow-100",
+        accentText: "text-yellow-900"
+      },
+      scouts: {
+        title: "Tropa Scout (Brownsea)",
+        age: "11 a 14 años (1º a 3º ESO)",
+        motto: "Lema: «Siempre Listos»",
+        desc: "El corazón de la aventura scout tradicional. Los chicos y chicas se autogobiernan en pequeñas Patrullas con Guía y Subguía. Es la etapa de la Promesa Scout, la vivencia de la montaña, la cocina de campaña y la orientación con brújula.",
+        learnings: "Liderazgo compartido, orientación topográfica, cocina autónoma en acampada y asunción de compromisos personales.",
+        activities: "Rutas de senderismo de 2 días con vivac, construcciones de madera con nudos y amarres, juegos de estrategia y campamentos en tiendas de campaña.",
+        icon: "🏕️",
+        groupName: "Tropa Scout Brownsea",
+        accentBg: "bg-emerald-100",
+        accentText: "text-emerald-900"
+      },
+      escultas: {
+        title: "Unidad Esculta (Ázimut)",
+        age: "14 a 17 años (4º ESO y Bachillerato)",
+        motto: "Lema: «Unidad»",
+        desc: "La etapa de los grandes retos y la autogestión. Los escultas idean, financian y ejecutan sus propios proyectos comunitarios ('empresas'). Aprenden a debatir sobre el mundo actual y realizan expediciones de alta montaña con mochila grande.",
+        learnings: "Gestión de presupuestos reales, toma de decisiones asamblearia, espíritu crítico y resistencia en alta montaña.",
+        activities: "Travesías de alta montaña con tienda ligera, voluntariado social en Albacete, proyectos medioambientales y debates de actualidad.",
+        icon: "🧭",
+        groupName: "Unidad Ázimut",
+        accentBg: "bg-red-100",
+        accentText: "text-red-900"
+      },
+      rovers: {
+        title: "Clan Rover (Iriakener)",
+        age: "17 a 21 años (Universidad / Formación)",
+        motto: "Lema: «Servir»",
+        desc: "Jóvenes adultos en camino hacia su plena autonomía ciudadana. Su lema es el servicio desinteresado a la sociedad. Desarrollan proyectos de voluntariado en colectivos vulnerables y reflexionan sobre su proyecto de vida personal.",
+        learnings: "Compromiso cívico activo, solidaridad directa, vocación pedagógica y transición hacia la vida profesional adulta.",
+        activities: "Camino de Santiago o rutas internacionales de servicio, apoyo comunitario en comedores sociales, colaboración en el grupo scout.",
+        icon: "🥾",
+        groupName: "Clan Iriakener",
+        accentBg: "bg-teal-100",
+        accentText: "text-teal-900"
+      }
+    };
+
+    function selectBranch(key) {
+      const data = branches[key];
+      if (!data) return;
+
+      // Actualizar tarjeta
+      document.getElementById('branch-title').innerText = data.title;
+      document.getElementById('branch-badge-age').innerText = data.age;
+      document.getElementById('branch-badge-motto').innerText = data.motto;
+      document.getElementById('branch-desc').innerText = data.desc;
+      document.getElementById('branch-learnings').innerText = data.learnings;
+      document.getElementById('branch-activities').innerText = data.activities;
+      document.getElementById('branch-icon-box').innerText = data.icon;
+      document.getElementById('branch-group-name').innerText = data.groupName;
+
+      // Actualizar botones de pestañas
+      const allBtns = document.querySelectorAll('.branch-btn');
+      allBtns.forEach(btn => {
+        btn.className = "branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-stone-100 text-slate-700 border-stone-200 hover:bg-stone-200";
+      });
+
+      const activeBtn = document.getElementById('tab-branch-' + key);
+      if (activeBtn) {
+        activeBtn.className = "branch-btn px-4 py-2.5 rounded-xl font-bold text-xs transition border flex items-center gap-2 bg-amber-500 text-white border-amber-600 shadow-xs";
+      }
+    }
+
+    // Switcher Multitenant
+    function setTheme(group) {
+      const root = document.documentElement;
+      const tabLestonnac = document.getElementById('tab-lestonnac');
+      const tabSanVicente = document.getElementById('tab-sanvicente');
+
+      if (group === 'sanvicente') {
+        root.classList.add('theme-sanvicente');
+        tabSanVicente.className = "px-2.5 py-1 rounded text-xs font-semibold bg-blue-700 text-white transition";
+        tabLestonnac.className = "px-2.5 py-1 rounded text-xs font-semibold text-slate-400 hover:text-white transition";
+
+        document.getElementById('txt-nombre-grupo').innerText = "Grupo Scout San Vicente 412";
+        document.getElementById('txt-subtitulo-grupo').innerText = "Toledo · Scouts de Castilla-La Mancha (SCLM)";
+        document.getElementById('txt-footer-nombre').innerText = "Grupo Scout San Vicente 412";
+        document.getElementById('txt-lema-hero').innerText = "«Por la senda del deber hacia un mundo mejor»";
+        document.getElementById('txt-correo-contacto').innerText = "coordinacion@scoutssanvicente.org";
+        document.getElementById('lnk-email-contacto').href = "mailto:coordinacion@scoutssanvicente.org";
+      } else {
+        root.classList.remove('theme-sanvicente');
+        tabLestonnac.className = "px-2.5 py-1 rounded text-xs font-semibold bg-emerald-700 text-white transition";
+        tabSanVicente.className = "px-2.5 py-1 rounded text-xs font-semibold text-slate-400 hover:text-white transition";
+
+        document.getElementById('txt-nombre-grupo').innerText = "Grupo Scout Lestonnac 330";
+        document.getElementById('txt-subtitulo-grupo').innerText = "Albacete · Scouts de Castilla-La Mancha (SCLM)";
+        document.getElementById('txt-footer-nombre').innerText = "Grupo Scout Lestonnac 330";
+        document.getElementById('txt-lema-hero').innerText = "«Dejad el mundo en mejores condiciones de cómo lo encontrasteis»";
+        document.getElementById('txt-correo-contacto').innerText = "coordinacion@scoutslestonnac.es";
+        document.getElementById('lnk-email-contacto').href = "mailto:coordinacion@scoutslestonnac.es";
+      }
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      if (menu) {
+        menu.classList.toggle('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>

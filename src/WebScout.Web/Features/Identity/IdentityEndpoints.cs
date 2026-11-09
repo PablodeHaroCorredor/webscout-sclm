@@ -44,7 +44,8 @@ public static class IdentityEndpoints
             {
                 user.UltimoAccesoUtc = DateTime.UtcNow;
                 await userManager.UpdateAsync(user);
-                return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
+                var destino = await CalcularRutaDestinoPorRolAsync(userManager, user, returnUrl);
+                return Results.Redirect(destino);
             }
 
             return Results.Redirect($"/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
@@ -77,7 +78,8 @@ public static class IdentityEndpoints
             user.UltimoAccesoUtc = DateTime.UtcNow;
             await userManager.UpdateAsync(user);
 
-            return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
+            var destino = await CalcularRutaDestinoPorRolAsync(userManager, user, returnUrl);
+            return Results.Redirect(destino);
         });
 
         // Cierre de sesión seguro
@@ -89,5 +91,38 @@ public static class IdentityEndpoints
         });
 
         return app;
+    }
+
+    private static async Task<string> CalcularRutaDestinoPorRolAsync(
+        UserManager<UsuarioScout> userManager, 
+        UsuarioScout user, 
+        string? returnUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(returnUrl) && returnUrl != "/")
+        {
+            return returnUrl;
+        }
+
+        if (await userManager.IsInRoleAsync(user, RolesScout.Familia))
+        {
+            return "/familias";
+        }
+
+        if (await userManager.IsInRoleAsync(user, RolesScout.Scouter))
+        {
+            return "/kraal/inscripciones";
+        }
+
+        if (await userManager.IsInRoleAsync(user, RolesScout.Coordinacion) || await userManager.IsInRoleAsync(user, RolesScout.Administracion))
+        {
+            return "/kraal/actividades";
+        }
+
+        if (await userManager.IsInRoleAsync(user, RolesScout.SuperAdmin))
+        {
+            return "/admin/grupos";
+        }
+
+        return "/";
     }
 }
