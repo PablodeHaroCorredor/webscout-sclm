@@ -1,7 +1,8 @@
 @page "/"
 @inject ITenantContext Tenant
+@inject NavigationManager Navigation
 
-<PageTitle>@(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM") · Plataforma Asociativa</PageTitle>
+<PageTitle>@(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "WebScout SCLM — Federación de Scouts de Castilla-La Mancha")</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
     <!-- Cabecera Limpia y Profesional -->
@@ -12,26 +13,20 @@
                     Scouts de Castilla-La Mancha (SCLM)
                 </MudChip>
                 <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A;">
-                    @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")
+                    @(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "Federación Scouts de Castilla-La Mancha")
                 </MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
-                    Plataforma de gestión para grupos scout: censo, fichas médicas y convocatorias de actividades.
+                    @(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty 
+                        ? $"Portal oficial de gestión del Grupo Scout Nº {Tenant.GroupNumber}: censo, expedientes sanitarios y actividades." 
+                        : "Plataforma asociativa y federativa de gestión integral para los Grupos Scout de Castilla-La Mancha.")
                 </MudText>
             </div>
-            <div class="d-flex align-center gap-2">
-                <MudButton Variant="Variant.Outlined" 
-                           Color="@(Tenant.TenantSlug == "lestonnac" ? Color.Primary : Color.Default)" 
-                           Size="Size.Small" 
-                           Href="?tenant=lestonnac">
-                    Lestonnac 330
-                </MudButton>
-                <MudButton Variant="Variant.Outlined" 
-                           Color="@(Tenant.TenantSlug == "sanvicente" ? Color.Primary : Color.Default)" 
-                           Size="Size.Small" 
-                           Href="?tenant=sanvicente">
-                    San Vicente 412
-                </MudButton>
-            </div>
+            @if (Tenant.CurrentTenantId != Guid.Empty)
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Medium" Icon="@Icons.Material.Filled.Domain">
+                    Subdominio: @Tenant.TenantSlug.ToLowerInvariant()
+                </MudChip>
+            }
         </div>
     </MudPaper>
 
@@ -57,12 +52,21 @@
                     <MudDivider Class="my-3" />
 
                     <div class="d-flex flex-wrap gap-2">
+                        <AuthorizeView Roles="SuperAdmin" Context="super">
+                            <MudButton Variant="Variant.Filled" Color="Color.Secondary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AdminPanelSettings" Href="/admin/grupos">
+                                Panel SuperAdmin SCLM
+                            </MudButton>
+                        </AuthorizeView>
+
                         <AuthorizeView Roles="Familia" Context="fam">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.ChildCare" Href="/familias/educandos">
                                 Fichas de Educandos
                             </MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.EventAvailable" Href="/familias/actividades">
                                 Convocatorias y Salidas
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.AssignmentTurnedIn" Href="/familias/inscripciones">
+                                Mis Inscripciones y Pagos
                             </MudButton>
                         </AuthorizeView>
 
@@ -80,10 +84,10 @@
                 <MudCardContent Class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-4 pa-6">
                     <div>
                         <MudText Typo="Typo.h6" Style="font-weight: 700;">
-                            Acceso al Portal
+                            Acceso al Portal @(Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "SCLM")
                         </MudText>
                         <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
-                            Inicia sesión con tu cuenta de familia o scouter para gestionar educandos o publicar actividades.
+                            Inicia sesión con tu cuenta de familia, scouter o equipo asociativo para acceder a tus servicios.
                         </MudText>
                     </div>
                     <MudButton Variant="Variant.Filled" 
@@ -96,4 +100,90 @@
             </MudCard>
         </NotAuthorized>
     </AuthorizeView>
+
+    <!-- Directorio de Grupos Federados (Visible en dominio central federativo) -->
+    @if (Tenant.CurrentTenantId == Guid.Empty)
+    {
+        <div class="mb-4">
+            <MudText Typo="Typo.h6" Style="font-weight: 700;" Class="mb-1">
+                Grupos Scout Federados (Acceso por Subdominio)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                Cada grupo scout dispone de su propio entorno aislado y seguro accesible desde su dirección web específica.
+            </MudText>
+
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="0" Outlined="true" Class="h-100 d-flex flex-column">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled">330</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Style="font-weight: 700;">Grupo Scout Lestonnac 330</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">lestonnac.localhost / lestonnac.scoutsclm.org</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="flex-grow-1 pt-0">
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Grupo piloto con secciones de Castores, Manada, Tropa, Escultas y Clan. Censo completo, salidas y campamentos de montaña.
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="pa-4 pt-0">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       Href="@ObtenerUrlGrupo("lestonnac")"
+                                       EndIcon="@Icons.Material.Filled.OpenInNew">
+                                Entrar a Lestonnac 330
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="0" Outlined="true" Class="h-100 d-flex flex-column">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Secondary" Variant="Variant.Filled">412</MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Style="font-weight: 700;">Grupo Scout San Vicente 412</MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">sanvicente.localhost / sanvicente.scoutsclm.org</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+                        <MudCardContent Class="flex-grow-1 pt-0">
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Grupo scout de contraste multitenant. Aislamiento estricto de expedientes sanitarios, autorizaciones e inscripciones.
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions Class="pa-4 pt-0">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Secondary" 
+                                       Size="Size.Small" 
+                                       Href="@ObtenerUrlGrupo("sanvicente")"
+                                       EndIcon="@Icons.Material.Filled.OpenInNew">
+                                Entrar a San Vicente 412
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            </MudGrid>
+        </div>
+    }
 </MudContainer>
+
+@code {
+    private string ObtenerUrlGrupo(string slug)
+    {
+        var uri = new Uri(Navigation.Uri);
+        var port = uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : "";
+
+        if (uri.Host.EndsWith("scoutsclm.org", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{uri.Scheme}://{slug}.scoutsclm.org{port}/";
+        }
+
+        return $"{uri.Scheme}://{slug}.localhost{port}/";
+    }
+}

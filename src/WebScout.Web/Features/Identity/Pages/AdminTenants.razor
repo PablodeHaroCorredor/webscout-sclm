@@ -1,0 +1,189 @@
+@page "/admin/grupos"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using WebScout.Web.Common.Domain
+@using WebScout.Web.Features.Activities.Domain
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Participants.Domain
+@using WebScout.Web.Infrastructure.Persistence
+@attribute [Authorize(Roles = RolesScout.SuperAdmin)]
+@inject WebScoutDbContext DbContext
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject ITenantContext Tenant
+
+<PageTitle>Panel SuperAdmin — Grupos Federados SCLM</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Filled">
+                    SuperAdmin Federativo
+                </MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Castilla-La Mancha</MudText>
+            </div>
+            <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A;">
+                Gestión Centralizada de Grupos Scout (Tenants)
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Supervisión técnica y asociativa de dominios, aislamiento multitenant y censo federativo.
+            </MudText>
+        </div>
+    </div>
+
+    @if (_cargando)
+    {
+        <div class="d-flex justify-center align-center pa-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        <!-- Métricas Globales Federativas -->
+        <MudGrid Spacing="3" Class="mb-6">
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Hub" Color="Color.Primary" Size="Size.Large" Class="mb-1" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Grupos Federados</MudText>
+                    <MudText Typo="Typo.h4" Style="font-weight: 800;" Color="Color.Primary">@_grupos.Count</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.ChildCare" Color="Color.Success" Size="Size.Large" Class="mb-1" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Educandos SCLM</MudText>
+                    <MudText Typo="Typo.h4" Style="font-weight: 800;" Color="Color.Success">@_totalEducandos</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Diversity3" Color="Color.Info" Size="Size.Large" Class="mb-1" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Scouters Activos</MudText>
+                    <MudText Typo="Typo.h4" Style="font-weight: 800;" Color="Color.Info">@_totalScouters</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6" sm="3">
+                <MudPaper Elevation="0" Outlined="true" Class="pa-4 text-center">
+                    <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Color="Color.Warning" Size="Size.Large" Class="mb-1" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Actividades Publicadas</MudText>
+                    <MudText Typo="Typo.h4" Style="font-weight: 800;" Color="Color.Warning">@_totalActividades</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Tabla de Grupos Scout / Tenants -->
+        <MudTable Items="@_grupos" Dense="true" Hover="true" Elevation="0" Outlined="true">
+            <HeaderContent>
+                <MudTh>Nº Grupo</MudTh>
+                <MudTh>Nombre del Grupo</MudTh>
+                <MudTh>Subdominio / Host Asociado</MudTh>
+                <MudTh>Email Oficial</MudTh>
+                <MudTh Class="text-center">Educandos</MudTh>
+                <MudTh Class="text-center">Actividades</MudTh>
+                <MudTh Class="text-end">Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Número">
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" Style="font-weight: 700;">
+                        @context.NumeroGrupo
+                    </MudAvatar>
+                </MudTd>
+                <MudTd DataLabel="Nombre">
+                    <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.Nombre</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Lema</MudText>
+                </MudTd>
+                <MudTd DataLabel="Subdominio">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                        @context.Slug.ToLowerInvariant()
+                    </MudChip>
+                    <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mt-1">
+                        @ObtenerUrlSubdominio(context.Slug)
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Email">
+                    <MudLink Href="@($"mailto:{context.EmailContacto}")" Typo="Typo.body2">
+                        @context.EmailContacto
+                    </MudLink>
+                </MudTd>
+                <MudTd DataLabel="Educandos" Class="text-center">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">
+                        @(_educandosPorGrupo.GetValueOrDefault(context.Id, 0)) educandos
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Actividades" Class="text-center">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">
+                        @(_actividadesPorGrupo.GetValueOrDefault(context.Id, 0)) actividades
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Acciones" Class="text-end">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               Size="Size.Small" 
+                               Href="@ObtenerUrlSubdominio(context.Slug)" 
+                               Target="_blank"
+                               EndIcon="@Icons.Material.Filled.OpenInNew">
+                        Abrir Entorno
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudContainer>
+
+@code {
+    private List<GrupoScout> _grupos = [];
+    private Dictionary<Guid, int> _educandosPorGrupo = new();
+    private Dictionary<Guid, int> _actividadesPorGrupo = new();
+    private int _totalEducandos;
+    private int _totalScouters;
+    private int _totalActividades;
+    private bool _cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            // SuperAdmin consulta sin filtros de tenant
+            _grupos = await DbContext.GruposScout.AsNoTracking().OrderBy(g => g.NumeroGrupo).ToListAsync();
+
+            var educandos = await DbContext.Educandos.IgnoreQueryFilters().AsNoTracking().ToListAsync();
+            _totalEducandos = educandos.Count;
+            _educandosPorGrupo = educandos.GroupBy(e => e.OrganizacionId).ToDictionary(g => g.Key, g => g.Count());
+
+            var actividades = await DbContext.Actividades.IgnoreQueryFilters().AsNoTracking().ToListAsync();
+            _totalActividades = actividades.Count;
+            _actividadesPorGrupo = actividades.GroupBy(a => a.OrganizacionId).ToDictionary(g => g.Key, g => g.Count());
+
+            var usuarios = await DbContext.Users.IgnoreQueryFilters().AsNoTracking().ToListAsync();
+            _totalScouters = usuarios.Count(u => u.RamaAsignada != RamaScout.Ninguna);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar datos globales: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private string ObtenerUrlSubdominio(string slug)
+    {
+        var uri = new Uri(Navigation.Uri);
+        var port = uri.Port != 80 && uri.Port != 443 ? $":{uri.Port}" : "";
+
+        if (uri.Host.EndsWith("scoutsclm.org", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{uri.Scheme}://{slug}.scoutsclm.org{port}/";
+        }
+
+        return $"{uri.Scheme}://{slug}.localhost{port}/";
+    }
+}

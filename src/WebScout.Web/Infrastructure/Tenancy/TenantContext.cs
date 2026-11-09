@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+using WebScout.Web.Features.Identity.Domain;
 
 namespace WebScout.Web.Infrastructure.Tenancy;
 
@@ -25,6 +26,7 @@ public class TenantContext : ITenantContext
     private string _groupName = string.Empty;
     private int _groupNumber;
     private bool _isResolved;
+    private bool _isSuperAdmin;
 
     public TenantContext()
     {
@@ -83,11 +85,86 @@ public class TenantContext : ITenantContext
         }
     }
 
+    public bool IsSuperAdmin
+    {
+        get
+        {
+            EnsureResolved();
+            return _isSuperAdmin;
+        }
+    }
+
     private void EnsureResolved()
     {
         if (_isResolved) return;
 
-        // 1. Intentar resolver por usuario autenticado (Identity Claims)
+        // 1. Resolver por Subdominio en la URL (Host)
+        var http = _httpContextAccessor?.HttpContext;
+        if (http != null)
+        {
+            if (http.Request.Headers.TryGetValue("X-Tenant-Slug", out var headerSlug) && !string.IsNullOrWhiteSpace(headerSlug))
+            {
+                AplicarPresetPorSlug(headerSlug.ToString().Trim().ToLowerInvariant());
+                if (_isResolved)
+                {
+                    VerificarSuperAdmin();
+                    return;
+                }
+            }
+
+            var host = http.Request.Host.Host;
+
+            // Subdominio en localhost: ej. lestonnac.localhost o sanvicente.localhost
+            if (host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = host.Split('.');
+                if (parts.Length > 1 && !parts[0].Equals("www", StringComparison.OrdinalIgnoreCase))
+                {
+                    AplicarPresetPorSlug(parts[0].ToLowerInvariant());
+                    if (_isResolved)
+                    {
+                        VerificarSuperAdmin();
+                        return;
+                    }
+                }
+            }
+
+            // Subdominio en dominio de producción: ej. lestonnac.scoutsclm.org
+            if (host.EndsWith("scoutsclm.org", StringComparison.OrdinalIgnoreCase))
+            {
+                var prefix = host.Substring(0, host.Length - "scoutsclm.org".Length).TrimEnd('.');
+                if (!string.IsNullOrWhiteSpace(prefix) && !prefix.Equals("www", StringComparison.OrdinalIgnoreCase))
+                {
+                    var parts = prefix.Split('.');
+                    AplicarPresetPorSlug(parts[^1].ToLowerInvariant());
+                    if (_isResolved)
+                    {
+                        VerificarSuperAdmin();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 2. Verificar rol SuperAdmin o claims de usuario
+        VerificarSuperAdmin();
+
+        // 3. Si se accede a bare domain (localhost o scoutsclm.org sin subdominio), es la federación SCLM
+        if (http != null)
+        {
+            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
+        }
+    }
+
+    private void VerificarSuperAdmin()
+    {
+        var httpUser = _httpContextAccessor?.HttpContext?.User;
+        if (httpUser?.Identity?.IsAuthenticated == true && httpUser.IsInRole(RolesScout.SuperAdmin))
+        {
+            _isSuperAdmin = true;
+            return;
+        }
+
         if (_authStateProvider != null)
         {
             try
@@ -98,61 +175,23 @@ public class TenantContext : ITenantContext
                     var user = authTask.Result.User;
                     if (user?.Identity?.IsAuthenticated == true)
                     {
-                        var orgClaim = user.FindFirst("OrganizacionId")?.Value;
-                        if (Guid.TryParse(orgClaim, out var orgId) && orgId != Guid.Empty)
+                        if (user.IsInRole(RolesScout.SuperAdmin))
                         {
-                            if (orgId == OrgSanVicente)
-                            {
-                                SetTenant(OrgSanVicente, "sanvicente", "Grupo Scout San Vicente 412", 412);
-                                return;
-                            }
-                            else
-                            {
-                                SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
-                                return;
-                            }
+                            _isSuperAdmin = true;
                         }
                     }
                 }
             }
             catch
             {
-                // Silencioso si el circuito aún no está montado
+                // Silencioso si el circuito aún no está inicializado
             }
         }
+    }
 
-        // 2. Intentar resolver por HttpContext (Query, Cookie, Subdominio)
-        var http = _httpContextAccessor?.HttpContext;
-        if (http != null)
-        {
-            // Query string ?tenant=xxx
-            if (http.Request.Query.TryGetValue("tenant", out var qSlug) && !string.IsNullOrWhiteSpace(qSlug))
-            {
-                var slug = qSlug.ToString().Trim().ToLowerInvariant();
-                AplicarPresetPorSlug(slug);
-                if (_isResolved) return;
-            }
-
-            // Cookie .WebScout.Tenant
-            if (http.Request.Cookies.TryGetValue(".WebScout.Tenant", out var cSlug) && !string.IsNullOrWhiteSpace(cSlug))
-            {
-                var slug = cSlug.Trim().ToLowerInvariant();
-                AplicarPresetPorSlug(slug);
-                if (_isResolved) return;
-            }
-
-            // Subdominio
-            var host = http.Request.Host.Host;
-            if (host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
-            {
-                var slug = host.Split('.')[0].ToLowerInvariant();
-                AplicarPresetPorSlug(slug);
-                if (_isResolved) return;
-            }
-
-            // Fallback en desarrollo para peticiones web en localhost sin subdominio
-            SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
-        }
+    public void SetSuperAdmin(bool isSuperAdmin = true)
+    {
+        _isSuperAdmin = isSuperAdmin;
     }
 
     private void AplicarPresetPorSlug(string slug)
@@ -164,6 +203,10 @@ public class TenantContext : ITenantContext
         else if (slug.Equals("lestonnac", StringComparison.OrdinalIgnoreCase))
         {
             SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
+        }
+        else if (slug.Equals("admin", StringComparison.OrdinalIgnoreCase) || slug.Equals("sclm", StringComparison.OrdinalIgnoreCase))
+        {
+            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
         }
     }
 

@@ -131,6 +131,51 @@ public class TenantDataIsolationTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task Query_SuperAdmin_ShouldBypassTenantFilterAutomatically()
+    {
+        // 1. Actividad en Lestonnac
+        var ctxLestonnac = new TenantContext();
+        ctxLestonnac.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
+
+        using (var db = new WebScoutDbContext(_options, ctxLestonnac))
+        {
+            db.Actividades.Add(new ActividadScout
+            {
+                Titulo = "Campamento de Verano Lestonnac",
+                Lugar = "Pirineos"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // 2. Actividad en San Vicente
+        var ctxSanVicente = new TenantContext();
+        ctxSanVicente.SetTenant(OrgSanVicente, "sanvicente", "San Vicente 412", 412);
+
+        using (var db = new WebScoutDbContext(_options, ctxSanVicente))
+        {
+            db.Actividades.Add(new ActividadScout
+            {
+                Titulo = "Campamento de Verano San Vicente",
+                Lugar = "Gredos"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        // 3. SuperAdmin accede y consulta sin llamar a IgnoreQueryFilters()
+        var ctxSuperAdmin = new TenantContext();
+        ctxSuperAdmin.SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
+        ctxSuperAdmin.SetSuperAdmin(true);
+
+        using (var db = new WebScoutDbContext(_options, ctxSuperAdmin))
+        {
+            var todas = await db.Actividades.ToListAsync();
+            Assert.True(todas.Count >= 2);
+            Assert.Contains(todas, a => a.Titulo == "Campamento de Verano Lestonnac");
+            Assert.Contains(todas, a => a.Titulo == "Campamento de Verano San Vicente");
+        }
+    }
+
     public void Dispose()
     {
         _connection.Dispose();

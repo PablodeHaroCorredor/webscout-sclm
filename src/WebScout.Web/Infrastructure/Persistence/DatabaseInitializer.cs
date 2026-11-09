@@ -83,22 +83,25 @@ public static class DatabaseInitializer
                 }
             }
 
-            // 3. Seed de Usuarios Demo para el Grupo Piloto (Lestonnac 330)
+            // 3. Seed de SuperAdmin Federativo (SCLM / Desarrolladores)
+            await SeedDemoUserAsync(userManager, logger, Guid.Empty, "superadmin@scoutsclm.org", "Administrador Federación SCLM", "00000000T", RolesScout.SuperAdmin, RamaScout.Ninguna);
+
+            // 4. Seed de Usuarios Demo para el Grupo Piloto (Lestonnac 330)
             var garciaUser = await SeedDemoUserAsync(userManager, logger, lestonnacId, "familia.garcia@scoutslestonnac.es", "Familia García Pérez", "12345678Z", RolesScout.Familia, RamaScout.Ninguna);
             await SeedDemoUserAsync(userManager, logger, lestonnacId, "scouter.manada@scoutslestonnac.es", "Elena Akela", "87654321A", RolesScout.Scouter, RamaScout.Manada);
             await SeedDemoUserAsync(userManager, logger, lestonnacId, "coordinador@scoutslestonnac.es", "Roberto Coordinador", "45678901B", RolesScout.Coordinacion, RamaScout.Ninguna);
 
-            // 4. Seed de Usuarios Demo para el Grupo de Contraste (San Vicente 412)
+            // 5. Seed de Usuarios Demo para el Grupo de Contraste (San Vicente 412)
             var lopezUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "familia.lopez@scoutssanvicente.org", "Familia López Ruiz", "23456789C", RolesScout.Familia, RamaScout.Ninguna);
             await SeedDemoUserAsync(userManager, logger, sanVicenteId, "scouter.tropa@scoutssanvicente.org", "David Baloo", "98765432D", RolesScout.Scouter, RamaScout.Tropa);
 
-            // 5. Seed de Educandos y Fichas Médicas Anuales
+            // 6. Seed de Educandos y Fichas Médicas Anuales
             await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
 
-            // 6. Seed de Actividades y Campamentos por Ramas
+            // 7. Seed de Actividades y Campamentos por Ramas
             await SeedActivitiesAsync(db, logger, lestonnacId, sanVicenteId);
 
-            // 7. Seed de Inscripciones y Justificantes de Pago
+            // 8. Seed de Inscripciones y Justificantes de Pago
             await SeedInscriptionsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
         }
         catch (Exception ex)

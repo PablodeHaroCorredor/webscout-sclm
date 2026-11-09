@@ -29,7 +29,13 @@ public class TenantResolutionTests
     [InlineData("LESTONNAC.scoutsclm.org", "lestonnac")]
     [InlineData("lestonnac.localhost", "lestonnac")]
     [InlineData("sanvicente.localhost", "sanvicente")]
-    public void ExtractTenantSlug_FromSubdomain_ShouldResolveExpectedSlug(string host, string expectedSlug)
+    [InlineData("admin.localhost", "admin")]
+    [InlineData("sclm.scoutsclm.org", "sclm")]
+    [InlineData("localhost", null)]
+    [InlineData("scoutsclm.org", null)]
+    [InlineData("www.scoutsclm.org", null)]
+    [InlineData("www.localhost", null)]
+    public void ExtractTenantSlug_FromSubdomain_ShouldResolveExpectedSlug(string host, string? expectedSlug)
     {
         var middleware = new TenantResolutionMiddleware(
             _ => Task.CompletedTask,
