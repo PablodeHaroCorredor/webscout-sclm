@@ -1,6 +1,7 @@
 using MudBlazor.Services;
 using WebScout.Web.Components;
 using WebScout.Web.Features.Activities;
+using WebScout.Web.Features.Admissions;
 using WebScout.Web.Features.Audit;
 using WebScout.Web.Features.Dossier;
 using WebScout.Web.Features.Dossier.Endpoints;
@@ -42,6 +43,9 @@ builder.Services.AddInscriptionFeatures();
 
 // Registrar Dominio de Dossier Operativo y Asistencia
 builder.Services.AddDossierFeatures();
+
+// Registrar Dominio de Admisiones y Contacto Público (BL03)
+builder.Services.AddAdmissionFeatures();
 
 // Registrar Motor Outbox Transaccional y Transporte SMTP (ADR07 / PA11)
 builder.Services.AddOutboxInfrastructure(builder.Configuration);

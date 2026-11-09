@@ -273,6 +273,146 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("Actividades", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Admissions.Domain.MensajeContacto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Asunto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("ConsentimientoPrivacidad")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmailRemitente")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("FechaEnvioUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Leido")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("NombreRemitente")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("NotasKraal")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Respondido")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TelefonoRemitente")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId", "FechaEnvioUtc");
+
+                    b.HasIndex("OrganizacionId", "Leido");
+
+                    b.ToTable("MensajesContacto", (string)null);
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Admissions.Domain.SolicitudAdmision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApellidosEducando")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid?>("AtendidoPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ConsentimientoComunicaciones")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentimientoPrivacidad")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("EmailTutor")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("FechaNacimiento")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaResolucionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaSolicitudUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NombreEducando")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NombreTutor")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("NotasKraal")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Observaciones")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RamaSugerida")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RelacionTutor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TelefonoTutor")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId", "Estado");
+
+                    b.HasIndex("OrganizacionId", "FechaSolicitudUtc");
+
+                    b.HasIndex("OrganizacionId", "RamaSugerida");
+
+                    b.ToTable("SolicitudesAdmision", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Audit.Domain.RegistroAuditoria", b =>
                 {
                     b.Property<Guid>("Id")

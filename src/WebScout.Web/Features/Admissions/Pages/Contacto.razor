@@ -1,0 +1,479 @@
+@page "/contacto"
+@page "/admisiones"
+@using WebScout.Web.Common.Domain
+@using WebScout.Web.Features.Admissions.Domain
+@using WebScout.Web.Features.Admissions.Services
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Infrastructure.Tenancy
+@inject IServicioAdmisiones ServicioAdmisiones
+@inject ITenantContext Tenant
+@inject ISnackbar Snackbar
+
+<PageTitle>Admisión y Contacto · @(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="py-8 py-md-12">
+    <!-- Encabezado de la página -->
+    <div class="text-center mb-8">
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" Class="mb-2">
+            @(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "Grupo Scout Federado SCLM")
+        </MudChip>
+        <MudText Typo="Typo.h3" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+            Únete al Grupo Scout
+        </MudText>
+        <MudText Typo="Typo.subtitle1" Class="mud-text-secondary mt-2" Style="max-width: 600px; margin: 0 auto;">
+            ¿Quieres que tu hijo/a viva la aventura del escultismo? Solicita su plaza en lista de espera o envíanos cualquier consulta.
+        </MudText>
+    </div>
+
+    <!-- Tarjeta Principal con Pestañas -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden shadow-sm">
+        <MudTabs Color="Color.Primary" 
+                 Rounded="true" 
+                 Centered="true" 
+                 SliderColor="Color.Primary" 
+                 Class="mud-tabs-modern"
+                 ActivePanelIndexChanged="@(i => _tabActiva = i)">
+            
+            <!-- PESTAÑA 1: SOLICITUD DE ADMISIÓN (LISTA DE ESPERA) -->
+            <MudTabPanel Text="Solicitar Admisión (Lista de Espera)" Icon="@Icons.Material.Filled.PersonAdd">
+                <div class="pa-6 pa-md-8">
+                    @if (_admisionEnviada)
+                    {
+                        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="rounded-xl mb-4 py-4">
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">¡Solicitud de Admisión Registrada con Éxito!</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-1">
+                                Hemos recibido la solicitud para <strong>@_dtoAdmision.NombreEducando @_dtoAdmision.ApellidosEducando</strong> en la sección de <strong>@_ramaCalculada.ObtenerNombre()</strong>.
+                                Se ha enviado un acuse de recibo a <strong>@_dtoAdmision.EmailTutor</strong>. La secretaría del grupo contactará con vosotros en cuanto haya plazas vacantes.
+                            </MudText>
+                        </MudAlert>
+                        <div class="text-center mt-6">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@ResetearFormularioAdmision">
+                                Enviar otra solicitud
+                            </MudButton>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(_errorAdmision))
+                        {
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-4 rounded-lg">
+                                @_errorAdmision
+                            </MudAlert>
+                        }
+
+                        <EditForm Model="@_dtoAdmision" OnValidSubmit="EnviarAdmisionAsync">
+                            <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-3" Style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                                1. Datos del Menor (Educando)
+                            </MudText>
+
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoAdmision.NombreEducando"
+                                                  Label="Nombre del educando *"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Placeholder="ej. Lucía" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoAdmision.ApellidosEducando"
+                                                  Label="Apellidos *"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Placeholder="ej. García Pérez" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudDatePicker Label="Fecha de nacimiento *"
+                                                   Date="@_fechaNacimientoDateTime"
+                                                   DateChanged="OnFechaNacimientoChanged"
+                                                   Variant="Variant.Outlined"
+                                                   Required="true"
+                                                   DateFormat="dd/MM/yyyy"
+                                                   MaxDate="@DateTime.Today" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6" Class="d-flex align-center">
+                                    <div class="pa-3 rounded-lg border w-100" style="background-color: #F8FAFC;">
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Rama pedagógica calculada:</MudText>
+                                        <div class="d-flex align-center gap-2 mt-1">
+                                            <MudChip T="string" Color="@ObtenerColorRama(_ramaCalculada)" Size="Size.Small" Variant="Variant.Filled">
+                                                @_ramaCalculada.ObtenerNombre()
+                                            </MudChip>
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                                @ObtenerRangoEdadRama(_ramaCalculada)
+                                            </MudText>
+                                        </div>
+                                    </div>
+                                </MudItem>
+                            </MudGrid>
+
+                            <MudDivider Class="my-6" />
+
+                            <MudText Typo="Typo.subtitle2" Class="mud-text-secondary mb-3" Style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                                2. Datos del Tutor o Tutora Legal
+                            </MudText>
+
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="8">
+                                    <MudTextField @bind-Value="_dtoAdmision.NombreTutor"
+                                                  Label="Nombre y apellidos del tutor/a *"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Placeholder="ej. Carmen Pérez López" />
+                                </MudItem>
+                                <MudItem xs="12" sm="4">
+                                    <MudSelect @bind-Value="_dtoAdmision.RelacionTutor"
+                                               Label="Relación con el menor *"
+                                               Variant="Variant.Outlined">
+                                        <MudSelectItem Value="@("Madre")">Madre</MudSelectItem>
+                                        <MudSelectItem Value="@("Padre")">Padre</MudSelectItem>
+                                        <MudSelectItem Value="@("Tutor legal")">Tutor legal</MudSelectItem>
+                                        <MudSelectItem Value="@("Familiar")">Otro familiar</MudSelectItem>
+                                    </MudSelect>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoAdmision.EmailTutor"
+                                                  Label="Correo electrónico de contacto *"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Email"
+                                                  Required="true"
+                                                  Placeholder="familia@correo.com" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoAdmision.TelefonoTutor"
+                                                  Label="Teléfono móvil *"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Telephone"
+                                                  Required="true"
+                                                  Placeholder="600 000 000" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="_dtoAdmision.Observaciones"
+                                                  Label="Observaciones, dudas o necesidades específicas (opcional)"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="2"
+                                                  Placeholder="Indica si tiene hermanos en el grupo o cualquier duda inicial..." />
+                                </MudItem>
+                            </MudGrid>
+
+                            <!-- Cláusulas RGPD Obligatorias y Opcionales (PA13) -->
+                            <div class="mt-5 pa-4 rounded-xl border" style="background-color: #F8FAFC; border-color: #E2E8F0;">
+                                <MudCheckBox @bind-Value="_dtoAdmision.ConsentimientoPrivacidad"
+                                             Color="Color.Primary"
+                                             Required="true"
+                                             Class="my-1">
+                                    <span style="font-size: 0.85rem; color: #1E293B;">
+                                        <strong>He leído y acepto la política de protección de datos (RGPD) *</strong>. Entiendo que los datos se recogen exclusivamente para tramitar la admisión y lista de espera en el grupo scout conforme al Reglamento (UE) 2016/679.
+                                    </span>
+                                </MudCheckBox>
+
+                                <MudCheckBox @bind-Value="_dtoAdmision.ConsentimientoComunicaciones"
+                                             Color="Color.Primary"
+                                             Class="my-1">
+                                    <span style="font-size: 0.85rem; color: #475569;">
+                                        Acepto recibir información sobre jornadas de puertas abiertas, eventos públicos y noticias de Scouts de Castilla-La Mancha (opcional).
+                                    </span>
+                                </MudCheckBox>
+                            </div>
+
+                            <div class="mt-6 text-center">
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           FullWidth="true"
+                                           Disabled="@_procesando"
+                                           StartIcon="@Icons.Material.Filled.Send"
+                                           Style="font-weight: 700; padding: 12px 24px; border-radius: 10px;">
+                                    @if (_procesando)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        <span>Procesando solicitud...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Enviar Solicitud a Lista de Espera</span>
+                                    }
+                                </MudButton>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </MudTabPanel>
+
+            <!-- PESTAÑA 2: CONTACTO Y CONSULTAS GENERALES -->
+            <MudTabPanel Text="Contacto y Dudas Generales" Icon="@Icons.Material.Filled.MailOutline">
+                <div class="pa-6 pa-md-8">
+                    @if (_contactoEnviado)
+                    {
+                        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="rounded-xl mb-4 py-4">
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">¡Mensaje Enviado Correctamente!</MudText>
+                            <MudText Typo="Typo.body2" Class="mt-1">
+                                Gracias por escribirnos, <strong>@_dtoContacto.NombreRemitente</strong>. Hemos recibido tu consulta y te responderemos a <strong>@_dtoContacto.EmailRemitente</strong> a la mayor brevedad.
+                            </MudText>
+                        </MudAlert>
+                        <div class="text-center mt-6">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="@(() => _contactoEnviado = false)">
+                                Enviar otro mensaje
+                            </MudButton>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(_errorContacto))
+                        {
+                            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="mb-4 rounded-lg">
+                                @_errorContacto
+                            </MudAlert>
+                        }
+
+                        <EditForm Model="@_dtoContacto" OnValidSubmit="EnviarContactoAsync">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoContacto.NombreRemitente"
+                                                  Label="Tu nombre y apellidos *"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Placeholder="ej. María Morales" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoContacto.EmailRemitente"
+                                                  Label="Tu correo electrónico *"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Email"
+                                                  Required="true"
+                                                  Placeholder="tuemail@correo.com" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoContacto.TelefonoRemitente"
+                                                  Label="Teléfono de contacto (opcional)"
+                                                  Variant="Variant.Outlined"
+                                                  InputType="InputType.Telephone"
+                                                  Placeholder="600 000 000" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField @bind-Value="_dtoContacto.Asunto"
+                                                  Label="Asunto de la consulta *"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true"
+                                                  Placeholder="ej. Información sobre campamento de verano" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField @bind-Value="_dtoContacto.Mensaje"
+                                                  Label="Mensaje o consulta *"
+                                                  Variant="Variant.Outlined"
+                                                  Lines="4"
+                                                  Required="true"
+                                                  Placeholder="Escribe aquí tu consulta para el equipo del Kraal..." />
+                                </MudItem>
+                            </MudGrid>
+
+                            <div class="mt-4 pa-4 rounded-xl border" style="background-color: #F8FAFC; border-color: #E2E8F0;">
+                                <MudCheckBox @bind-Value="_dtoContacto.ConsentimientoPrivacidad"
+                                             Color="Color.Primary"
+                                             Required="true">
+                                    <span style="font-size: 0.85rem; color: #1E293B;">
+                                        <strong>He leído y acepto la política de privacidad *</strong> para tramitar esta consulta.
+                                    </span>
+                                </MudCheckBox>
+                            </div>
+
+                            <div class="mt-6 text-center">
+                                <MudButton ButtonType="ButtonType.Submit"
+                                           Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           FullWidth="true"
+                                           Disabled="@_procesando"
+                                           StartIcon="@Icons.Material.Filled.Send"
+                                           Style="font-weight: 700; padding: 12px 24px; border-radius: 10px;">
+                                    @if (_procesando)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        <span>Enviando mensaje...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Enviar Consulta al Kraal</span>
+                                    }
+                                </MudButton>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </MudTabPanel>
+        </MudTabs>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private int _tabActiva = 0;
+    private bool _procesando = false;
+
+    // Estado Admisión
+    private ModelAdmision _dtoAdmision = new();
+    private DateTime? _fechaNacimientoDateTime = DateTime.Today.AddYears(-9);
+    private RamaScout _ramaCalculada = RamaScout.Manada;
+    private bool _admisionEnviada = false;
+    private string? _errorAdmision;
+
+    // Estado Contacto
+    private ModelContacto _dtoContacto = new();
+    private bool _contactoEnviado = false;
+    private string? _errorContacto;
+
+    protected override void OnInitialized()
+    {
+        CalcularRama();
+    }
+
+    private void OnFechaNacimientoChanged(DateTime? nuevaFecha)
+    {
+        _fechaNacimientoDateTime = nuevaFecha;
+        CalcularRama();
+    }
+
+    private void CalcularRama()
+    {
+        if (_fechaNacimientoDateTime.HasValue)
+        {
+            var dateOnly = DateOnly.FromDateTime(_fechaNacimientoDateTime.Value);
+            _ramaCalculada = SolicitudAdmision.CalcularRamaPedagogica(dateOnly);
+        }
+    }
+
+    private async Task EnviarAdmisionAsync()
+    {
+        _errorAdmision = null;
+
+        if (!_dtoAdmision.ConsentimientoPrivacidad)
+        {
+            _errorAdmision = "Debe aceptar expresamente la cláusula de protección de datos.";
+            return;
+        }
+
+        if (!_fechaNacimientoDateTime.HasValue)
+        {
+            _errorAdmision = "Debe indicar la fecha de nacimiento del educando.";
+            return;
+        }
+
+        _procesando = true;
+
+        try
+        {
+            var dto = new RegistrarSolicitudAdmisionDto(
+                NombreEducando: _dtoAdmision.NombreEducando,
+                ApellidosEducando: _dtoAdmision.ApellidosEducando,
+                FechaNacimiento: DateOnly.FromDateTime(_fechaNacimientoDateTime.Value),
+                NombreTutor: _dtoAdmision.NombreTutor,
+                RelacionTutor: _dtoAdmision.RelacionTutor,
+                EmailTutor: _dtoAdmision.EmailTutor,
+                TelefonoTutor: _dtoAdmision.TelefonoTutor,
+                Observaciones: _dtoAdmision.Observaciones,
+                ConsentimientoPrivacidad: _dtoAdmision.ConsentimientoPrivacidad,
+                ConsentimientoComunicaciones: _dtoAdmision.ConsentimientoComunicaciones
+            );
+
+            await ServicioAdmisiones.RegistrarSolicitudAdmisionAsync(dto);
+            _admisionEnviada = true;
+            Snackbar.Add("Solicitud registrada correctamente. Compruebe su correo para el acuse de recibo.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _errorAdmision = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _procesando = false;
+        }
+    }
+
+    private async Task EnviarContactoAsync()
+    {
+        _errorContacto = null;
+
+        if (!_dtoContacto.ConsentimientoPrivacidad)
+        {
+            _errorContacto = "Debe aceptar la política de privacidad para enviar el mensaje.";
+            return;
+        }
+
+        _procesando = true;
+
+        try
+        {
+            var dto = new RegistrarMensajeContactoDto(
+                NombreRemitente: _dtoContacto.NombreRemitente,
+                EmailRemitente: _dtoContacto.EmailRemitente,
+                TelefonoRemitente: _dtoContacto.TelefonoRemitente,
+                Asunto: _dtoContacto.Asunto,
+                Mensaje: _dtoContacto.Mensaje,
+                ConsentimientoPrivacidad: _dtoContacto.ConsentimientoPrivacidad
+            );
+
+            await ServicioAdmisiones.RegistrarMensajeContactoAsync(dto);
+            _contactoEnviado = true;
+            Snackbar.Add("Mensaje enviado con éxito al Kraal.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            _errorContacto = ex.Message;
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _procesando = false;
+        }
+    }
+
+    private void ResetearFormularioAdmision()
+    {
+        _dtoAdmision = new();
+        _fechaNacimientoDateTime = DateTime.Today.AddYears(-9);
+        CalcularRama();
+        _admisionEnviada = false;
+    }
+
+    private Color ObtenerColorRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => Color.Warning,
+        RamaScout.Manada => Color.Tertiary,
+        RamaScout.Tropa => Color.Info,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Success,
+        _ => Color.Default
+    };
+
+    private string ObtenerRangoEdadRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => "(6 a 8 años)",
+        RamaScout.Manada => "(8 a 11 años)",
+        RamaScout.Tropa => "(11 a 14 años)",
+        RamaScout.Escultas => "(14 a 17 años)",
+        RamaScout.Clan => "(17 a 21 años)",
+        _ => ""
+    };
+
+    public class ModelAdmision
+    {
+        public string NombreEducando { get; set; } = string.Empty;
+        public string ApellidosEducando { get; set; } = string.Empty;
+        public string NombreTutor { get; set; } = string.Empty;
+        public string RelacionTutor { get; set; } = "Madre";
+        public string EmailTutor { get; set; } = string.Empty;
+        public string TelefonoTutor { get; set; } = string.Empty;
+        public string? Observaciones { get; set; }
+        public bool ConsentimientoPrivacidad { get; set; } = false; // Sin premarcar (PA13)
+        public bool ConsentimientoComunicaciones { get; set; } = false;
+    }
+
+    public class ModelContacto
+    {
+        public string NombreRemitente { get; set; } = string.Empty;
+        public string EmailRemitente { get; set; } = string.Empty;
+        public string? TelefonoRemitente { get; set; }
+        public string Asunto { get; set; } = string.Empty;
+        public string Mensaje { get; set; } = string.Empty;
+        public bool ConsentimientoPrivacidad { get; set; } = false;
+    }
+}
