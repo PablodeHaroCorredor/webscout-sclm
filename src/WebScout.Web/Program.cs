@@ -8,6 +8,7 @@ using WebScout.Web.Features.Identity;
 using WebScout.Web.Features.Inscriptions;
 using WebScout.Web.Features.Inscriptions.Endpoints;
 using WebScout.Web.Features.Participants;
+using WebScout.Web.Infrastructure.Outbox;
 using WebScout.Web.Infrastructure.Security;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -41,6 +42,9 @@ builder.Services.AddInscriptionFeatures();
 
 // Registrar Dominio de Dossier Operativo y Asistencia
 builder.Services.AddDossierFeatures();
+
+// Registrar Motor Outbox Transaccional y Transporte SMTP (ADR07 / PA11)
+builder.Services.AddOutboxInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
