@@ -391,6 +391,85 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Inscriptions.Domain.InscripcionActividad", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActividadId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AutorizacionFirmada")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("EducandoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaAutorizacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("FechaInscripcionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaRevisionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaSubidaJustificanteUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("ImporteEuros")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("NombreArchivoJustificante")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("NotasKraal")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ObservacionesFamilia")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RevisadoPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RutaArchivoJustificante")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("TutorLegalId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActividadId");
+
+                    b.HasIndex("EducandoId");
+
+                    b.HasIndex("RevisadoPorUsuarioId");
+
+                    b.HasIndex("TutorLegalId");
+
+                    b.HasIndex("OrganizacionId", "Estado");
+
+                    b.HasIndex("OrganizacionId", "TutorLegalId");
+
+                    b.HasIndex("OrganizacionId", "ActividadId", "EducandoId")
+                        .IsUnique();
+
+                    b.ToTable("Inscripciones", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
                 {
                     b.Property<Guid>("Id")
@@ -672,6 +751,40 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreadoPorUsuario");
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Inscriptions.Domain.InscripcionActividad", b =>
+                {
+                    b.HasOne("WebScout.Web.Features.Activities.Domain.ActividadScout", "Actividad")
+                        .WithMany()
+                        .HasForeignKey("ActividadId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebScout.Web.Features.Participants.Domain.Educando", "Educando")
+                        .WithMany()
+                        .HasForeignKey("EducandoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", "RevisadoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("RevisadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", "TutorLegal")
+                        .WithMany()
+                        .HasForeignKey("TutorLegalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actividad");
+
+                    b.Navigation("Educando");
+
+                    b.Navigation("RevisadoPorUsuario");
+
+                    b.Navigation("TutorLegal");
                 });
 
             modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>

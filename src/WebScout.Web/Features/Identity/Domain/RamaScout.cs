@@ -25,3 +25,16 @@ public enum ScoutBranch
     Escultas = 4,
     Clan = 5
 }
+
+public static class RamaScoutExtensions
+{
+    public static string ObtenerNombre(this RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => "Castores",
+        RamaScout.Manada => "Manada",
+        RamaScout.Tropa => "Tropa",
+        RamaScout.Escultas => "Escultas",
+        RamaScout.Clan => "Clan",
+        _ => "Sin Rama"
+    };
+}

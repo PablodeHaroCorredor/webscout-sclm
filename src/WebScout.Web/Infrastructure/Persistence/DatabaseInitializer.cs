@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Participants.Domain;
 
 namespace WebScout.Web.Infrastructure.Persistence;
@@ -96,6 +97,9 @@ public static class DatabaseInitializer
 
             // 6. Seed de Actividades y Campamentos por Ramas
             await SeedActivitiesAsync(db, logger, lestonnacId, sanVicenteId);
+
+            // 7. Seed de Inscripciones y Justificantes de Pago
+            await SeedInscriptionsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
         }
         catch (Exception ex)
         {
@@ -387,5 +391,125 @@ public static class DatabaseInitializer
             await db.SaveChangesAsync();
             logger.LogInformation("Actividad demo de San Vicente 412 creada: Castores (Gratuita).");
         }
+    }
+
+    private static async Task SeedInscriptionsAsync(
+        WebScoutDbContext db,
+        ILogger logger,
+        Guid lestonnacId,
+        Guid sanVicenteId,
+        UsuarioScout? garciaUser,
+        UsuarioScout? lopezUser)
+    {
+        if (await db.Inscripciones.IgnoreQueryFilters().AnyAsync())
+        {
+            return;
+        }
+
+        logger.LogInformation("Poblando inscripciones de prueba y justificantes bancarios...");
+
+        // 1. Inscripciones en Lestonnac 330
+        if (garciaUser != null)
+        {
+            var salidaManada = await db.Actividades.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.OrganizacionId == lestonnacId && a.Titulo.Contains("Laguna del Arquillo"));
+            var acampadaAlcaraz = await db.Actividades.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.OrganizacionId == lestonnacId && a.Titulo.Contains("Sierra de Alcaraz"));
+
+            var lucia = await db.Educandos.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e => e.TutorLegalId == garciaUser.Id && e.Nombre == "Lucía");
+            var marcos = await db.Educandos.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e => e.TutorLegalId == garciaUser.Id && e.Nombre == "Marcos");
+
+            if (salidaManada != null && lucia != null)
+            {
+                // Crear archivo físico demo para el comprobante de Lucía
+                var baseDir = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "justificantes", lestonnacId.ToString());
+                if (!Directory.Exists(baseDir))
+                {
+                    Directory.CreateDirectory(baseDir);
+                }
+
+                var nombreFisico = $"demo_justificante_lucia_{Guid.NewGuid():N}.pdf";
+                var rutaFisica = Path.Combine(baseDir, nombreFisico);
+                var rutaRelativa = $"{lestonnacId}/{nombreFisico}";
+
+                // PDF mínimo válido
+                var pdfBytes = "%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\nxref\n0 4\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n178\n%%EOF"u8.ToArray();
+                await File.WriteAllBytesAsync(rutaFisica, pdfBytes);
+
+                var inscripcionLucia = new InscripcionActividad
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizacionId = lestonnacId,
+                    ActividadId = salidaManada.Id,
+                    EducandoId = lucia.Id,
+                    TutorLegalId = garciaUser.Id,
+                    Estado = EstadoInscripcion.EnRevision,
+                    ImporteEuros = salidaManada.Precio,
+                    AutorizacionFirmada = true,
+                    FechaAutorizacionUtc = DateTime.UtcNow.AddDays(-1),
+                    FechaInscripcionUtc = DateTime.UtcNow.AddDays(-1),
+                    NombreArchivoJustificante = "justificante_transferencia_santander_lucia.pdf",
+                    RutaArchivoJustificante = rutaRelativa,
+                    FechaSubidaJustificanteUtc = DateTime.UtcNow.AddDays(-1).AddHours(1),
+                    ObservacionesFamilia = "Transferencia bancaria efectuada desde el Banco Santander. Referencia: Salida Manada Lucia Garcia."
+                };
+
+                db.Inscripciones.Add(inscripcionLucia);
+            }
+
+            if (acampadaAlcaraz != null && marcos != null)
+            {
+                var inscripcionMarcos = new InscripcionActividad
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizacionId = lestonnacId,
+                    ActividadId = acampadaAlcaraz.Id,
+                    EducandoId = marcos.Id,
+                    TutorLegalId = garciaUser.Id,
+                    Estado = EstadoInscripcion.PendienteJustificante,
+                    ImporteEuros = acampadaAlcaraz.Precio,
+                    AutorizacionFirmada = true,
+                    FechaAutorizacionUtc = DateTime.UtcNow.AddHours(-5),
+                    FechaInscripcionUtc = DateTime.UtcNow.AddHours(-5),
+                    ObservacionesFamilia = "Llegará en el turno matinal. Pendiente de adjuntar comprobante."
+                };
+
+                db.Inscripciones.Add(inscripcionMarcos);
+            }
+        }
+
+        // 2. Inscripciones en San Vicente 412
+        if (lopezUser != null)
+        {
+            var jornadaCastores = await db.Actividades.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(a => a.OrganizacionId == sanVicenteId && a.Titulo.Contains("Jornada de la Presa"));
+            var hugo = await db.Educandos.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(e => e.TutorLegalId == lopezUser.Id && e.Nombre == "Hugo");
+
+            if (jornadaCastores != null && hugo != null)
+            {
+                var inscripcionHugo = new InscripcionActividad
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizacionId = sanVicenteId,
+                    ActividadId = jornadaCastores.Id,
+                    EducandoId = hugo.Id,
+                    TutorLegalId = lopezUser.Id,
+                    Estado = EstadoInscripcion.Confirmada,
+                    ImporteEuros = 0.00m,
+                    AutorizacionFirmada = true,
+                    FechaAutorizacionUtc = DateTime.UtcNow.AddHours(-3),
+                    FechaInscripcionUtc = DateTime.UtcNow.AddHours(-3),
+                    ObservacionesFamilia = "Primera salida con la Colonia de Castores."
+                };
+
+                db.Inscripciones.Add(inscripcionHugo);
+            }
+        }
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("Inscripciones de demostración creadas con éxito.");
     }
 }

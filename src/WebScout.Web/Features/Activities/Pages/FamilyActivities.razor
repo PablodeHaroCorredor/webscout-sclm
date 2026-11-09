@@ -7,6 +7,7 @@
 @inject IServicioEducandos ServicioEducandos
 @inject IDialogService DialogService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @inject ITenantContext Tenant
 
 <PageTitle>Actividades y Campamentos — Familias</PageTitle>
@@ -167,6 +168,7 @@
 
 @code {
     private IReadOnlyList<ActividadScout> _actividades = [];
+    private IReadOnlyList<Educando> _educandosFamilia = [];
     private bool _cargando = true;
     private Guid _usuarioActualId;
 
@@ -188,6 +190,10 @@
         try
         {
             _actividades = await ServicioActividades.ObtenerActividadesParaFamiliaAsync(_usuarioActualId);
+            if (_usuarioActualId != Guid.Empty)
+            {
+                _educandosFamilia = await ServicioEducandos.ObtenerPorTutorAsync(_usuarioActualId);
+            }
         }
         finally
         {
@@ -208,10 +214,21 @@
 
     private async Task InscribirAsync(ActividadScout actividad)
     {
-        await DialogService.ShowMessageBoxAsync(
-            "Inscripción a Actividad",
-            $"La convocatoria para '{actividad.Titulo}' está abierta. En el siguiente paso (Paso 4: Inscripciones y Pagos) podrás formalizar la plaza, autorizar y adjuntar justificantes.",
-            yesText: "Entendido");
+        var parameters = new DialogParameters<InscribirEducandoDialog>
+        {
+            { x => x.Actividad, actividad },
+            { x => x.TutorId, _usuarioActualId },
+            { x => x.EducandosFamilia, _educandosFamilia.ToList() }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<InscribirEducandoDialog>("Inscribir Educando", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Navigation.NavigateTo("/familias/inscripciones");
+        }
     }
 
     private Color ObtenerColorTipo(TipoActividad tipo) => tipo switch

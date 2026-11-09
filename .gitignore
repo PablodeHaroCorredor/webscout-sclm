@@ -57,3 +57,6 @@ ehthumbs.db
 ## Antigravity / Gemini scratch artifacts
 *.tmp
 *.bak
+
+## Storage local de archivos y justificantes subidos
+App_Data/
