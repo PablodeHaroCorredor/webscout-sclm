@@ -412,6 +412,12 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("FechaAutorizacionUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("FechaCheckInRegresoUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaCheckInSalidaUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("FechaInscripcionUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -433,12 +439,22 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("ObservacionesAsistencia")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("ObservacionesFamilia")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
                     b.Property<Guid>("OrganizacionId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("PresenteEnRegreso")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("PresenteEnSalida")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("RevisadoPorUsuarioId")
                         .HasColumnType("uuid");
