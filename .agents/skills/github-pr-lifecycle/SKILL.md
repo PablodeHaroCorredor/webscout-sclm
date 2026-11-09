@@ -12,25 +12,29 @@ Esta skill proporciona los pasos directos para abrir, gestionar y cerrar cambios
 
 ---
 
-## 1. Comprobaciones Previas al Inicio de Rama
+## 1. Verificación y Creación de Issue Previa
 
-Antes de iniciar cualquier desarrollo, siempre partir de **`develop`**:
-```powershell
-# 1. Asegurar estar en develop y con el árbol limpio
-git checkout develop
-git status
-git pull origin develop
-```
+Antes de crear cualquier rama o escribir código:
+1. Comprobar si ya existe una Issue abierta en GitHub para la tarea:
+   ```powershell
+   $env:GH_PAGER="cat"
+   gh issue list --state open
+   ```
+2. Si no existe, crear la Issue formal con sus criterios de aceptación y etiquetas:
+   ```powershell
+   gh issue create --title "[Paso X] Título descriptivo" --body "..." --label "..."
+   ```
 
 ---
 
-## 2. Creación de la Rama de Funcionalidad
+## 2. Creación y Publicación de la Rama de Funcionalidad
 
-Seguir la convención: `<tipo>/<nombre-descriptivo>-<numero-issue>`:
+Partir siempre de **`develop`** actualizado:
 ```powershell
-# Ejemplos:
-git checkout -b feat/actividades-campamentos-ramas-3
-git checkout -b bugfix/inscripcion-fecha-limite-14
+git checkout develop
+git pull origin develop
+git checkout -b feat/<nombre-descriptivo>-<numero-issue>
+git push -u origin feat/<nombre-descriptivo>-<numero-issue>
 ```
 
 ---
@@ -58,30 +62,31 @@ Antes de considerar una rama lista para Pull Request:
 
 ## 4. Publicación y Creación de PR
 
-1. **Subir rama al remoto:**
+1. **Crear la Pull Request en GitHub hacia `develop`:**
    ```powershell
-   git push -u origin feat/actividades-campamentos-ramas-3
+   gh pr create --head feat/<nombre-descriptivo>-<numero-issue> --base develop --title "feat(...): ..." --body "..."
    ```
-2. **Destino del PR:**
-   - Base branch: **`develop`** (para features y bugfixes normales).
-   - Base branch: **`main`** (únicamente para `release/v...` o `hotfix/...`).
-
-3. **Estructura del PR (plantilla .github/pull_request_template.md):**
-   - Enlace al Issue: `Closes #3`
+2. **Estructura obligatoria del cuerpo de la PR (.github/pull_request_template.md):**
+   - Enlace formal al Issue: `Closes #<numero-issue>`
+   - Hito / Paso correspondiente.
    - Checklist de DoD completado.
 
 ---
 
-## 5. Estrategia de Fusión: Squash and Merge
+## 5. Estrategia de Fusión: Squash and Merge (Conservando Ramas)
 
-1. Asegurar que el pipeline de GitHub Actions (`ci.yml`) está en verde.
-2. Realizar **Squash and Merge** hacia `develop`.
-3. Título del commit en `develop`:
-   `feat(actividades): publicar campamentos y actividades por ramas (#3)`
-4. Borrar la rama remota de la feature.
+1. Asegurar que la batería de pruebas (`dotnet test`) y el pipeline de CI están en verde.
+2. Realizar **Squash and Merge** a través de GitHub CLI o la interfaz web:
+   ```powershell
+   gh pr merge <numero-pr> --squash --delete-branch=false
+   ```
+3. **IMPORTANTE:** NUNCA eliminar la rama remota (`--delete-branch=false`). Las ramas deben permanecer visibles en el repositorio para trazabilidad e histórico de auditoría.
+4. Cerrar la issue asociada si no se cerró automáticamente y dejar comentario de trazabilidad:
+   ```powershell
+   gh issue close <numero-issue> --comment "Completado y verificado mediante PR #<numero-pr>."
+   ```
 5. En local:
    ```powershell
    git checkout develop
    git pull origin develop
-   git branch -d feat/actividades-campamentos-ramas-3
    ```
