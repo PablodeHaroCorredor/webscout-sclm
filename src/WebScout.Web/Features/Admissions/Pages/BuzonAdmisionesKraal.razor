@@ -1,0 +1,402 @@
+@page "/kraal/admisiones"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using WebScout.Web.Common.Domain
+@using WebScout.Web.Features.Admissions.Domain
+@using WebScout.Web.Features.Admissions.Services
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Infrastructure.Tenancy
+@attribute [Authorize(Roles = "SuperAdmin,Coordinacion,Scouter")]
+@inject IServicioAdmisiones ServicioAdmisiones
+@inject ITenantContext Tenant
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Buzón de Admisiones y Secretaría · @(Tenant.GroupName)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
+    <!-- Encabezado de la página -->
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                    @(Tenant.GroupName)
+                </MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Secretaría y Censo</MudText>
+            </div>
+            <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                Buzón de Admisiones y Contacto
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Gestión de solicitudes de ingreso, lista de espera por secciones pedagógicas y consultas recibidas (RF12 / RF13).
+            </MudText>
+        </div>
+
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Default" 
+                   StartIcon="@Icons.Material.Filled.Refresh" 
+                   OnClick="CargarDatosAsync">
+            Actualizar
+        </MudButton>
+    </div>
+
+    <!-- Pestañas Principales -->
+    <MudTabs Color="Color.Primary" Rounded="true" Class="mud-tabs-modern" ApplyEffectsToContainer="true">
+        
+        <!-- PESTAÑA 1: SOLICITUDES DE ADMISIÓN (LISTA DE ESPERA) -->
+        <MudTabPanel Text="@($"Solicitudes de Admisión ({_solicitudes.Count})")" Icon="@Icons.Material.Filled.FormatListNumbered">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white mt-4">
+                <MudCardContent>
+                    <!-- Barra de Filtros -->
+                    <div class="d-flex flex-wrap gap-4 align-center mb-4">
+                        <MudSelect T="EstadoSolicitudAdmision?" 
+                                   Label="Filtrar por Estado" 
+                                   Value="_filtroEstado" 
+                                   ValueChanged="OnFiltroEstadoChanged"
+                                   Dense="true" 
+                                   Variant="Variant.Outlined" 
+                                   Clearable="true" 
+                                   Style="min-width: 200px;">
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@((EstadoSolicitudAdmision?)null)">Todos los estados</MudSelectItem>
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@EstadoSolicitudAdmision.Pendiente">Pendiente de Revisión</MudSelectItem>
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@EstadoSolicitudAdmision.EnListaEspera">En Lista de Espera</MudSelectItem>
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@EstadoSolicitudAdmision.Admitida">Admitida</MudSelectItem>
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@EstadoSolicitudAdmision.Rechazada">Rechazada</MudSelectItem>
+                            <MudSelectItem T="EstadoSolicitudAdmision?" Value="@EstadoSolicitudAdmision.Archivada">Archivada</MudSelectItem>
+                        </MudSelect>
+
+                        <MudSelect T="RamaScout?" 
+                                   Label="Filtrar por Sección" 
+                                   Value="_filtroRama" 
+                                   ValueChanged="OnFiltroRamaChanged"
+                                   Dense="true" 
+                                   Variant="Variant.Outlined" 
+                                   Clearable="true" 
+                                   Style="min-width: 180px;">
+                            <MudSelectItem T="RamaScout?" Value="@((RamaScout?)null)">Todas las ramas</MudSelectItem>
+                            <MudSelectItem T="RamaScout?" Value="@RamaScout.Castores">Castores (6-8)</MudSelectItem>
+                            <MudSelectItem T="RamaScout?" Value="@RamaScout.Manada">Manada (8-11)</MudSelectItem>
+                            <MudSelectItem T="RamaScout?" Value="@RamaScout.Tropa">Tropa (11-14)</MudSelectItem>
+                            <MudSelectItem T="RamaScout?" Value="@RamaScout.Escultas">Escultas (14-17)</MudSelectItem>
+                            <MudSelectItem T="RamaScout?" Value="@RamaScout.Clan">Clan (17-21)</MudSelectItem>
+                        </MudSelect>
+                    </div>
+
+                    <!-- Tabla de Solicitudes -->
+                    @if (_cargando)
+                    {
+                        <div class="d-flex justify-center py-8">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                        </div>
+                    }
+                    else if (_solicitudes.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Text" Class="my-4">
+                            No se encontraron solicitudes de admisión con los filtros seleccionados.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="@_solicitudes" 
+                                  Hover="true" 
+                                  Dense="true" 
+                                  Elevation="0" 
+                                  Class="rounded-lg">
+                            <HeaderContent>
+                                <MudTh>Fecha Solicitud</MudTh>
+                                <MudTh>Educando</MudTh>
+                                <MudTh>Nacimiento</MudTh>
+                                <MudTh>Rama</MudTh>
+                                <MudTh>Tutor / Contacto</MudTh>
+                                <MudTh>Estado</MudTh>
+                                <MudTh>Notas Kraal</MudTh>
+                                <MudTh Style="text-align: right;">Acciones</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Fecha">
+                                    @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </MudTd>
+                                <MudTd DataLabel="Educando">
+                                    <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                                        @context.NombreCompletoEducando
+                                    </MudText>
+                                    @if (!string.IsNullOrWhiteSpace(context.Observaciones))
+                                    {
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-truncate" Style="max-width: 250px;">
+                                            @context.Observaciones
+                                        </MudText>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Nacimiento">
+                                    @context.FechaNacimiento.ToString("dd/MM/yyyy")
+                                </MudTd>
+                                <MudTd DataLabel="Rama">
+                                    <MudChip T="string" Color="@ObtenerColorRama(context.RamaSugerida)" Size="Size.Small" Variant="Variant.Filled">
+                                        @context.RamaSugerida.ObtenerNombre()
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Tutor">
+                                    <MudText Typo="Typo.body2">@context.NombreTutor (@context.RelacionTutor)</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                                        📞 <a href="tel:@context.TelefonoTutor">@context.TelefonoTutor</a> · ✉️ @context.EmailTutor
+                                    </MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Estado">
+                                    <MudChip T="string" Color="@ObtenerColorEstado(context.Estado)" Size="Size.Small" Variant="Variant.Outlined">
+                                        @context.Estado.ToString()
+                                    </MudChip>
+                                </MudTd>
+                                <MudTd DataLabel="Notas Kraal">
+                                    <span style="font-size: 0.85rem; color: #475569;">
+                                        @(string.IsNullOrWhiteSpace(context.NotasKraal) ? "—" : context.NotasKraal)
+                                    </span>
+                                </MudTd>
+                                <MudTd DataLabel="Acciones" Style="text-align: right;">
+                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
+                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.EnListaEspera))">
+                                            Pasar a Lista de Espera
+                                        </MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Admitida))">
+                                            Admitir en el Grupo
+                                        </MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Rechazada))">
+                                            Desestimar / Rechazar
+                                        </MudMenuItem>
+                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Archivada))">
+                                            Archivar Solicitud
+                                        </MudMenuItem>
+                                    </MudMenu>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudTabPanel>
+
+        <!-- PESTAÑA 2: MENSAJES DE CONTACTO -->
+        <MudTabPanel Text="@($"Mensajes de Contacto ({_mensajes.Count})")" Icon="@Icons.Material.Filled.Email">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white mt-4">
+                <MudCardContent>
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudCheckBox T="bool"
+                                     Value="_soloNoLeidos" 
+                                     ValueChanged="OnSoloNoLeidosChanged"
+                                     Color="Color.Primary" 
+                                     Dense="true" 
+                                     Label="Mostrar solo mensajes no leídos" />
+                    </div>
+
+                    @if (_mensajes.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Text" Class="my-4">
+                            No hay mensajes en el buzón de contacto.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudTable Items="@_mensajes" Hover="true" Dense="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Fecha</MudTh>
+                                <MudTh>Remitente</MudTh>
+                                <MudTh>Asunto</MudTh>
+                                <MudTh>Mensaje</MudTh>
+                                <MudTh>Estado</MudTh>
+                                <MudTh Style="text-align: right;">Acciones</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Fecha">
+                                    @context.FechaEnvioUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </MudTd>
+                                <MudTd DataLabel="Remitente">
+                                    <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.NombreRemitente</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        ✉️ @context.EmailRemitente @(!string.IsNullOrWhiteSpace(context.TelefonoRemitente) ? $" · 📞 {context.TelefonoRemitente}" : "")
+                                    </MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Asunto">
+                                    <MudText Typo="Typo.body2" Style="font-weight: 600;">@context.Asunto</MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Mensaje">
+                                    <MudText Typo="Typo.body2" Style="max-width: 350px; white-space: pre-wrap;">
+                                        @context.Mensaje
+                                    </MudText>
+                                </MudTd>
+                                <MudTd DataLabel="Estado">
+                                    @if (context.Leido)
+                                    {
+                                        <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Text">Leído</MudChip>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">Nuevo</MudChip>
+                                    }
+                                </MudTd>
+                                <MudTd DataLabel="Acciones" Style="text-align: right;">
+                                    <MudButton Size="Size.Small" 
+                                               Variant="Variant.Text" 
+                                               Color="@(context.Leido ? Color.Default : Color.Primary)"
+                                               OnClick="@(() => AlternarLecturaMensajeAsync(context))">
+                                        @(context.Leido ? "Marcar no leído" : "Marcar como leído")
+                                    </MudButton>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+<!-- Diálogo para Cambiar Estado y Registrar Notas del Kraal -->
+<MudDialog @bind-Visible="_dialogoGestionVisible" Options="_dialogOptions">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Tramitar Solicitud: @_solicitudSeleccionada?.NombreCompletoEducando
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Nuevo estado propuesto: <strong>@_nuevoEstadoPropuesto.ToString()</strong>
+        </MudText>
+        <MudTextField @bind-Value="_notasKraalTemp" 
+                      Label="Anotaciones internas del Kraal (motivo, cupo, contacto mantenido...)" 
+                      Variant="Variant.Outlined" 
+                      Lines="3" 
+                      Placeholder="Escribe cualquier detalle relevante para la secretaría..." />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => _dialogoGestionVisible = false)">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="GuardarResolucionAsync">
+            Guardar Resolución
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private bool _cargando = true;
+    private IReadOnlyList<SolicitudAdmision> _solicitudes = [];
+    private IReadOnlyList<MensajeContacto> _mensajes = [];
+
+    // Filtros
+    private EstadoSolicitudAdmision? _filtroEstado;
+    private RamaScout? _filtroRama;
+    private bool _soloNoLeidos = false;
+
+    // Estado del diálogo
+    private bool _dialogoGestionVisible = false;
+    private SolicitudAdmision? _solicitudSeleccionada;
+    private EstadoSolicitudAdmision _nuevoEstadoPropuesto;
+    private string? _notasKraalTemp;
+    private readonly DialogOptions _dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _solicitudes = await ServicioAdmisiones.ObtenerSolicitudesAsync(_filtroEstado, _filtroRama);
+            _mensajes = await ServicioAdmisiones.ObtenerMensajesContactoAsync(_soloNoLeidos);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task OnFiltroEstadoChanged(EstadoSolicitudAdmision? estado)
+    {
+        _filtroEstado = estado;
+        await CargarDatosAsync();
+    }
+
+    private async Task OnFiltroRamaChanged(RamaScout? rama)
+    {
+        _filtroRama = rama;
+        await CargarDatosAsync();
+    }
+
+    private async Task OnSoloNoLeidosChanged(bool soloNoLeidos)
+    {
+        _soloNoLeidos = soloNoLeidos;
+        await CargarDatosAsync();
+    }
+
+    private void AbrirGestionDialog(SolicitudAdmision solicitud, EstadoSolicitudAdmision nuevoEstado)
+    {
+        _solicitudSeleccionada = solicitud;
+        _nuevoEstadoPropuesto = nuevoEstado;
+        _notasKraalTemp = solicitud.NotasKraal;
+        _dialogoGestionVisible = true;
+    }
+
+    private async Task GuardarResolucionAsync()
+    {
+        if (_solicitudSeleccionada == null) return;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var scouterId = Guid.TryParse(userIdStr, out var id) ? id : Guid.Empty;
+
+            await ServicioAdmisiones.CambiarEstadoSolicitudAsync(
+                _solicitudSeleccionada.Id,
+                _nuevoEstadoPropuesto,
+                _notasKraalTemp,
+                scouterId);
+
+            _dialogoGestionVisible = false;
+            Snackbar.Add($"Solicitud de {_solicitudSeleccionada.NombreCompletoEducando} actualizada a {_nuevoEstadoPropuesto}.", Severity.Success);
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AlternarLecturaMensajeAsync(MensajeContacto mensaje)
+    {
+        try
+        {
+            await ServicioAdmisiones.MarcarMensajeLeidoAsync(mensaje.Id, !mensaje.Leido);
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private Color ObtenerColorRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => Color.Warning,
+        RamaScout.Manada => Color.Tertiary,
+        RamaScout.Tropa => Color.Info,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Success,
+        _ => Color.Default
+    };
+
+    private Color ObtenerColorEstado(EstadoSolicitudAdmision estado) => estado switch
+    {
+        EstadoSolicitudAdmision.Pendiente => Color.Warning,
+        EstadoSolicitudAdmision.EnListaEspera => Color.Info,
+        EstadoSolicitudAdmision.Admitida => Color.Success,
+        EstadoSolicitudAdmision.Rechazada => Color.Error,
+        EstadoSolicitudAdmision.Archivada => Color.Default,
+        _ => Color.Default
+    };
+}
