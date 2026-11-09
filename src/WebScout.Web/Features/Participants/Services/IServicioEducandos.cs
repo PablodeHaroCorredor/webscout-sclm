@@ -10,6 +10,7 @@ public interface IServicioEducandos
 {
     Task<List<Educando>> ObtenerPorTutorAsync(Guid tutorLegalId);
     Task<List<Educando>> ObtenerPorRamaAsync(RamaScout rama);
+    Task<List<Educando>> ObtenerTodosDelTenantAsync();
     Task<Educando?> ObtenerPorIdAsync(Guid educandoId);
     Task<Educando> CrearEducandoAsync(Educando educando, FichaMedica fichaMedica);
     Task ActualizarEducandoAsync(Educando educando);

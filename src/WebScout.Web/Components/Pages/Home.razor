@@ -8,6 +8,7 @@
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
 @inject WebScoutDbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? $"{Tenant.GroupName} · Scouts de Castilla-La Mancha" : "WebScout SCLM — Federación de Scouts de Castilla-La Mancha")</PageTitle>
 
@@ -638,6 +639,33 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            if (user.IsInRole(RolesScout.Familia))
+            {
+                Navigation.NavigateTo("/familias");
+                return;
+            }
+            if (user.IsInRole(RolesScout.Scouter))
+            {
+                Navigation.NavigateTo("/kraal/inscripciones");
+                return;
+            }
+            if (user.IsInRole(RolesScout.Coordinacion) || user.IsInRole(RolesScout.Administracion))
+            {
+                Navigation.NavigateTo("/kraal/actividades");
+                return;
+            }
+            if (user.IsInRole(RolesScout.SuperAdmin))
+            {
+                Navigation.NavigateTo("/admin/grupos");
+                return;
+            }
+        }
+
         if (Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty)
         {
             _grupo = await DbContext.GruposScout
