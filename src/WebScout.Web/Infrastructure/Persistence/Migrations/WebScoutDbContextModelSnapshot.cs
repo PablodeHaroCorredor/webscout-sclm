@@ -273,6 +273,56 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("Actividades", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Audit.Domain.RegistroAuditoria", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Detalles")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("DireccionIp")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("EmailUsuario")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("FechaCreacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RecursoId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("TipoRecurso")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId", "Accion");
+
+                    b.HasIndex("OrganizacionId", "FechaCreacionUtc");
+
+                    b.ToTable("RegistrosAuditoria", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.RolScout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -585,8 +635,8 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("NumeroSeguridadSocial")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("ObservacionesAdicionales")
                         .HasColumnType("text");

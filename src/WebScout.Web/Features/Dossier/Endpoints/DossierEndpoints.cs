@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using WebScout.Web.Features.Audit.Services;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Dossier.Services;
 
@@ -13,7 +14,8 @@ public static class DossierEndpoints
     {
         endpoints.MapGet("/api/actividades/{actividadId:guid}/asistencia/csv", async (
             Guid actividadId,
-            IServicioDossierAsistencia servicioDossier) =>
+            IServicioDossierAsistencia servicioDossier,
+            IServicioAuditoria servicioAuditoria) =>
         {
             try
             {
@@ -23,6 +25,13 @@ public static class DossierEndpoints
                 var fullBytes = new byte[utf8Bom.Length + csvBytes.Length];
                 Buffer.BlockCopy(utf8Bom, 0, fullBytes, 0, utf8Bom.Length);
                 Buffer.BlockCopy(csvBytes, 0, fullBytes, utf8Bom.Length, csvBytes.Length);
+
+                // Registrar auditoría de exportación de datos sanitarios y de asistencia
+                await servicioAuditoria.RegistrarAsync(
+                    accion: "ExportacionDossierAsistenciaCsv",
+                    tipoRecurso: "ActividadScout",
+                    recursoId: actividadId.ToString(),
+                    detalles: "Exportación de nómina de asistencia con datos médicos");
 
                 return Results.File(
                     fullBytes,

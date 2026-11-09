@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using WebScout.Web.Features.Audit.Services;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Services;
 using WebScout.Web.Features.Inscriptions.Storage;
@@ -19,6 +20,7 @@ public static class JustificanteEndpoints
             Guid id,
             IServicioInscripciones servicioInscripciones,
             IAlmacenamientoJustificantes almacenamiento,
+            IServicioAuditoria servicioAuditoria,
             ClaimsPrincipal user) =>
         {
             if (user?.Identity?.IsAuthenticated != true)
@@ -48,6 +50,13 @@ public static class JustificanteEndpoints
             {
                 return Results.NotFound("El archivo físico del justificante no ha podido ser localizado.");
             }
+
+            // Registrar auditoría de acceso al documento bancario
+            await servicioAuditoria.RegistrarAsync(
+                accion: "DescargaJustificante",
+                tipoRecurso: "InscripcionActividad",
+                recursoId: inscripcion.Id.ToString(),
+                detalles: $"Archivo: {inscripcion.NombreArchivoJustificante}. Educando: {inscripcion.EducandoId}");
 
             return Results.File(
                 archivo.Value.Stream,
