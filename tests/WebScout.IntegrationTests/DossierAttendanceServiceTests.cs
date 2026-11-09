@@ -407,6 +407,81 @@ public class DossierAttendanceServiceTests : IDisposable
         }
     }
 
+    [Fact]
+    public async Task GenerarCsvAsistencia_ShouldSanitizeFormulas_PreventingCsvInjection()
+    {
+        var tenantLestonnac = new TenantContext();
+        tenantLestonnac.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330);
+
+        var actividadId = Guid.NewGuid();
+        var tutorId = Guid.NewGuid();
+        var educandoId = Guid.NewGuid();
+
+        using (var db = new WebScoutDbContext(_options, tenantLestonnac))
+        {
+            var tutor = new UsuarioScout
+            {
+                Id = tutorId,
+                OrganizacionId = OrgLestonnac,
+                UserName = "tutor.inyeccion@scoutslestonnac.es",
+                Email = "tutor.inyeccion@scoutslestonnac.es",
+                NombreCompleto = "=cmd|' /C calc'!A0" // Fórmula maliciosa
+            };
+            db.Users.Add(tutor);
+
+            var educando = new Educando
+            {
+                Id = educandoId,
+                OrganizacionId = OrgLestonnac,
+                TutorLegalId = tutorId,
+                Nombre = "+2+5", // Fórmula maliciosa
+                Apellidos = "@SUM(A1:A10)", // Fórmula maliciosa
+                FechaNacimiento = new DateOnly(2014, 1, 1),
+                Sexo = "M",
+                RamaActual = RamaScout.Tropa,
+                Activo = true
+            };
+            db.Educandos.Add(educando);
+
+            var actividad = new ActividadScout
+            {
+                Id = actividadId,
+                OrganizacionId = OrgLestonnac,
+                Titulo = "Salida con Prueba de Inyección",
+                Lugar = "Parque",
+                Tipo = TipoActividad.Salida,
+                Precio = 10m,
+                FechaInicio = DateTime.UtcNow.AddDays(5),
+                FechaFin = DateTime.UtcNow.AddDays(5).AddHours(4)
+            };
+            db.Actividades.Add(actividad);
+
+            db.Inscripciones.Add(new InscripcionActividad
+            {
+                OrganizacionId = OrgLestonnac,
+                ActividadId = actividadId,
+                EducandoId = educandoId,
+                TutorLegalId = tutorId,
+                Estado = EstadoInscripcion.Confirmada,
+                ImporteEuros = 10m,
+                ObservacionesAsistencia = "-10-20" // Fórmula maliciosa
+            });
+
+            await db.SaveChangesAsync();
+        }
+
+        using (var db = new WebScoutDbContext(_options, tenantLestonnac))
+        {
+            var servicio = new ServicioDossierAsistencia(db, tenantLestonnac, NullLogger<ServicioDossierAsistencia>.Instance);
+            var csv = await servicio.GenerarCsvAsistenciaAsync(actividadId);
+
+            // Verificar que los campos con fórmula al inicio están prefijados con apóstrofe para neutralizar la ejecución
+            Assert.Contains("'+2+5", csv);
+            Assert.Contains("'=cmd", csv);
+            Assert.Contains("'-10-20", csv);
+        }
+    }
+
     public void Dispose()
     {
         _connection.Dispose();
