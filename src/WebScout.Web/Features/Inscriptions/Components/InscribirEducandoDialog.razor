@@ -1,0 +1,222 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Components.Forms
+@inject IServicioInscripciones ServicioInscripciones
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.HowToReg" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">Inscripción a Convocatoria Scout</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <!-- Resumen de la Actividad -->
+            <MudPaper Elevation="0" Outlined="true" Class="pa-3 bg-light">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700;">@Actividad.Titulo</MudText>
+                <div class="d-flex align-center gap-2 mt-1 mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">@Actividad.Lugar</MudText>
+                </div>
+                <div class="d-flex align-center gap-2 mt-1 mud-text-secondary">
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" />
+                    <MudText Typo="Typo.body2">
+                        @Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @Actividad.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </MudText>
+                </div>
+                <div class="d-flex align-center justify-space-between mt-2 pt-2" style="border-top: 1px dashed #E2E8F0;">
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">Cuota de Inscripción:</MudText>
+                    <MudChip T="string" Color="@(Actividad.Precio == 0 ? Color.Success : Color.Primary)" Variant="Variant.Filled" Size="Size.Small" Style="font-weight: 700;">
+                        @(Actividad.Precio == 0 ? "0,00 € (Gratuita)" : $"{Actividad.Precio:N2} €")
+                    </MudChip>
+                </div>
+            </MudPaper>
+
+            <!-- Selección de Educando a Inscribir -->
+            @if (EducandosDisponibles.Count == 0)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    No tienes educandos dados de alta en las ramas convocadas para esta actividad (@RamasConvocadasTexto).
+                </MudAlert>
+            }
+            else
+            {
+                <MudSelect T="Guid" @bind-Value="_educandoSeleccionadoId" Label="Educando a inscribir" Variant="Variant.Outlined" Margin="Margin.Dense" Required="true">
+                    @foreach (var educando in EducandosDisponibles)
+                    {
+                        <MudSelectItem Value="@educando.Id">
+                            @educando.NombreCompleto — Rama @educando.RamaActual.ObtenerNombre() (@educando.CalcularEdad() años)
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            }
+
+            <!-- Datos para la Transferencia Bancaria Externa (si cuota > 0) -->
+            @if (Actividad.Precio > 0)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="mt-1">
+                    <MudText Typo="Typo.body2">
+                        <strong>Aviso de pago:</strong> La cuota se abona mediante transferencia bancaria al número de cuenta del grupo scout. No se realizan pagos directos con tarjeta en la plataforma.
+                    </MudText>
+                    <div class="mt-2">
+                        <MudText Typo="Typo.caption" Class="d-block">
+                            <strong>IBAN:</strong> @(!string.IsNullOrWhiteSpace(Actividad.IbanCuentaBancaria) ? Actividad.IbanCuentaBancaria : "Consultar con el Kraal / Tesorería")
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="d-block">
+                            <strong>Concepto sugerido:</strong> @(!string.IsNullOrWhiteSpace(Actividad.ConceptoPagoSugerido) ? Actividad.ConceptoPagoSugerido : $"{Actividad.Titulo} - [Nombre Educando]")
+                        </MudText>
+                    </div>
+                </MudAlert>
+
+                <!-- Subida opcional del Justificante de Pago -->
+                <div>
+                    <MudText Typo="Typo.subtitle2" Class="mb-1">Justificante de Transferencia Bancaria (Opcional en este paso):</MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+                        Puedes adjuntar el comprobante ahora o más tarde desde "Mis Inscripciones" antes del cierre del plazo.
+                    </MudText>
+                    
+                    <div class="d-flex align-center gap-2">
+                        <MudFileUpload T="IBrowserFile" FilesChanged="OnJustificanteSeleccionado" Accept=".pdf,.jpg,.jpeg,.png,.webp" MaximumFileCount="1">
+                            <CustomContent Context="fileUpload">
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           StartIcon="@Icons.Material.Filled.AttachFile"
+                                           OnClick="@fileUpload.OpenFilePickerAsync">
+                                    @(_archivoJustificante != null ? "Cambiar Archivo" : "Adjuntar Justificante (PDF / Imagen)")
+                                </MudButton>
+                            </CustomContent>
+                        </MudFileUpload>
+
+                        @if (_archivoJustificante != null)
+                        {
+                            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small" OnClose="@(() => _archivoJustificante = null)">
+                                @_archivoJustificante.Name (@((_archivoJustificante.Size / 1024.0).ToString("N1")) KB)
+                            </MudChip>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Observaciones Médicas o Logísticas de la Familia -->
+            <MudTextField @bind-Value="_observacionesFamilia" 
+                          Label="Observaciones para el Kraal (opcional)" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense" 
+                          Lines="2" 
+                          Placeholder="Llegada más tarde por examen escolar, medicación específica que lleva consigo, etc." />
+
+            <!-- Autorización Legal Obligatoria -->
+            <MudPaper Elevation="0" Outlined="true" Class="pa-3" Style="background-color: #F8FAFC; border-color: #CBD5E1;">
+                <MudCheckBox T="bool" @bind-Value="_autorizacionLegalAceptada" Color="Color.Primary" Dense="true">
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                        Autorización Legal y Sanitaria Expresa *
+                    </MudText>
+                </MudCheckBox>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1 ps-7">
+                    En calidad de tutor/a legal del educando, autorizo expresamente su asistencia y participación en esta actividad scout, el uso de medios de transporte necesarios para los desplazamientos previstos y la adopción de las medidas sanitarias o de auxilio médico urgente que fuesen requeridas.
+                </MudText>
+            </MudPaper>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   Disabled="@(!PuedeEnviar || _enviando)" 
+                   OnClick="FormalizarInscripcionAsync">
+            @if (_enviando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                <span>Registrando...</span>
+            }
+            else
+            {
+                <span>Formalizar Inscripción</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public ActividadScout Actividad { get; set; } = null!;
+    [Parameter] public Guid TutorId { get; set; }
+    [Parameter] public List<Educando> EducandosFamilia { get; set; } = [];
+
+    private Guid _educandoSeleccionadoId;
+    private string? _observacionesFamilia;
+    private bool _autorizacionLegalAceptada = false;
+    private IBrowserFile? _archivoJustificante;
+    private bool _enviando = false;
+
+    private List<Educando> EducandosDisponibles =>
+        EducandosFamilia.Where(e => Actividad.AplicaARama(e.RamaActual)).ToList();
+
+    private string RamasConvocadasTexto =>
+        Actividad.RamasDestinatarias.Count == 0 
+            ? "Grupo Completo" 
+            : string.Join(", ", Actividad.RamasDestinatarias.Select(r => r.ObtenerNombre()));
+
+    private bool PuedeEnviar =>
+        _educandoSeleccionadoId != Guid.Empty &&
+        _autorizacionLegalAceptada;
+
+    protected override void OnInitialized()
+    {
+        if (EducandosDisponibles.Count == 1)
+        {
+            _educandoSeleccionadoId = EducandosDisponibles[0].Id;
+        }
+    }
+
+    private void OnJustificanteSeleccionado(IBrowserFile? file)
+    {
+        _archivoJustificante = file;
+    }
+
+    private async Task FormalizarInscripcionAsync()
+    {
+        if (!PuedeEnviar) return;
+
+        _enviando = true;
+        try
+        {
+            var inscripcion = await ServicioInscripciones.InscribirEducandoAsync(
+                Actividad.Id,
+                _educandoSeleccionadoId,
+                TutorId,
+                _observacionesFamilia);
+
+            if (_archivoJustificante != null)
+            {
+                using var stream = _archivoJustificante.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+                await ServicioInscripciones.SubirJustificantePagoAsync(
+                    inscripcion.Id,
+                    _archivoJustificante.Name,
+                    stream);
+            }
+
+            var mensaje = Actividad.Precio <= 0
+                ? "Inscripción confirmada automáticamente (actividad gratuita)."
+                : _archivoJustificante != null
+                    ? "Inscripción registrada y justificante adjuntado para revisión."
+                    : "Inscripción registrada. Recuerda adjuntar el justificante tras realizar la transferencia.";
+
+            Snackbar.Add(mensaje, Severity.Success);
+            MudDialog.Close(DialogResult.Ok(inscripcion));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al registrar la inscripción: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _enviando = false;
+        }
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+}
