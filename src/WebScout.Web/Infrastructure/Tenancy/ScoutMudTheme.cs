@@ -1,35 +1,34 @@
 using MudBlazor;
-using WebScout.Web.Common.Domain;
-using WebScout.Web.Common.Wcag;
 
 namespace WebScout.Web.Infrastructure.Tenancy;
 
+/// <summary>
+/// Provee el tema visual sobrio, neutro y profesional de MudBlazor para WebScout SCLM.
+/// Evita estridencias cromáticas y garantiza máxima legibilidad y usabilidad.
+/// </summary>
 public static class ScoutMudTheme
 {
-    public static MudTheme CreateTheme(PanoletaConfig panoleta)
+    public static MudTheme CreateTheme()
     {
-        var textColorOnPrimary = WcagContrastCalculator.GetAccessibleTextColor(panoleta.BaseColorHex);
-        var textColorOnSecondary = WcagContrastCalculator.GetAccessibleTextColor(panoleta.BorderColorHex);
-
         return new MudTheme
         {
             PaletteLight = new PaletteLight
             {
-                Primary = panoleta.BaseColorHex,
-                PrimaryContrastText = textColorOnPrimary,
-                Secondary = panoleta.BorderColorHex,
-                SecondaryContrastText = textColorOnSecondary,
-                AppbarBackground = panoleta.BaseColorHex,
-                AppbarText = textColorOnPrimary,
-                Background = "#F8FAFC",
+                Primary = "#1E3A8A",            // Azul marino profesional
+                PrimaryContrastText = "#FFFFFF",
+                Secondary = "#475569",          // Pizarra neutro
+                SecondaryContrastText = "#FFFFFF",
+                AppbarBackground = "#FFFFFF",   // Barra superior blanca limpia
+                AppbarText = "#0F172A",         // Texto oscuro de alto contraste
+                Background = "#F8FAFC",         // Fondo gris claro moderno
                 Surface = "#FFFFFF",
                 TextPrimary = "#0F172A",
-                TextSecondary = "#475569",
+                TextSecondary = "#64748B",
                 DrawerBackground = "#FFFFFF",
                 DrawerText = "#0F172A",
-                DrawerIcon = panoleta.BaseColorHex,
-                ActionDefault = "#475569",
-                Success = "#166534",
+                DrawerIcon = "#1E3A8A",
+                ActionDefault = "#64748B",
+                Success = "#15803D",
                 Warning = "#D97706",
                 Error = "#DC2626",
                 Info = "#0284C7"

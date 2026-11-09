@@ -1,7 +1,9 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using WebScout.Web.Common.Domain;
+using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Tenancy;
@@ -68,8 +70,35 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.ToTable("Actividades");
             b.HasKey(a => a.Id);
             b.Property(a => a.Titulo).HasMaxLength(150).IsRequired();
+            b.Property(a => a.Descripcion).HasMaxLength(2000);
             b.Property(a => a.Lugar).HasMaxLength(200).IsRequired();
+            b.Property(a => a.PuntoEncuentroSalida).HasMaxLength(250);
+            b.Property(a => a.PuntoEncuentroRegreso).HasMaxLength(250);
+            b.Property(a => a.IbanCuentaBancaria).HasMaxLength(50);
+            b.Property(a => a.ConceptoPagoSugerido).HasMaxLength(150);
+            b.Property(a => a.MaterialRequerido).HasMaxLength(2000);
+            b.Property(a => a.ObservacionesSanitarias).HasMaxLength(1000);
+            b.Property(a => a.Precio).HasPrecision(10, 2);
+
+            var ramasComparer = new ValueComparer<List<RamaScout>>(
+                (c1, c2) => (c1 == null && c2 == null) || (c1 != null && c2 != null && c1.SequenceEqual(c2)),
+                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                c => c.ToList());
+
+            b.Property(a => a.RamasDestinatarias)
+                .HasConversion(
+                    v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                    v => System.Text.Json.JsonSerializer.Deserialize<List<RamaScout>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<RamaScout>()
+                )
+                .Metadata.SetValueComparer(ramasComparer);
+
             b.HasIndex(a => new { a.OrganizacionId, a.FechaInicio });
+            b.HasIndex(a => new { a.OrganizacionId, a.Estado });
+
+            b.HasOne(a => a.CreadoPorUsuario)
+                .WithMany()
+                .HasForeignKey(a => a.CreadoPorUsuarioId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // 5. Configuración de Educandos

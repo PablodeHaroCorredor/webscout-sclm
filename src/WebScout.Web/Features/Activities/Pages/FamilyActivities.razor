@@ -1,0 +1,234 @@
+@page "/familias/actividades"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using WebScout.Web.Features.Participants.Services
+@attribute [Authorize(Roles = $"{RolesScout.Familia},{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion}")]
+@inject IServicioActividades ServicioActividades
+@inject IServicioEducandos ServicioEducandos
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ITenantContext Tenant
+
+<PageTitle>Actividades y Campamentos — Familias</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
+    <div class="mb-4">
+        <MudText Typo="Typo.h5" Style="font-weight: 700;">Próximas Actividades y Campamentos</MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            Convocatorias oficiales abiertas para tus educandos en @(Tenant.IsResolved ? Tenant.GroupName : "el grupo scout").
+        </MudText>
+    </div>
+
+    @if (_cargando)
+    {
+        <div class="d-flex justify-center align-center pa-8">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else if (_actividades.Count == 0)
+    {
+        <MudPaper Elevation="0" Outlined="true" Class="pa-8 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Color="Color.Default" Class="mb-3" />
+            <MudText Typo="Typo.h6">No hay convocatorias activas en este momento</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                Cuando los scouters publiquen una nueva salida o campamento para las ramas de tus educandos, aparecerá listada aquí.
+            </MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-4" Href="/familias/educandos">
+                Ver fichas de mis educandos
+            </MudButton>
+        </MudPaper>
+    }
+    else
+    {
+        <MudGrid Spacing="3">
+            @foreach (var actividad in _actividades)
+            {
+                var act = actividad;
+                <MudItem xs="12" md="6">
+                    <MudCard Elevation="0" Outlined="true" Class="d-flex flex-column h-100">
+                        <MudCardHeader Class="pb-2">
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="@ObtenerColorTipo(act.Tipo)" Variant="Variant.Filled" Size="Size.Medium">
+                                    <MudIcon Icon="@ObtenerIconoTipo(act.Tipo)" />
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Style="font-size: 1.1rem; font-weight: 700; line-height: 1.3;">
+                                    @act.Titulo
+                                </MudText>
+                                <div class="d-flex align-center flex-wrap gap-1 mt-1">
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorTipo(act.Tipo)">
+                                        @act.Tipo.ToString()
+                                    </MudChip>
+                                    @if (act.RamasDestinatarias.Count == 0)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">Grupo Completo</MudChip>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var rama in act.RamasDestinatarias)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@rama.ToString()</MudChip>
+                                        }
+                                    }
+                                </div>
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudChip T="string" 
+                                         Color="@(act.Precio == 0 ? Color.Success : Color.Primary)" 
+                                         Variant="Variant.Filled" 
+                                         Size="Size.Small"
+                                         Style="font-weight: 700;">
+                                    @(act.Precio == 0 ? "Gratuita" : $"{act.Precio:N2} €")
+                                </MudChip>
+                            </CardHeaderActions>
+                        </MudCardHeader>
+
+                        <MudCardContent Class="py-2 flex-grow-1">
+                            <MudStack Spacing="1">
+                                <div class="d-flex align-center gap-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.Place" Color="Color.Primary" Size="Size.Small" />
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@act.Lugar</MudText>
+                                </div>
+                                <div class="d-flex align-center gap-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" Size="Size.Small" />
+                                    <MudText Typo="Typo.body2">
+                                        @act.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @act.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </MudText>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(act.PuntoEncuentroSalida))
+                                {
+                                    <div class="d-flex align-center gap-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.DepartureBoard" Color="Color.Info" Size="Size.Small" />
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Salida: @act.PuntoEncuentroSalida</MudText>
+                                    </div>
+                                }
+
+                                @if (act.FechaLimiteInscripcion.HasValue)
+                                {
+                                    var diasRestantes = (act.FechaLimiteInscripcion.Value.Date - DateTime.UtcNow.Date).Days;
+                                    <div class="mt-2">
+                                        @if (act.AdmiteInscripciones)
+                                        {
+                                            <MudText Typo="Typo.caption" Color="@(diasRestantes <= 3 ? Color.Warning : Color.Default)">
+                                                <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" Class="vertical-align-middle me-1" />
+                                                Inscripción hasta el @act.FechaLimiteInscripcion.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                                @(diasRestantes > 0 ? $"({diasRestantes} días restantes)" : "(¡Último día!)")
+                                            </MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Color="Color.Error">
+                                                <MudIcon Icon="@Icons.Material.Filled.LockClock" Size="Size.Small" Class="vertical-align-middle me-1" />
+                                                Plazo de inscripción finalizado
+                                            </MudText>
+                                        }
+                                    </div>
+                                }
+                            </MudStack>
+                        </MudCardContent>
+
+                        <MudCardActions Class="pt-0 pb-3 px-4 d-flex justify-space-between align-center">
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Info"
+                                       OnClick="@(() => VerDetalleAsync(act))">
+                                Ver Detalles y Mochila
+                            </MudButton>
+
+                            @if (act.AdmiteInscripciones)
+                            {
+                                <MudButton Variant="Variant.Filled" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.HowToReg"
+                                           OnClick="@(() => InscribirAsync(act))">
+                                    Inscribir Educando
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Text" 
+                                           Color="Color.Default" 
+                                           Size="Size.Small" 
+                                           Disabled="true">
+                                    Inscripción Cerrada
+                                </MudButton>
+                            }
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private IReadOnlyList<ActividadScout> _actividades = [];
+    private bool _cargando = true;
+    private Guid _usuarioActualId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var idClaim = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (Guid.TryParse(idClaim, out var parsedId))
+        {
+            _usuarioActualId = parsedId;
+        }
+
+        await CargarActividadesAsync();
+    }
+
+    private async Task CargarActividadesAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _actividades = await ServicioActividades.ObtenerActividadesParaFamiliaAsync(_usuarioActualId);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task VerDetalleAsync(ActividadScout actividad)
+    {
+        var parameters = new DialogParameters<DetalleActividadDialog>
+        {
+            { x => x.Actividad, actividad }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<DetalleActividadDialog>(actividad.Titulo, parameters, options);
+    }
+
+    private async Task InscribirAsync(ActividadScout actividad)
+    {
+        await DialogService.ShowMessageBoxAsync(
+            "Inscripción a Actividad",
+            $"La convocatoria para '{actividad.Titulo}' está abierta. En el siguiente paso (Paso 4: Inscripciones y Pagos) podrás formalizar la plaza, autorizar y adjuntar justificantes.",
+            yesText: "Entendido");
+    }
+
+    private Color ObtenerColorTipo(TipoActividad tipo) => tipo switch
+    {
+        TipoActividad.Reunion => Color.Default,
+        TipoActividad.Salida => Color.Info,
+        TipoActividad.Acampada => Color.Primary,
+        TipoActividad.Campamento => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private string ObtenerIconoTipo(TipoActividad tipo) => tipo switch
+    {
+        TipoActividad.Reunion => Icons.Material.Filled.Groups,
+        TipoActividad.Salida => Icons.Material.Filled.Hiking,
+        TipoActividad.Acampada => Icons.Material.Filled.Cabin,
+        TipoActividad.Campamento => Icons.Material.Filled.Forest,
+        _ => Icons.Material.Filled.Event
+    };
+}
