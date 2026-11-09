@@ -30,8 +30,21 @@ public class ServicioEducandos : IServicioEducandos, IParticipantService
     {
         return await _db.Educandos
             .Include(e => e.FichaMedica)
+            .Include(e => e.TutorLegal)
             .Where(e => e.RamaActual == rama && e.Activo)
             .OrderBy(e => e.Apellidos)
+            .ThenBy(e => e.Nombre)
+            .ToListAsync();
+    }
+
+    public async Task<List<Educando>> ObtenerTodosDelTenantAsync()
+    {
+        return await _db.Educandos
+            .Include(e => e.FichaMedica)
+            .Include(e => e.TutorLegal)
+            .Where(e => e.Activo)
+            .OrderBy(e => e.RamaActual)
+            .ThenBy(e => e.Apellidos)
             .ThenBy(e => e.Nombre)
             .ToListAsync();
     }

@@ -206,6 +206,42 @@ public class ServicioInscripciones : IServicioInscripciones
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesMesaKraalAsync(
+        RamaScout? ramaFiltro = null,
+        Guid? actividadIdFiltro = null,
+        EstadoInscripcion? estadoFiltro = null)
+    {
+        ValidarTenantActivo();
+
+        var query = _dbContext.Inscripciones
+            .AsNoTracking()
+            .Include(i => i.Actividad)
+            .Include(i => i.Educando)
+                .ThenInclude(e => e.FichaMedica)
+            .Include(i => i.TutorLegal)
+            .Include(i => i.RevisadoPorUsuario)
+            .AsQueryable();
+
+        if (ramaFiltro.HasValue && ramaFiltro.Value != RamaScout.Ninguna)
+        {
+            query = query.Where(i => i.Educando.RamaActual == ramaFiltro.Value);
+        }
+
+        if (actividadIdFiltro.HasValue && actividadIdFiltro.Value != Guid.Empty)
+        {
+            query = query.Where(i => i.ActividadId == actividadIdFiltro.Value);
+        }
+
+        if (estadoFiltro.HasValue)
+        {
+            query = query.Where(i => i.Estado == estadoFiltro.Value);
+        }
+
+        return await query
+            .OrderByDescending(i => i.FechaInscripcionUtc)
+            .ToListAsync();
+    }
+
     public async Task<InscripcionActividad?> ObtenerPorIdAsync(Guid inscripcionId)
     {
         ValidarTenantActivo();

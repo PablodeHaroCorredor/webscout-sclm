@@ -1,0 +1,155 @@
+@using MudBlazor
+@using WebScout.Web.Features.Participants.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" Color="Color.Success" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">Expediente Sanitario: @Educando?.NombreCompleto</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        @if (Educando?.FichaMedica == null)
+        {
+            <MudAlert Severity="Severity.Warning">Este educando no dispone aún de expediente sanitario registrado.</MudAlert>
+        }
+        else
+        {
+            var fm = Educando.FichaMedica;
+
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pa-3">
+                
+                <!-- Pestaña 1: Alergias y Dietas Críticas -->
+                <MudTabPanel Text="Alergias y Alimentación" Icon="@Icons.Material.Filled.NoMeals">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-3 mb-2 rounded-lg" Style="background-color: #FEF2F2; border-color: #FECACA;">
+                                <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #991B1B;">Alergias Alimentarias:</MudText>
+                                <MudText Typo="Typo.body2" Style="color: #7F1D1D;">
+                                    @(string.IsNullOrWhiteSpace(fm.AlergiasAlimentarias) ? "Ninguna declarada" : fm.AlergiasAlimentarias)
+                                </MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudPaper Elevation="0" Outlined="true" Class="pa-3 mb-2 rounded-lg" Style="background-color: #FFFBEB; border-color: #FDE68A;">
+                                <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #92400E;">Régimen / Intolerancias:</MudText>
+                                <MudText Typo="Typo.body2" Style="color: #78350F;">
+                                    @(string.IsNullOrWhiteSpace(fm.RegimenAlimenticio) ? "Dieta estándar sin restricciones" : fm.RegimenAlimenticio)
+                                </MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Alergias a Medicamentos:</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(fm.AlergiasMedicamentosas) ? "Ninguna" : fm.AlergiasMedicamentosas)
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Alergias Ambientales / Picaduras:</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(fm.AlergiasAmbientales) ? "Ninguna" : fm.AlergiasAmbientales)
+                            </MudText>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <!-- Pestaña 2: Tratamientos y Salud -->
+                <MudTabPanel Text="Medicación y Salud" Icon="@Icons.Material.Filled.Medication">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Medicación Activa en Salidas/Campamento:</MudText>
+                            <MudText Typo="Typo.body2" Class="pa-2 rounded-lg" Style="background-color: #F8FAFC; border: 1px solid #E2E8F0; font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(fm.MedicacionActiva) ? "No requiere administración de medicación pautada" : fm.MedicacionActiva)
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Enfermedades Crónicas / Patologías:</MudText>
+                            <MudText Typo="Typo.body2">
+                                @(string.IsNullOrWhiteSpace(fm.EnfermedadesCronicas) ? "Ninguna patología relevante informada" : fm.EnfermedadesCronicas)
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">¿Sabe nadar?</MudText>
+                            <div>
+                                <MudChip T="string" Size="Size.Small" Color="@(fm.SabeNadar ? Color.Success : Color.Error)">
+                                    @(fm.SabeNadar ? "Sí sabe nadar" : "NO sabe nadar")
+                                </MudChip>
+                            </div>
+                        </MudItem>
+                        <MudItem xs="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Vacunación oficial:</MudText>
+                            <div>
+                                <MudChip T="string" Size="Size.Small" Color="@(fm.VacunacionAlDia ? Color.Success : Color.Warning)">
+                                    @(fm.VacunacionAlDia ? "Al día" : "Revisar")
+                                </MudChip>
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+                <!-- Pestaña 3: Contactos de Emergencia -->
+                <MudTabPanel Text="Contactos y Seguro" Icon="@Icons.Material.Filled.Phone">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Contacto Principal:</MudText>
+                            <MudText Typo="Typo.body2" Style="font-weight: 700;">@fm.NombreContactoEmergenciaPrincipal</MudText>
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       Href="@($"tel:{fm.TelefonoEmergenciaPrincipal}")"
+                                       StartIcon="@Icons.Material.Filled.Call"
+                                       Class="mt-1">
+                                @fm.TelefonoEmergenciaPrincipal
+                            </MudButton>
+                        </MudItem>
+                        @if (!string.IsNullOrWhiteSpace(fm.TelefonoEmergenciaSecundario))
+                        {
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Contacto Secundario:</MudText>
+                                <MudText Typo="Typo.body2" Style="font-weight: 700;">@fm.NombreContactoEmergenciaSecundario</MudText>
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Default" 
+                                           Size="Size.Small" 
+                                           Href="@($"tel:{fm.TelefonoEmergenciaSecundario}")"
+                                           StartIcon="@Icons.Material.Filled.Call"
+                                           Class="mt-1">
+                                    @fm.TelefonoEmergenciaSecundario
+                                </MudButton>
+                            </MudItem>
+                        }
+                        <MudItem xs="12">
+                            <MudDivider Class="my-2" />
+                            <div class="d-flex justify-space-between align-center">
+                                <div>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Nº Seguridad Social / CIP:</MudText>
+                                    <MudText Typo="Typo.body2" Style="font-weight: 700; font-family: monospace;">@fm.NumeroSeguridadSocial</MudText>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(fm.EntidadAseguradora))
+                                {
+                                    <div class="text-end">
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Entidad Aseguradora:</MudText>
+                                        <MudText Typo="Typo.body2">@fm.EntidadAseguradora</MudText>
+                                    </div>
+                                }
+                            </div>
+                        </MudItem>
+                    </MudGrid>
+                </MudTabPanel>
+
+            </MudTabs>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cerrar" Color="Color.Primary" Variant="Variant.Filled">Cerrar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public Educando? Educando { get; set; }
+
+    private void Cerrar() => MudDialog.Close();
+}

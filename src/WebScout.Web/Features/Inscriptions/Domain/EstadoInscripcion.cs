@@ -31,3 +31,16 @@ public enum EstadoInscripcion
     /// </summary>
     Cancelada = 5
 }
+
+public static class EstadoInscripcionExtensions
+{
+    public static string ObtenerNombre(this EstadoInscripcion estado) => estado switch
+    {
+        EstadoInscripcion.PendienteJustificante => "Pendiente de Justificante",
+        EstadoInscripcion.EnRevision => "En Revisión",
+        EstadoInscripcion.Confirmada => "Confirmada",
+        EstadoInscripcion.RequiereSubsanacion => "Requiere Subsanación",
+        EstadoInscripcion.Cancelada => "Cancelada",
+        _ => estado.ToString()
+    };
+}

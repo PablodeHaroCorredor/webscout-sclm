@@ -1,0 +1,539 @@
+@page "/familias"
+@page "/familias/resumen"
+@attribute [Authorize(Roles = "Familia,SuperAdmin")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@using WebScout.Web.Features.Activities.Domain
+@using WebScout.Web.Features.Activities.Services
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Inscriptions.Components
+@using WebScout.Web.Features.Inscriptions.Domain
+@using WebScout.Web.Features.Inscriptions.Services
+@using WebScout.Web.Features.Participants.Components
+@using WebScout.Web.Features.Participants.Domain
+@using WebScout.Web.Features.Participants.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@inject IServicioEducandos ServicioEducandos
+@inject IServicioInscripciones ServicioInscripciones
+@inject IServicioActividades ServicioActividades
+@inject ITenantContext Tenant
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Mi Espacio Familiar · @Tenant.GroupName</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+    
+    <!-- 1. Cabecera de Bienvenida a la Familia -->
+    <MudCard Elevation="0" Outlined="true" Class="mb-6 rounded-2xl pa-6" Style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%); border-color: #E2E8F0;">
+        <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-4">
+            <div>
+                <div class="d-flex align-center gap-2 mb-1">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Style="font-weight: 700;">
+                        PORTAL FAMILIAS
+                    </MudChip>
+                    <span style="font-size: 0.85rem; color: #64748B;">@Tenant.GroupName</span>
+                </div>
+                <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                    ¡Hola, @_nombreTutor!
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    Bienvenido al espacio de gestión de tu unidad familiar. Consulta el estado de tus hijos, actualiza sus expedientes sanitarios e inscribe a las próximas salidas scout.
+                </MudText>
+            </div>
+
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary" 
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           OnClick="AbrirAltaEducandoDialog">
+                    Añadir Hijo/a
+                </MudButton>
+            </div>
+        </div>
+    </MudCard>
+
+    @if (_cargando)
+    {
+        <div class="pa-12 text-center">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-3">Cargando tu espacio familiar...</MudText>
+        </div>
+    }
+    else
+    {
+        <!-- 2. Avisos de Acción Inmediata (Subsanación o Justificantes Pendientes) -->
+        var pendientesSubsanacion = _inscripcionesFamilia.Where(i => i.Estado == EstadoInscripcion.RequiereSubsanacion).ToList();
+        var pendientesJustificante = _inscripcionesFamilia.Where(i => i.Estado == EstadoInscripcion.PendienteJustificante).ToList();
+
+        @if (pendientesSubsanacion.Any())
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4 rounded-xl" Dense="false">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-3">
+                    <div>
+                        <strong>Subsanación Requerida por el Kraal:</strong> El equipo de monitores ha solicitado subsanar el justificante o documentación de @pendientesSubsanacion.Count inscripción/es.
+                        <div class="mt-1" style="font-size: 0.85rem; opacity: 0.95;">
+                            @foreach (var sub in pendientesSubsanacion)
+                            {
+                                <div>• <strong>@sub.Educando?.Nombre</strong> en <em>@sub.Actividad?.Titulo</em>: «@sub.NotasKraal»</div>
+                            }
+                        </div>
+                    </div>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Surface" 
+                               Size="Size.Small" 
+                               Href="/familias/inscripciones"
+                               StartIcon="@Icons.Material.Filled.UploadFile"
+                               Style="color: #991B1B; font-weight: 700; white-space: nowrap;">
+                        Corregir Ahora
+                    </MudButton>
+                </div>
+            </MudAlert>
+        }
+
+        @if (pendientesJustificante.Any())
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Filled" Class="mb-4 rounded-xl" Dense="false">
+                <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-3">
+                    <div>
+                        <strong>Justificante de Pago Pendiente:</strong> Tienes @pendientesJustificante.Count inscripción/es esperando el comprobante de transferencia para que el Kraal pueda confirmar la plaza.
+                    </div>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Surface" 
+                               Size="Size.Small" 
+                               Href="/familias/inscripciones"
+                               StartIcon="@Icons.Material.Filled.AttachFile"
+                               Style="color: #92400E; font-weight: 700; white-space: nowrap;">
+                        Subir Comprobante
+                    </MudButton>
+                </div>
+            </MudAlert>
+        }
+
+        <!-- 3. Tus Educandos y Semáforo de Ficha Médica Anual -->
+        <div class="mb-8">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.ChildCare" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700; color: #0F172A;">Mis Hijos/as y Salud Anual</MudText>
+                </div>
+                <MudLink Href="/familias/educandos" Style="font-weight: 600; font-size: 0.85rem;">
+                    Gestionar todos mis educandos ➔
+                </MudLink>
+            </div>
+
+            @if (!_educandos.Any())
+            {
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-8 text-center" Style="border-color: #E2E8F0; background-color: #FFFFFF;">
+                    <MudIcon Icon="@Icons.Material.Filled.SentimentDissatisfied" Size="Size.Large" Style="color: #94A3B8;" />
+                    <MudText Typo="Typo.body1" Class="font-weight-bold mt-2">Aún no tienes educandos dados de alta</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">Registra a tus hijos para poder cumplimentar su ficha médica e inscribirlos en las actividades.</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" OnClick="AbrirAltaEducandoDialog">
+                        Dar de alta primer educando
+                    </MudButton>
+                </MudCard>
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    @foreach (var educando in _educandos)
+                    {
+                        var fichaAlDia = EsFichaMedicaAlDia(educando.FichaMedica);
+
+                        <MudItem xs="12" md="6">
+                            <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4 h-100 d-flex flex-column justify-space-between" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                                <div>
+                                    <div class="d-flex justify-space-between align-start mb-3">
+                                        <div class="d-flex align-center gap-3">
+                                            <MudAvatar Color="@ObtenerColorRama(educando.RamaActual)" Size="Size.Large" Style="font-weight: 800;">
+                                                @(educando.Nombre.FirstOrDefault())
+                                            </MudAvatar>
+                                            <div>
+                                                <MudText Typo="Typo.subtitle1" Style="font-weight: 800; color: #0F172A; line-height: 1.2;">
+                                                    @educando.NombreCompleto
+                                                </MudText>
+                                                <div class="d-flex align-center gap-1 mt-0.5">
+                                                    <MudChip T="string" Size="Size.Small" Color="@ObtenerColorRama(educando.RamaActual)" Variant="Variant.Filled" Style="font-weight: 700; font-size: 0.75rem;">
+                                                        @educando.RamaActual.ObtenerNombre()
+                                                    </MudChip>
+                                                    <span style="color: #64748B; font-size: 0.8rem;">· @educando.CalcularEdad() años</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Semáforo de Salud -->
+                                        @if (fichaAlDia)
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.CheckCircle">
+                                                Ficha al día
+                                            </MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Icon="@Icons.Material.Filled.PriorityHigh">
+                                                Revisión anual requerida
+                                            </MudChip>
+                                        }
+                                    </div>
+
+                                    <!-- Resumen Clínico / Alergias -->
+                                    <div class="pa-3 rounded-lg mb-3" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; font-size: 0.8rem;">
+                                        <div class="d-flex justify-space-between mb-1">
+                                            <span style="color: #64748B;">Alergias / Dietas:</span>
+                                            <span style="font-weight: 600; color: #0F172A;">
+                                                @(string.IsNullOrWhiteSpace(educando.FichaMedica?.AlergiasAlimentarias) ? "Ninguna declarada" : educando.FichaMedica.AlergiasAlimentarias)
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-space-between mb-1">
+                                            <span style="color: #64748B;">Seguridad Social / CIP:</span>
+                                            <span style="font-weight: 600; font-family: monospace;">
+                                                @(educando.FichaMedica?.NumeroSeguridadSocial ?? "Pendiente")
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-space-between">
+                                            <span style="color: #64748B;">Natación en campamento:</span>
+                                            <span style="font-weight: 600; color: @(educando.FichaMedica?.SabeNadar == true ? "#15803D" : "#B91C1C");">
+                                                @(educando.FichaMedica?.SabeNadar == true ? "Sabe nadar" : "NO sabe nadar")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-space-between align-center pt-2 border-t border-slate-100">
+                                    <span style="font-size: 0.75rem; color: #94A3B8;">
+                                        Actualizado: @(educando.FichaMedica?.UltimaActualizacionUtc.ToString("dd/MM/yyyy") ?? "Nunca")
+                                    </span>
+                                    <MudButton Variant="Variant.Outlined" 
+                                               Color="Color.Primary" 
+                                               Size="Size.Small" 
+                                               StartIcon="@Icons.Material.Filled.EditNote"
+                                               OnClick="@(() => AbrirEditarFichaMedica(educando))">
+                                        Editar Ficha Médica
+                                    </MudButton>
+                                </div>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </div>
+
+        <!-- 4. Próximas Actividades y Campamentos para tus Ramas -->
+        <div class="mb-8">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Color="Color.Primary" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700; color: #0F172A;">Próximas Salidas y Campamentos</MudText>
+                </div>
+                <MudLink Href="/familias/actividades" Style="font-weight: 600; font-size: 0.85rem;">
+                    Ver todas las actividades ➔
+                </MudLink>
+            </div>
+
+            @if (!ActividadesParaMisHijos.Any())
+            {
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-6 text-center" Style="border-color: #E2E8F0; background-color: #FFFFFF;">
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                        No hay convocatorias abiertas actualmente para las ramas de tus hijos.
+                    </MudText>
+                </MudCard>
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    @foreach (var actividad in ActividadesParaMisHijos)
+                    {
+                        var hijosAplicables = _educandos.Where(e => actividad.AplicaARama(e.RamaActual)).ToList();
+
+                        <MudItem xs="12" md="6">
+                            <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-5 h-100 d-flex flex-column justify-space-between" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                                <div>
+                                    <div class="d-flex justify-space-between align-start gap-2 mb-2">
+                                        <MudText Typo="Typo.h6" Style="font-weight: 800; color: #0F172A; line-height: 1.2;">
+                                            @actividad.Titulo
+                                        </MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Style="font-weight: 700;">
+                                            @(actividad.Precio <= 0m ? "Gratuita" : actividad.Precio.ToString("C2"))
+                                        </MudChip>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-3 mb-3 text-secondary" style="font-size: 0.8rem;">
+                                        <div class="d-flex align-center gap-1">
+                                            <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Size="Size.Small" />
+                                            <span>@actividad.FechaInicio.ToString("dd/MM/yyyy") - @actividad.FechaFin.ToString("dd/MM/yyyy")</span>
+                                        </div>
+                                        <div class="d-flex align-center gap-1">
+                                            <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" />
+                                            <span>@actividad.Lugar</span>
+                                        </div>
+                                    </div>
+
+                                    <MudText Typo="Typo.body2" Class="mb-3 text-secondary" Style="font-size: 0.85rem; line-height: 1.4;">
+                                        @actividad.Descripcion
+                                    </MudText>
+                                </div>
+
+                                <!-- Estado de Inscripción de los Hijos en esta Actividad -->
+                                <div class="pt-3 border-t border-slate-100 space-y-2">
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700; text-transform: uppercase;">
+                                        Inscripción por Educando:
+                                    </MudText>
+
+                                    @foreach (var hijo in hijosAplicables)
+                                    {
+                                        var inscripcion = _inscripcionesFamilia.FirstOrDefault(i => i.ActividadId == actividad.Id && i.EducandoId == hijo.Id && i.Estado != EstadoInscripcion.Cancelada);
+
+                                        <div class="d-flex justify-space-between align-center py-1">
+                                            <div class="d-flex align-center gap-2">
+                                                <MudAvatar Size="Size.Small" Color="@ObtenerColorRama(hijo.RamaActual)">
+                                                    @(hijo.Nombre.FirstOrDefault())
+                                                </MudAvatar>
+                                                <span style="font-weight: 600; font-size: 0.85rem;">@hijo.Nombre</span>
+                                            </div>
+
+                                            @if (inscripcion != null)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(inscripcion.Estado)">
+                                                    @inscripcion.Estado.ObtenerNombre()
+                                                </MudChip>
+                                            }
+                                            else if (actividad.FechaLimiteInscripcion.HasValue && actividad.FechaLimiteInscripcion.Value.Date < DateTime.UtcNow.Date)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                                                    Plazo cerrado
+                                                </MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudButton Variant="Variant.Filled" 
+                                                           Color="Color.Primary" 
+                                                           Size="Size.Small" 
+                                                           StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+                                                           OnClick="@(() => InscribirHijoAsync(actividad, hijo))">
+                                                    Inscribir
+                                                </MudButton>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </MudCard>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </div>
+
+        <!-- 5. Tarjetas de Accesos Rápidos -->
+        <MudGrid Spacing="3">
+            <MudItem xs="12" sm="4">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4 hover:shadow-sm transition" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                    <div class="d-flex align-center gap-3">
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" />
+                        </MudAvatar>
+                        <div>
+                            <MudLink Href="/familias/inscripciones" Typo="Typo.subtitle2" Style="font-weight: 700; color: #0F172A;">
+                                Mis Recibos y Justificantes
+                            </MudLink>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                                Consulta tus pagos y comprobantes
+                            </MudText>
+                        </div>
+                    </div>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4 hover:shadow-sm transition" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                    <div class="d-flex align-center gap-3">
+                        <MudAvatar Color="Color.Success" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.HealthAndSafety" />
+                        </MudAvatar>
+                        <div>
+                            <MudLink Href="/familias/educandos" Typo="Typo.subtitle2" Style="font-weight: 700; color: #0F172A;">
+                                Censo y Fichas Médicas
+                            </MudLink>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                                Actualiza datos clínicos y CIP
+                            </MudText>
+                        </div>
+                    </div>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl pa-4 hover:shadow-sm transition" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                    <div class="d-flex align-center gap-3">
+                        <MudAvatar Color="Color.Warning" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.HelpOutline" />
+                        </MudAvatar>
+                        <div>
+                            <MudLink Href="/contacto" Typo="Typo.subtitle2" Style="font-weight: 700; color: #0F172A;">
+                                Buzón con el Kraal
+                            </MudLink>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                                Escribe a secretaría y educadores
+                            </MudText>
+                        </div>
+                    </div>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+
+</MudContainer>
+
+@code {
+    private bool _cargando = true;
+    private Guid _tutorId = Guid.Empty;
+    private string _nombreTutor = "Familia";
+    private List<Educando> _educandos = new();
+    private List<InscripcionActividad> _inscripcionesFamilia = new();
+    private List<ActividadScout> _actividades = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ObtenerIdentidadUsuarioAsync();
+        await CargarDatosDashboardAsync();
+    }
+
+    private async Task ObtenerIdentidadUsuarioAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(idClaim, out var uid))
+            {
+                _tutorId = uid;
+            }
+
+            _nombreTutor = user.FindFirst("NombreCompleto")?.Value ?? user.Identity.Name ?? "Familia";
+        }
+    }
+
+    private async Task CargarDatosDashboardAsync()
+    {
+        _cargando = true;
+        try
+        {
+            if (_tutorId != Guid.Empty)
+            {
+                _educandos = await ServicioEducandos.ObtenerPorTutorAsync(_tutorId);
+                _inscripcionesFamilia = (await ServicioInscripciones.ObtenerInscripcionesFamiliaAsync(_tutorId)).ToList();
+                _actividades = (await ServicioActividades.ObtenerActividadesParaFamiliaAsync(_tutorId))
+                    .Where(a => a.Estado == EstadoActividad.Publicada)
+                    .OrderBy(a => a.FechaInicio)
+                    .ToList();
+            }
+            else
+            {
+                _actividades = (await ServicioActividades.ObtenerActividadesKraalAsync())
+                    .Where(a => a.Estado == EstadoActividad.Publicada)
+                    .OrderBy(a => a.FechaInicio)
+                    .ToList();
+            }
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private IEnumerable<ActividadScout> ActividadesParaMisHijos
+    {
+        get
+        {
+            var ramasDeMisHijos = _educandos.Select(e => e.RamaActual).Distinct().ToList();
+            return _actividades.Where(a => ramasDeMisHijos.Any(r => a.AplicaARama(r)));
+        }
+    }
+
+    private bool EsFichaMedicaAlDia(FichaMedica? ficha)
+    {
+        if (ficha == null) return false;
+        if (string.IsNullOrWhiteSpace(ficha.NumeroSeguridadSocial)) return false;
+        if (string.IsNullOrWhiteSpace(ficha.TelefonoEmergenciaPrincipal)) return false;
+
+        // Si fue actualizada en los últimos 365 días
+        return ficha.UltimaActualizacionUtc >= DateTime.UtcNow.AddYears(-1);
+    }
+
+    private async Task AbrirAltaEducandoDialog()
+    {
+        var parameters = new DialogParameters<AddParticipantDialog>
+        {
+            { x => x.TutorLegalId, _tutorId },
+            { x => x.OrganizacionId, Tenant.CurrentTenantId }
+        };
+
+        var dialog = await DialogService.ShowAsync<AddParticipantDialog>("Nuevo Educando", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Snackbar.Add("Educando registrado con éxito", Severity.Success);
+            await CargarDatosDashboardAsync();
+        }
+    }
+
+    private async Task AbrirEditarFichaMedica(Educando educando)
+    {
+        var parameters = new DialogParameters<EditHealthRecordDialog>
+        {
+            { x => x.Educando, educando }
+        };
+
+        var dialog = await DialogService.ShowAsync<EditHealthRecordDialog>("Actualizar Ficha Médica", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Snackbar.Add("Ficha médica actualizada correctamente", Severity.Success);
+            await CargarDatosDashboardAsync();
+        }
+    }
+
+    private async Task InscribirHijoAsync(ActividadScout actividad, Educando educando)
+    {
+        var parameters = new DialogParameters<InscribirEducandoDialog>
+        {
+            { x => x.Actividad, actividad },
+            { x => x.TutorId, _tutorId },
+            { x => x.EducandosFamilia, _educandos }
+        };
+
+        var dialog = await DialogService.ShowAsync<InscribirEducandoDialog>("Inscripción a Actividad", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Snackbar.Add($"Inscripción tramitada para {educando.NombreCompleto}", Severity.Success);
+            await CargarDatosDashboardAsync();
+        }
+    }
+
+    private Color ObtenerColorRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => Color.Warning,
+        RamaScout.Manada => Color.Tertiary,
+        RamaScout.Tropa => Color.Success,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Info,
+        _ => Color.Default
+    };
+
+    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
+    {
+        EstadoInscripcion.PendienteJustificante => Color.Default,
+        EstadoInscripcion.EnRevision => Color.Warning,
+        EstadoInscripcion.RequiereSubsanacion => Color.Error,
+        EstadoInscripcion.Confirmada => Color.Success,
+        EstadoInscripcion.Cancelada => Color.Dark,
+        _ => Color.Default
+    };
+}

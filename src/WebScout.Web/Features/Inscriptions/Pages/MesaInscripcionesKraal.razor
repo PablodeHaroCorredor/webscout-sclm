@@ -1,0 +1,520 @@
+@page "/kraal/inscripciones"
+@attribute [Authorize(Roles = "Scouter,Coordinacion,Administracion,SuperAdmin")]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using MudBlazor
+@using WebScout.Web.Features.Activities.Domain
+@using WebScout.Web.Features.Activities.Services
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Inscriptions.Components
+@using WebScout.Web.Features.Inscriptions.Domain
+@using WebScout.Web.Features.Inscriptions.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@inject IServicioInscripciones ServicioInscripciones
+@inject IServicioActividades ServicioActividades
+@inject ITenantContext Tenant
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Mesa de Inscripciones · @Tenant.GroupName</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
+    
+    <!-- Cabecera de la Mesa de Revisión -->
+    <div class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center gap-4 mb-6">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                    KRAAL DE SCOUTERS
+                </MudChip>
+                @if (_bloquearFiltroRama && _ramaAsignada != RamaScout.Ninguna)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Lock">
+                        Alcance restringido a @_ramaAsignada.ObtenerNombre() (PA02)
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Secondary" Variant="Variant.Outlined">
+                        Visión de Coordinación (Todas las ramas)
+                    </MudChip>
+                }
+            </div>
+            <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                Mesa de Revisión de Inscripciones
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Validación documental, comprobación de transferencias bancarias y gestión de plazas de campamento.
+            </MudText>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Default" 
+                       StartIcon="@Icons.Material.Filled.Refresh" 
+                       OnClick="CargarDatosAsync">
+                Actualizar
+            </MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Hiking" 
+                       Href="/kraal/actividades">
+                Gestor de Actividades
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- Filtros de Actividad, Rama y Búsqueda -->
+    <MudCard Elevation="0" Outlined="true" Class="mb-6 rounded-xl" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        <MudCardContent Class="py-3">
+            <MudGrid Spacing="3" Class="align-center">
+                
+                <!-- Selector de Actividad -->
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect T="Guid?" 
+                               Label="Filtrar por Convocatoria" 
+                               Value="_actividadSeleccionadaId" 
+                               ValueChanged="OnActividadChanged"
+                               Variant="Variant.Outlined" 
+                               Dense="true"
+                               Clearable="true">
+                        <MudSelectItem T="Guid?" Value="@((Guid?)null)">Todas las convocatorias</MudSelectItem>
+                        @foreach (var act in _actividades)
+                        {
+                            <MudSelectItem T="Guid?" Value="@act.Id">@act.Titulo (@act.FechaInicio.ToString("dd/MM/yyyy"))</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Selector de Rama Pedagógica (Bloqueado para Scouter de rama según PA02) -->
+                <MudItem xs="12" sm="6" md="4">
+                    <MudSelect T="RamaScout?" 
+                               Label="Rama Pedagógica" 
+                               Value="_ramaFiltro" 
+                               ValueChanged="OnRamaChanged"
+                               Disabled="@_bloquearFiltroRama"
+                               Variant="Variant.Outlined" 
+                               Dense="true"
+                               Clearable="@(!_bloquearFiltroRama)">
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)null)">Todas las ramas</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Castores)">Castores (6-8 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Manada)">Manada (8-11 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Tropa)">Tropa Scout (11-14 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Escultas)">Escultas (14-17 años)</MudSelectItem>
+                        <MudSelectItem T="RamaScout?" Value="@((RamaScout?)RamaScout.Clan)">Clan Rover (17-21 años)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Búsqueda rápida por educando o tutor -->
+                <MudItem xs="12" md="4">
+                    <MudTextField @bind-Value="_textoBusqueda" 
+                                  Placeholder="Buscar por nombre, educando o tutor..." 
+                                  Adornment="Adornment.Start" 
+                                  AdornmentIcon="@Icons.Material.Filled.Search" 
+                                  Variant="Variant.Outlined" 
+                                  Margin="Margin.Dense" 
+                                  Clearable="true" />
+                </MudItem>
+
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Pestañas de Estado con Contadores Reactivos -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <MudButton Variant="@(_filtroEstado == null ? Variant.Filled : Variant.Outlined)" 
+                   Color="Color.Default" 
+                   Size="Size.Small"
+                   OnClick="() => CambiarFiltroEstado(null)"
+                   Class="rounded-lg">
+            Todas (@_inscripciones.Count)
+        </MudButton>
+
+        <MudButton Variant="@(_filtroEstado == EstadoInscripcion.EnRevision ? Variant.Filled : Variant.Outlined)" 
+                   Color="Color.Warning" 
+                   Size="Size.Small"
+                   OnClick="() => CambiarFiltroEstado(EstadoInscripcion.EnRevision)"
+                   StartIcon="@Icons.Material.Filled.HourglassTop"
+                   Class="rounded-lg">
+            Pendientes de Revisión (@_inscripciones.Count(i => i.Estado == EstadoInscripcion.EnRevision))
+        </MudButton>
+
+        <MudButton Variant="@(_filtroEstado == EstadoInscripcion.RequiereSubsanacion ? Variant.Filled : Variant.Outlined)" 
+                   Color="Color.Error" 
+                   Size="Size.Small"
+                   OnClick="() => CambiarFiltroEstado(EstadoInscripcion.RequiereSubsanacion)"
+                   StartIcon="@Icons.Material.Filled.ErrorOutline"
+                   Class="rounded-lg">
+            Subsanación Requerida (@_inscripciones.Count(i => i.Estado == EstadoInscripcion.RequiereSubsanacion))
+        </MudButton>
+
+        <MudButton Variant="@(_filtroEstado == EstadoInscripcion.Confirmada ? Variant.Filled : Variant.Outlined)" 
+                   Color="Color.Success" 
+                   Size="Size.Small"
+                   OnClick="() => CambiarFiltroEstado(EstadoInscripcion.Confirmada)"
+                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                   Class="rounded-lg">
+            Confirmadas (@_inscripciones.Count(i => i.Estado == EstadoInscripcion.Confirmada))
+        </MudButton>
+
+        <MudButton Variant="@(_filtroEstado == EstadoInscripcion.PendienteJustificante ? Variant.Filled : Variant.Outlined)" 
+                   Color="Color.Default" 
+                   Size="Size.Small"
+                   OnClick="() => CambiarFiltroEstado(EstadoInscripcion.PendienteJustificante)"
+                   Class="rounded-lg">
+            Esperando Justificante (@_inscripciones.Count(i => i.Estado == EstadoInscripcion.PendienteJustificante))
+        </MudButton>
+    </div>
+
+    <!-- Tabla Reactiva de Inscripciones -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        @if (_cargando)
+        {
+            <div class="pa-12 text-center">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-3">Cargando mesa de inscripciones...</MudText>
+            </div>
+        }
+        else if (!InscripcionesFiltradas.Any())
+        {
+            <div class="pa-12 text-center">
+                <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Size="Size.Large" Style="color: #CBD5E1; font-size: 3.5rem;" />
+                <MudText Typo="Typo.h6" Class="mt-3 font-weight-bold" Style="color: #334155;">No hay inscripciones que coincidan con los filtros</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                    Cambie los criterios de búsqueda o seleccione otra convocatoria.
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="InscripcionesFiltradas" Hover="true" Dense="false" Elevation="0" Class="w-100">
+                <HeaderContent>
+                    <MudTh Style="font-weight: 700;">Educando / Rama</MudTh>
+                    <MudTh Style="font-weight: 700;">Actividad</MudTh>
+                    <MudTh Style="font-weight: 700;">Tutor Legal</MudTh>
+                    <MudTh Style="font-weight: 700;">Comprobante de Pago</MudTh>
+                    <MudTh Style="font-weight: 700;">Estado</MudTh>
+                    <MudTh Style="font-weight: 700; text-align: right;">Acciones de Revisión</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <!-- Columna Educando -->
+                    <MudTd DataLabel="Educando">
+                        <div class="d-flex align-center gap-2">
+                            <MudAvatar Size="Size.Small" Color="@ObtenerColorRama(context.Educando?.RamaActual ?? RamaScout.Ninguna)">
+                                @(context.Educando?.Nombre.FirstOrDefault())
+                            </MudAvatar>
+                            <div>
+                                <span style="font-weight: 700; color: #0F172A; display: block;">
+                                    @context.Educando?.NombreCompleto
+                                </span>
+                                <div class="d-flex align-center gap-1 mt-0.5">
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@ObtenerColorRama(context.Educando?.RamaActual ?? RamaScout.Ninguna)" Class="pa-0 ma-0" Style="font-weight: 700; font-size: 0.75rem;">
+                                        @context.Educando?.RamaActual.ObtenerNombre()
+                                    </MudChip>
+                                    <span style="color: #94A3B8; font-size: 0.75rem;">·</span>
+                                    <span style="color: #64748B; font-size: 0.75rem;">@context.Educando?.CalcularEdad() años</span>
+                                </div>
+                            </div>
+                        </div>
+                    </MudTd>
+
+                    <!-- Columna Actividad -->
+                    <MudTd DataLabel="Actividad">
+                        <span style="font-weight: 600; color: #1E293B; display: block;">@context.Actividad?.Titulo</span>
+                        <span style="font-size: 0.75rem; color: #64748B;">@context.Actividad?.FechaInicio.ToString("dd/MM/yyyy") · @context.ImporteEuros.ToString("C2")</span>
+                    </MudTd>
+
+                    <!-- Columna Tutor Legal -->
+                    <MudTd DataLabel="Tutor">
+                        <span style="font-weight: 600; color: #334155; display: block;">@context.TutorLegal?.NombreCompleto</span>
+                        @if (!string.IsNullOrWhiteSpace(context.TutorLegal?.PhoneNumber))
+                        {
+                            <MudLink Href="@($"tel:{context.TutorLegal.PhoneNumber}")" Underline="Underline.Hover" Style="font-size: 0.8rem; font-weight: 600;">
+                                <MudIcon Icon="@Icons.Material.Filled.Call" Size="Size.Small" Class="me-1" />@context.TutorLegal.PhoneNumber
+                            </MudLink>
+                        }
+                    </MudTd>
+
+                    <!-- Columna Comprobante -->
+                    <MudTd DataLabel="Comprobante">
+                        @if (string.IsNullOrWhiteSpace(context.RutaArchivoJustificante))
+                        {
+                            @if (context.ImporteEuros <= 0m)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Success">Actividad gratuita</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">Pendiente de adjuntar</MudChip>
+                            }
+                        }
+                        else
+                        {
+                            var esCompartido = EsJustificanteCompartido(context);
+
+                            <div class="d-flex flex-column align-start gap-1">
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           Target="_blank"
+                                           Href="@($"/api/justificantes/{context.Id}/archivo")"
+                                           StartIcon="@Icons.Material.Filled.FileDownload">
+                                    Ver Justificante
+                                </MudButton>
+
+                                @if (esCompartido)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Info" Icon="@Icons.Material.Filled.People" Class="mt-0.5" Style="font-size: 0.7rem;">
+                                        Compartido hermanos (PA04)
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+                    </MudTd>
+
+                    <!-- Columna Estado -->
+                    <MudTd DataLabel="Estado">
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(context.Estado)">
+                            @context.Estado.ObtenerNombre()
+                        </MudChip>
+                        @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
+                        {
+                            <span class="d-block mt-1 text-truncate" style="max-width: 220px; font-size: 0.75rem; color: #DC2626; font-style: italic;" title="@context.NotasKraal">
+                                «@context.NotasKraal»
+                            </span>
+                        }
+                    </MudTd>
+
+                    <!-- Columna Acciones -->
+                    <MudTd DataLabel="Acciones" Class="text-end">
+                        <div class="d-flex justify-end gap-1">
+                            @if (context.Estado == EstadoInscripcion.EnRevision || context.Estado == EstadoInscripcion.RequiereSubsanacion)
+                            {
+                                <MudTooltip Text="Confirmar plaza y validar justificante">
+                                    <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" 
+                                                   Color="Color.Success" 
+                                                   Size="Size.Small" 
+                                                   OnClick="@(() => ConfirmarPlazaAsync(context))" />
+                                </MudTooltip>
+
+                                <MudTooltip Text="Solicitar subsanación o corrección a la familia">
+                                    <MudIconButton Icon="@Icons.Material.Filled.ReportProblem" 
+                                                   Color="Color.Warning" 
+                                                   Size="Size.Small" 
+                                                   OnClick="@(() => AbrirModalSubsanacionAsync(context))" />
+                                </MudTooltip>
+                            }
+                            else if (context.Estado == EstadoInscripcion.Confirmada)
+                            {
+                                <MudTooltip Text="Reabrir / Requerir subsanación">
+                                    <MudIconButton Icon="@Icons.Material.Filled.EditNote" 
+                                                   Color="Color.Default" 
+                                                   Size="Size.Small" 
+                                                   OnClick="@(() => AbrirModalSubsanacionAsync(context))" />
+                                </MudTooltip>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCard>
+
+</MudContainer>
+
+@code {
+    private bool _cargando = true;
+    private List<InscripcionActividad> _inscripciones = new();
+    private List<ActividadScout> _actividades = new();
+
+    private Guid? _actividadSeleccionadaId;
+    private RamaScout? _ramaFiltro;
+    private RamaScout _ramaAsignada = RamaScout.Ninguna;
+    private bool _bloquearFiltroRama = false;
+    private EstadoInscripcion? _filtroEstado = EstadoInscripcion.EnRevision;
+    private string? _textoBusqueda;
+    private Guid _usuarioActualId = Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ConfigurarAlcanceUsuarioAsync();
+        await CargarDatosAsync();
+    }
+
+    private async Task ConfigurarAlcanceUsuarioAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(idClaim, out var uid))
+            {
+                _usuarioActualId = uid;
+            }
+
+            var ramaClaim = user.FindFirst("RamaAsignada")?.Value;
+            if (Enum.TryParse<RamaScout>(ramaClaim, out var ramaParsed))
+            {
+                _ramaAsignada = ramaParsed;
+            }
+
+            // Si es Scouter con rama asignada, aplicar estrictamente PA02
+            if (user.IsInRole(RolesScout.Scouter) && !user.IsInRole(RolesScout.Coordinacion) && !user.IsInRole(RolesScout.Administracion) && !user.IsInRole(RolesScout.SuperAdmin))
+            {
+                if (_ramaAsignada != RamaScout.Ninguna)
+                {
+                    _ramaFiltro = _ramaAsignada;
+                    _bloquearFiltroRama = true;
+                }
+            }
+        }
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _actividades = (await ServicioActividades.ObtenerActividadesKraalAsync()).ToList();
+
+            // Cargar inscripciones según alcance
+            var lista = await ServicioInscripciones.ObtenerInscripcionesMesaKraalAsync(
+                ramaFiltro: _ramaFiltro,
+                actividadIdFiltro: _actividadSeleccionadaId,
+                estadoFiltro: null);
+
+            _inscripciones = lista.ToList();
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private IEnumerable<InscripcionActividad> InscripcionesFiltradas
+    {
+        get
+        {
+            var items = _inscripciones.AsEnumerable();
+
+            if (_filtroEstado.HasValue)
+            {
+                items = items.Where(i => i.Estado == _filtroEstado.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_textoBusqueda))
+            {
+                var q = _textoBusqueda.Trim().ToLowerInvariant();
+                items = items.Where(i =>
+                    (i.Educando?.NombreCompleto.ToLowerInvariant().Contains(q) == true) ||
+                    (i.TutorLegal?.NombreCompleto.ToLowerInvariant().Contains(q) == true) ||
+                    (i.Actividad?.Titulo.ToLowerInvariant().Contains(q) == true));
+            }
+
+            return items;
+        }
+    }
+
+    private void CambiarFiltroEstado(EstadoInscripcion? nuevoEstado)
+    {
+        _filtroEstado = nuevoEstado;
+    }
+
+    private async Task OnActividadChanged(Guid? nuevaActividadId)
+    {
+        _actividadSeleccionadaId = nuevaActividadId;
+        await CargarDatosAsync();
+    }
+
+    private async Task OnRamaChanged(RamaScout? nuevaRama)
+    {
+        if (!_bloquearFiltroRama)
+        {
+            _ramaFiltro = nuevaRama;
+            await CargarDatosAsync();
+        }
+    }
+
+    private bool EsJustificanteCompartido(InscripcionActividad inscripcion)
+    {
+        if (string.IsNullOrWhiteSpace(inscripcion.RutaArchivoJustificante)) return false;
+
+        return _inscripciones.Any(i =>
+            i.Id != inscripcion.Id &&
+            i.ActividadId == inscripcion.ActividadId &&
+            i.TutorLegalId == inscripcion.TutorLegalId &&
+            i.RutaArchivoJustificante == inscripcion.RutaArchivoJustificante);
+    }
+
+    private async Task ConfirmarPlazaAsync(InscripcionActividad inscripcion)
+    {
+        try
+        {
+            await ServicioInscripciones.RevisarInscripcionAsync(
+                inscripcion.Id,
+                EstadoInscripcion.Confirmada,
+                "Plaza confirmada y justificante validado por el Kraal.",
+                _usuarioActualId);
+
+            Snackbar.Add($"Plaza confirmada para {inscripcion.Educando?.NombreCompleto}", Severity.Success);
+            await CargarDatosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al confirmar plaza: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AbrirModalSubsanacionAsync(InscripcionActividad inscripcion)
+    {
+        var parameters = new DialogParameters<RequerirSubsanacionDialog>
+        {
+            { x => x.Inscripcion, inscripcion }
+        };
+
+        var dialog = await DialogService.ShowAsync<RequerirSubsanacionDialog>("Requerir Subsanación", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is string motivo)
+        {
+            try
+            {
+                await ServicioInscripciones.RevisarInscripcionAsync(
+                    inscripcion.Id,
+                    EstadoInscripcion.RequiereSubsanacion,
+                    motivo,
+                    _usuarioActualId);
+
+                Snackbar.Add($"Subsanación requerida a la familia de {inscripcion.Educando?.NombreCompleto}", Severity.Warning);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error al solicitar subsanación: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private Color ObtenerColorRama(RamaScout rama) => rama switch
+    {
+        RamaScout.Castores => Color.Warning,
+        RamaScout.Manada => Color.Tertiary,
+        RamaScout.Tropa => Color.Success,
+        RamaScout.Escultas => Color.Error,
+        RamaScout.Clan => Color.Info,
+        _ => Color.Default
+    };
+
+    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
+    {
+        EstadoInscripcion.PendienteJustificante => Color.Default,
+        EstadoInscripcion.EnRevision => Color.Warning,
+        EstadoInscripcion.RequiereSubsanacion => Color.Error,
+        EstadoInscripcion.Confirmada => Color.Success,
+        EstadoInscripcion.Cancelada => Color.Dark,
+        _ => Color.Default
+    };
+}
