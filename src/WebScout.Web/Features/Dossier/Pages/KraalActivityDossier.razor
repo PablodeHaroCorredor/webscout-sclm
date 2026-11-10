@@ -414,9 +414,7 @@
                             <MudTd DataLabel="Tutor">@context.TutorLegal.NombreCompleto</MudTd>
                             <MudTd DataLabel="Cuota">@context.ImporteEuros.ToString("N2") €</MudTd>
                             <MudTd DataLabel="Estado">
-                                <MudChip T="string" Size="Size.Small" Color="@(context.Estado == EstadoInscripcion.Confirmada ? Color.Success : Color.Warning)" Variant="Variant.Filled">
-                                    @context.Estado.ToString()
-                                </MudChip>
+                                <ScoutStatusBadge Estado="context.Estado" />
                             </MudTd>
                             <MudTd DataLabel="Comprobante">
                                 @if (context.TieneJustificanteSubido)

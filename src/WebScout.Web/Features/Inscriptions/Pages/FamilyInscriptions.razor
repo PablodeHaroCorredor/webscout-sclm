@@ -121,9 +121,7 @@
                             </MudText>
                         </MudTd>
                         <MudTd DataLabel="Estado">
-                            <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                                @ObtenerNombreEstado(context.Estado)
-                            </MudChip>
+                            <ScoutStatusBadge Estado="context.Estado" />
                             @if (context.Estado == EstadoInscripcion.RequiereSubsanacion && !string.IsNullOrWhiteSpace(context.NotasKraal))
                             {
                                 <MudText Typo="Typo.caption" Class="d-block text-danger mt-1">
@@ -210,9 +208,7 @@
                                         Rama @inscripcion.Educando.RamaActual.ObtenerNombre()
                                     </MudChip>
                                 </div>
-                                <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(inscripcion.Estado)" Variant="Variant.Filled" Style="font-weight: 700; font-size: 0.75rem;">
-                                    @ObtenerNombreEstado(inscripcion.Estado)
-                                </MudChip>
+                                <ScoutStatusBadge Estado="inscripcion.Estado" />
                             </div>
 
                             <!-- Información de la Actividad -->
@@ -402,24 +398,4 @@
             }
         }
     }
-
-    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
-    {
-        EstadoInscripcion.PendienteJustificante => Color.Warning,
-        EstadoInscripcion.EnRevision => Color.Info,
-        EstadoInscripcion.Confirmada => Color.Success,
-        EstadoInscripcion.RequiereSubsanacion => Color.Error,
-        EstadoInscripcion.Cancelada => Color.Default,
-        _ => Color.Default
-    };
-
-    private string ObtenerNombreEstado(EstadoInscripcion estado) => estado switch
-    {
-        EstadoInscripcion.PendienteJustificante => "Pendiente Justificante",
-        EstadoInscripcion.EnRevision => "En Revisión por Kraal",
-        EstadoInscripcion.Confirmada => "Plaza Confirmada",
-        EstadoInscripcion.RequiereSubsanacion => "Requiere Subsanación",
-        EstadoInscripcion.Cancelada => "Cancelada",
-        _ => estado.ToString()
-    };
 }
