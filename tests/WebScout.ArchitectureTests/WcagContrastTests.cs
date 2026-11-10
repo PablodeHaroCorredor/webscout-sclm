@@ -56,4 +56,32 @@ public class WcagContrastTests
 
         Assert.True(passes, $"El ratio de contraste {ratio:F2}:1 debe ser >= 4.5:1 para cumplir WCAG 2.2 AA");
     }
+
+    [Fact]
+    public void FamilyDashboard_ActionButtons_ShouldComplyWithWcagAa()
+    {
+        // Botón rojo de subsanación (#FFFFFF sobre #DC2626)
+        var ratioRojo = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", "#DC2626");
+        Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", "#DC2626"), 
+            $"El botón de subsanación ({ratioRojo:F2}:1) debe cumplir WCAG AA");
+
+        // Botón ámbar de justificante (#FFFFFF sobre #B45309)
+        var ratioAmbar = WcagContrastCalculator.CalculateContrastRatio("#FFFFFF", "#B45309");
+        Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#FFFFFF", "#B45309"), 
+            $"El botón de justificante ({ratioAmbar:F2}:1) debe cumplir WCAG AA");
+    }
+
+    [Fact]
+    public void FamilyDashboard_AlertHeadings_ShouldComplyWithWcagAa()
+    {
+        // Texto rojo oscuro #991B1B sobre fondo pastel #FEF2F2
+        var ratioRojo = WcagContrastCalculator.CalculateContrastRatio("#991B1B", "#FEF2F2");
+        Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#991B1B", "#FEF2F2"),
+            $"El texto de alerta roja ({ratioRojo:F2}:1) debe cumplir WCAG AA");
+
+        // Texto ámbar oscuro #92400E sobre fondo pastel #FFFBEB
+        var ratioAmbar = WcagContrastCalculator.CalculateContrastRatio("#92400E", "#FFFBEB");
+        Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#92400E", "#FFFBEB"),
+            $"El texto de alerta ámbar ({ratioAmbar:F2}:1) debe cumplir WCAG AA");
+    }
 }
