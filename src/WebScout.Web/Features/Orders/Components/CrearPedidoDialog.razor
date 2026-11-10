@@ -1,0 +1,177 @@
+@using WebScout.Web.Features.Orders.Domain
+@using WebScout.Web.Features.Orders.Services
+@using WebScout.Web.Features.Participants.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                Solicitar @Producto.Nombre
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4 py-2">
+            <!-- Resumen del artículo -->
+            <div class="rounded-xl pa-4" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                            @Producto.Nombre
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @(Producto.Categoria ?? "Material Scout") • Precio orientativo unitario: <b>@Producto.PrecioUnitario.ToString("F2") €</b>
+                        </MudText>
+                    </div>
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                        @Producto.PrecioUnitario.ToString("F2") €
+                    </MudChip>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Producto.Descripcion))
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-2" Style="font-size: 0.85rem;">
+                        @Producto.Descripcion
+                    </MudText>
+                }
+            </div>
+
+            <!-- Educando destinatario -->
+            @if (EducandosFamilia != null && EducandosFamilia.Count > 0)
+            {
+                <MudSelect T="Guid?" 
+                           Label="¿Para qué educando es este artículo?" 
+                           @bind-Value="_educandoSeleccionadoId"
+                           Variant="Variant.Outlined" 
+                           Margin="Margin.Dense"
+                           AnchorOrigin="Origin.BottomCenter">
+                    <MudSelectItem T="Guid?" Value="@((Guid?)null)">Para la familia / Sin asignar</MudSelectItem>
+                    @foreach (var educando in EducandosFamilia)
+                    {
+                        <MudSelectItem T="Guid?" Value="@((Guid?)educando.Id)">
+                            @educando.Nombre @educando.Apellidos (@educando.RamaActual)
+                        </MudSelectItem>
+                    }
+                </MudSelect>
+            }
+
+            <!-- Selector de Talla (si aplica) -->
+            @if (Producto.RequiereTalla)
+            {
+                var tallas = Producto.ObtenerTallas();
+                <MudSelect T="string" 
+                           Label="Selecciona la Talla *" 
+                           @bind-Value="_tallaSeleccionada"
+                           Required="true"
+                           RequiredError="Debes seleccionar una talla para este artículo."
+                           Variant="Variant.Outlined" 
+                           Margin="Margin.Dense"
+                           AnchorOrigin="Origin.BottomCenter">
+                    @foreach (var talla in tallas)
+                    {
+                        <MudSelectItem Value="@talla">@talla</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="rounded-lg">
+                    Este artículo es de <b>Talla Única</b> (no requiere selección de medida).
+                </MudAlert>
+            }
+
+            <!-- Cantidad (1 a 10 unidades per RF49) -->
+            <div class="d-flex align-center gap-3">
+                <MudNumericField T="int" 
+                                 Label="Cantidad (máx. 10 unidades) *" 
+                                 @bind-Value="_cantidad" 
+                                 Min="1" 
+                                 Max="10" 
+                                 Variant="Variant.Outlined" 
+                                 Margin="Margin.Dense"
+                                 Style="max-width: 200px;" />
+
+                <div class="ms-auto text-end">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Importe Total Estimado</MudText>
+                    <MudText Typo="Typo.h5" Style="font-weight: 800; color: #1B5E20;">
+                        @((_cantidad * Producto.PrecioUnitario).ToString("F2")) €
+                    </MudText>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <MudTextField T="string" 
+                          Label="Aclaraciones o notas para el responsable de material (opcional)" 
+                          @bind-Value="_observaciones" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Lines="2" 
+                          MaxLength="500" />
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="ConfirmarPedido" 
+                   Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   Disabled="@(Producto.RequiereTalla && string.IsNullOrWhiteSpace(_tallaSeleccionada))">
+            Confirmar Pedido (@((_cantidad * Producto.PrecioUnitario).ToString("F2")) €)
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public ProductoMaterial Producto { get; set; } = default!;
+
+    [Parameter]
+    public List<Educando> EducandosFamilia { get; set; } = new();
+
+    private Guid? _educandoSeleccionadoId;
+    private string? _tallaSeleccionada;
+    private int _cantidad = 1;
+    private string? _observaciones;
+
+    protected override void OnInitialized()
+    {
+        if (EducandosFamilia != null && EducandosFamilia.Count == 1)
+        {
+            _educandoSeleccionadoId = EducandosFamilia[0].Id;
+        }
+
+        if (Producto.RequiereTalla)
+        {
+            var tallas = Producto.ObtenerTallas();
+            if (tallas.Count > 0)
+            {
+                _tallaSeleccionada = tallas[0];
+            }
+        }
+    }
+
+    private void ConfirmarPedido()
+    {
+        if (Producto.RequiereTalla && string.IsNullOrWhiteSpace(_tallaSeleccionada))
+        {
+            return;
+        }
+
+        if (_cantidad < 1 || _cantidad > 10)
+        {
+            return;
+        }
+
+        var lineas = new List<CrearLineaPedidoDto>
+        {
+            new(Producto.Id, Producto.RequiereTalla ? _tallaSeleccionada : "Talla Única", _cantidad)
+        };
+
+        var resultado = new CrearPedidoDto(_educandoSeleccionadoId, _observaciones, lineas);
+        MudDialog.Close(DialogResult.Ok(resultado));
+    }
+}

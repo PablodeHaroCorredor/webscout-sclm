@@ -1,0 +1,121 @@
+@using WebScout.Web.Features.Orders.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                Cambiar Estado de Solicitud (@CodigoPedido)
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4 py-2">
+            <!-- Contexto y estado actual -->
+            <div class="d-flex align-center justify-space-between p-3 rounded-xl border bg-light pa-3" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+                <div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Estado Actual</MudText>
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">
+                        @EstadoActual
+                    </MudText>
+                </div>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Color="Color.Default" />
+                <div class="text-end">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Nuevo Estado a Asignar</MudText>
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #2563EB;">
+                        @_nuevoEstado
+                    </MudText>
+                </div>
+            </div>
+
+            <!-- Selector de los 6 Estados Core 1.29 -->
+            <MudSelect T="EstadoPedidoMaterial" 
+                       Label="Selecciona el nuevo estado de gestión *" 
+                       @bind-Value="_nuevoEstado"
+                       Variant="Variant.Outlined" 
+                       Margin="Margin.Dense"
+                       AnchorOrigin="Origin.BottomCenter">
+                <MudSelectItem Value="EstadoPedidoMaterial.Solicitado">
+                    1. Solicitado (Petición registrada por la familia)
+                </MudSelectItem>
+                <MudSelectItem Value="EstadoPedidoMaterial.Revisado">
+                    2. Revisado (Stock verificado o confirmado por el Kraal)
+                </MudSelectItem>
+                <MudSelectItem Value="EstadoPedidoMaterial.PedidoAlProveedor">
+                    3. Pedido al Proveedor (Lote encargado a distribuidora/fábrica)
+                </MudSelectItem>
+                <MudSelectItem Value="EstadoPedidoMaterial.Entregado">
+                    4. Entregado (Material entregado físicamente en mano)
+                </MudSelectItem>
+                <MudSelectItem Value="EstadoPedidoMaterial.Rechazado">
+                    5. Rechazado (Petición desestimada)
+                </MudSelectItem>
+                <MudSelectItem Value="EstadoPedidoMaterial.Cancelado">
+                    6. Cancelado (Anulación administrativa o baja)
+                </MudSelectItem>
+            </MudSelect>
+
+            <!-- Alerta pedagógica según el estado seleccionado -->
+            @if (_nuevoEstado == EstadoPedidoMaterial.Entregado)
+            {
+                <MudAlert Severity="Severity.Success" Dense="true" Class="rounded-lg">
+                    <b>Principio de Entrega Flexible (PA07):</b> Estás confirmando que el material se entrega en mano al chaval o su familia. La plataforma no exige que exista justificante bancario subido ni verificado.
+                </MudAlert>
+            }
+            else if (_nuevoEstado == EstadoPedidoMaterial.Rechazado || _nuevoEstado == EstadoPedidoMaterial.Cancelado)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true" Class="rounded-lg">
+                    Por favor, indica a continuación la causa del rechazo o cancelación para que la familia y secretaría dispongan del contexto exacto.
+                </MudAlert>
+            }
+            else if (EstadoActual == EstadoPedidoMaterial.Entregado && _nuevoEstado != EstadoPedidoMaterial.Entregado)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="rounded-lg">
+                    <b>Rectificación Administrativa (PA08):</b> Estás reabriendo o rectificando un pedido que ya constaba como entregado. La modificación quedará firmada e inmutablemente registrada en la auditoría del grupo.
+                </MudAlert>
+            }
+
+            <!-- Motivo o Aclaración de la transición -->
+            <MudTextField T="string" 
+                          Label="Motivo o aclaración del cambio (auditoría RF60 / PA08)" 
+                          @bind-Value="_motivo" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Lines="2" 
+                          MaxLength="500" 
+                          Placeholder="Ej. 'Entregado en la base scout tras la asamblea' o 'Talla L agotada en distribuidora'" />
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+            Cancelar
+        </MudButton>
+        <MudButton OnClick="Confirmar" Color="Color.Primary" Variant="Variant.Filled">
+            Guardar Cambio de Estado
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string CodigoPedido { get; set; } = string.Empty;
+
+    [Parameter]
+    public EstadoPedidoMaterial EstadoActual { get; set; }
+
+    private EstadoPedidoMaterial _nuevoEstado;
+    private string? _motivo;
+
+    protected override void OnInitialized()
+    {
+        _nuevoEstado = EstadoActual;
+    }
+
+    private void Confirmar()
+    {
+        MudDialog.Close(DialogResult.Ok((_nuevoEstado, _motivo?.Trim())));
+    }
+}

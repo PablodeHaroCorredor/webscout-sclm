@@ -755,6 +755,198 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("Inscripciones", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Orders.Domain.LineaPedidoMaterial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PedidoMaterialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid?>("ProductoMaterialId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductoNombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Talla")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoMaterialId");
+
+                    b.HasIndex("ProductoMaterialId");
+
+                    b.HasIndex("OrganizacionId", "PedidoMaterialId");
+
+                    b.HasIndex("OrganizacionId", "ProductoMaterialId");
+
+                    b.ToTable("LineasPedidoMaterial", (string)null);
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Orders.Domain.PedidoMaterial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoPedido")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("ComprobantePagoFechaUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ComprobantePagoNombreOriginal")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("ComprobantePagoRuta")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("EducandoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EducandoNombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("FechaSolicitudUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaUltimoCambioEstadoUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ModificadoPor")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("MotivoEstado")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("NotasInternasKraal")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ObservacionesFamilia")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RamaEducativa")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SolicitanteEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SolicitanteNombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("SolicitanteTelefono")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("TotalEstimado")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId", "CodigoPedido")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizacionId", "Estado");
+
+                    b.HasIndex("OrganizacionId", "FechaSolicitudUtc");
+
+                    b.HasIndex("OrganizacionId", "UsuarioId");
+
+                    b.ToTable("PedidosMaterial", (string)null);
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Orders.Domain.ProductoMaterial", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Categoria")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("FechaCreacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImagenUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("OrdenVisualizacion")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("TallasDisponiblesCsv")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId", "Activo");
+
+                    b.HasIndex("OrganizacionId", "Categoria");
+
+                    b.ToTable("ProductosMaterial", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1120,6 +1312,24 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.Navigation("TutorLegal");
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Orders.Domain.LineaPedidoMaterial", b =>
+                {
+                    b.HasOne("WebScout.Web.Features.Orders.Domain.PedidoMaterial", "Pedido")
+                        .WithMany("Lineas")
+                        .HasForeignKey("PedidoMaterialId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebScout.Web.Features.Orders.Domain.ProductoMaterial", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoMaterialId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Pedido");
+
+                    b.Navigation("Producto");
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>
                 {
                     b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", "TutorLegal")
@@ -1145,6 +1355,11 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.UsuarioScout", b =>
                 {
                     b.Navigation("Educandos");
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Orders.Domain.PedidoMaterial", b =>
+                {
+                    b.Navigation("Lineas");
                 });
 
             modelBuilder.Entity("WebScout.Web.Features.Participants.Domain.Educando", b =>

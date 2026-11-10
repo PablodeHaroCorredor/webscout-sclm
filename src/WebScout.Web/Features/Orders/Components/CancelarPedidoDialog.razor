@@ -1,0 +1,63 @@
+@using WebScout.Web.Features.Orders.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2 text-danger">
+            <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700; color: #DC2626;">
+                Cancelar Solicitud de Material
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 py-2">
+            <MudAlert Severity="Severity.Warning" Dense="true" Class="rounded-lg">
+                Estás a punto de cancelar la solicitud <b>@CodigoPedido</b>. Esta acción liberará la previsión de material y notificará al responsable del Kraal.
+            </MudAlert>
+
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Por acuerdo asociativo Core 1.29 (RF52), es obligatorio indicar un motivo breve de la cancelación (ej. <i>'Heredamos la pañoleta de su hermano'</i> o <i>'Nos equivocamos de talla'</i>):
+            </MudText>
+
+            <MudTextField T="string" 
+                          Label="Motivo de la cancelación *" 
+                          @bind-Value="_motivo" 
+                          Required="true" 
+                          RequiredError="Debes especificar un motivo para cancelar la solicitud." 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Lines="3" 
+                          MaxLength="500" 
+                          Placeholder="Indica aquí el motivo..." />
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+            Volver
+        </MudButton>
+        <MudButton OnClick="Confirmar" 
+                   Color="Color.Error" 
+                   Variant="Variant.Filled" 
+                   Disabled="@(string.IsNullOrWhiteSpace(_motivo))">
+            Confirmar Cancelación
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string CodigoPedido { get; set; } = string.Empty;
+
+    private string _motivo = string.Empty;
+
+    private void Confirmar()
+    {
+        if (string.IsNullOrWhiteSpace(_motivo))
+            return;
+
+        MudDialog.Close(DialogResult.Ok(_motivo.Trim()));
+    }
+}
