@@ -167,46 +167,78 @@
         </MudButton>
     </div>
 
-    <!-- Tabla Reactiva de Inscripciones -->
-    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
-        <MudTable Items="InscripcionesFiltradas" 
-                  Loading="_cargando" 
-                  FixedHeader="true" 
-                  Height="560px" 
-                  RowsPerPage="25" 
-                  Hover="true" 
-                  Dense="false" 
-                  Elevation="0" 
-                  Class="w-100">
-            <LoadingContent>
-                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando mesa de inscripciones...</MudText>
-                </div>
-            </LoadingContent>
-            <NoRecordsContent>
-                <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
-                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
-                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
-                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Color="Color.Default" Size="Size.Large" />
+    <!-- Mesa de Inscripciones (Tabla o Tarjetas) -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden mb-6" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        <div class="pa-4 border-b d-flex justify-space-between align-center" style="border-color: #E2E8F0;">
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 800; color: #0F172A;">
+                    Inscripciones (@InscripcionesFiltradas.Count())
+                </MudText>
+                @if (_filtroEstado != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                        @_filtroEstado.Value.ObtenerNombre()
+                    </MudChip>
+                }
+            </div>
+
+            <div class="d-flex align-center p-0.5 rounded-lg border flex-shrink-0" style="background-color: #F8FAFC; border-color: #E2E8F0;">
+                <MudTooltip Text="Vista en tabla">
+                    <MudIconButton Icon="@Icons.Material.Filled.TableRows" 
+                                   Size="Size.Small" 
+                                   Color="@(_modoVista == ModoVisualizacion.Tabla ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => _modoVista = _modoVista == ModoVisualizacion.Tabla ? ModoVisualizacion.Auto : ModoVisualizacion.Tabla)" />
+                </MudTooltip>
+                <MudTooltip Text="Vista en tarjetas táctiles">
+                    <MudIconButton Icon="@Icons.Material.Filled.ViewAgenda" 
+                                   Size="Size.Small" 
+                                   Color="@(_modoVista == ModoVisualizacion.Tarjetas ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => _modoVista = _modoVista == ModoVisualizacion.Tarjetas ? ModoVisualizacion.Auto : ModoVisualizacion.Tarjetas)" />
+                </MudTooltip>
+            </div>
+        </div>
+
+        <!-- VISTA TABULAR: md+ -->
+        <div class="@(_modoVista == ModoVisualizacion.Tarjetas ? "d-none" : (_modoVista == ModoVisualizacion.Tabla ? "d-block" : "d-none d-md-block"))">
+            <MudTable Items="InscripcionesFiltradas" 
+                      Loading="_cargando" 
+                      FixedHeader="true" 
+                      Height="560px" 
+                      RowsPerPage="25" 
+                      Hover="true" 
+                      Dense="false" 
+                      Elevation="0" 
+                      Breakpoint="Breakpoint.None"
+                      Class="w-100">
+                <LoadingContent>
+                    <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando mesa de inscripciones...</MudText>
                     </div>
-                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
-                        No hay inscripciones que coincidan con los filtros
-                    </MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
-                        Cambie los criterios de búsqueda o seleccione otra convocatoria.
-                    </MudText>
-                </div>
-            </NoRecordsContent>
-            <HeaderContent>
-                <MudTh Style="font-weight: 700;">Educando / Rama</MudTh>
-                <MudTh Style="font-weight: 700;">Actividad</MudTh>
-                <MudTh Style="font-weight: 700;">Tutor Legal</MudTh>
-                <MudTh Style="font-weight: 700;">Comprobante de Pago</MudTh>
-                <MudTh Style="font-weight: 700;">Estado</MudTh>
-                <MudTh Style="font-weight: 700; text-align: right;">Acciones de Revisión</MudTh>
-            </HeaderContent>
-            <RowTemplate>
+                </LoadingContent>
+                <NoRecordsContent>
+                    <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                        <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                             style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                            <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Color="Color.Default" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                            No hay inscripciones que coincidan con los filtros
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
+                            Cambie los criterios de búsqueda o seleccione otra convocatoria.
+                        </MudText>
+                    </div>
+                </NoRecordsContent>
+                <HeaderContent>
+                    <MudTh Style="font-weight: 700;">Educando / Rama</MudTh>
+                    <MudTh Style="font-weight: 700;">Actividad</MudTh>
+                    <MudTh Style="font-weight: 700;">Tutor Legal</MudTh>
+                    <MudTh Style="font-weight: 700;">Comprobante de Pago</MudTh>
+                    <MudTh Style="font-weight: 700;">Estado</MudTh>
+                    <MudTh Style="font-weight: 700; text-align: right;">Acciones de Revisión</MudTh>
+                </HeaderContent>
+                <RowTemplate>
                     <!-- Columna Educando -->
                     <MudTd DataLabel="Educando">
                         <div class="d-flex align-center gap-2">
@@ -332,6 +364,176 @@
                                    InfoFormat="{first_item}-{last_item} de {all_items}" />
                 </PagerContent>
             </MudTable>
+        </div>
+
+        <!-- VISTA MÓVIL: xs/sm (Tarjetas Táctiles WCAG 2.5.5) -->
+        <div class="@(_modoVista == ModoVisualizacion.Tabla ? "d-none" : (_modoVista == ModoVisualizacion.Tarjetas ? "d-block" : "d-block d-md-none")) pa-3">
+            @if (_cargando)
+            {
+                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando mesa de inscripciones...</MudText>
+                </div>
+            }
+            else if (!InscripcionesFiltradas.Any())
+            {
+                <div class="d-flex flex-column align-center justify-center py-12 px-4 text-center">
+                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Color="Color.Default" Size="Size.Large" />
+                    </div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                        No hay inscripciones con este filtro
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                        Cambie los criterios de búsqueda o seleccione otra convocatoria.
+                    </MudText>
+                </div>
+            }
+            else
+            {
+                var inscripcionesPagina = InscripcionesFiltradas.Skip((_paginaMovil - 1) * 10).Take(10).ToList();
+                var totalPaginas = (int)Math.Ceiling(InscripcionesFiltradas.Count() / 10.0);
+
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var inscripcion in inscripcionesPagina)
+                    {
+                        <div class="pa-4 rounded-2xl" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <!-- Cabecera de Tarjeta: Educando y Estado -->
+                            <div class="d-flex justify-space-between align-start mb-2">
+                                <div class="d-flex align-center gap-2">
+                                    <MudAvatar Size="Size.Medium" Color="@ObtenerColorRama(inscripcion.Educando?.RamaActual ?? RamaScout.Ninguna)" Style="font-weight: 800;">
+                                        @(inscripcion.Educando?.Nombre.FirstOrDefault())
+                                    </MudAvatar>
+                                    <div>
+                                        <span style="font-weight: 800; font-size: 0.95rem; color: #0F172A; display: block;">
+                                            @inscripcion.Educando?.NombreCompleto
+                                        </span>
+                                        <div class="d-flex align-center gap-1">
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="@ObtenerColorRama(inscripcion.Educando?.RamaActual ?? RamaScout.Ninguna)" Class="pa-0 ma-0" Style="font-weight: 700; font-size: 0.72rem;">
+                                                @inscripcion.Educando?.RamaActual.ObtenerNombre()
+                                            </MudChip>
+                                            <span style="color: #94A3B8; font-size: 0.72rem;">·</span>
+                                            <span style="color: #64748B; font-size: 0.72rem;">@inscripcion.Educando?.CalcularEdad() años</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(inscripcion.Estado)" Style="font-weight: 700; font-size: 0.75rem;">
+                                    @inscripcion.Estado.ObtenerNombre()
+                                </MudChip>
+                            </div>
+
+                            <!-- Información de la Actividad y Tutor -->
+                            <div class="py-2.5 my-2 border-t border-b" style="border-color: #F1F5F9;">
+                                <div class="d-flex justify-space-between align-center mb-1">
+                                    <span style="font-size: 0.8rem; color: #64748B;">Actividad:</span>
+                                    <span style="font-weight: 700; font-size: 0.85rem; color: #1E293B; text-align: right;">
+                                        @inscripcion.Actividad?.Titulo
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-space-between align-center mb-1">
+                                    <span style="font-size: 0.8rem; color: #64748B;">Cuota:</span>
+                                    <span style="font-weight: 800; font-size: 0.95rem; color: #1B5E20;">
+                                        @(inscripcion.ImporteEuros <= 0m ? "Gratuita" : inscripcion.ImporteEuros.ToString("C2"))
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-space-between align-center">
+                                    <span style="font-size: 0.8rem; color: #64748B;">Tutor Legal:</span>
+                                    <span style="font-weight: 600; font-size: 0.85rem; color: #334155;">
+                                        @inscripcion.TutorLegal?.NombreCompleto
+                                    </span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(inscripcion.TutorLegal?.PhoneNumber))
+                                {
+                                    <div class="d-flex justify-end pt-1">
+                                        <MudButton Variant="Variant.Text" 
+                                                   Color="Color.Primary" 
+                                                   Size="Size.Small" 
+                                                   Href="@($"tel:{inscripcion.TutorLegal.PhoneNumber}")" 
+                                                   StartIcon="@Icons.Material.Filled.Call"
+                                                   Style="font-size: 0.82rem; font-weight: 700; min-height: 44px;">
+                                            @inscripcion.TutorLegal.PhoneNumber
+                                        </MudButton>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(inscripcion.NotasKraal))
+                            {
+                                <div class="mb-3 pa-2 rounded-lg" style="background-color: #FEF2F2; border: 1px solid #FECACA; font-size: 0.8rem; color: #991B1B;">
+                                    <strong>Nota Kraal:</strong> «@inscripcion.NotasKraal»
+                                </div>
+                            }
+
+                            <!-- Comprobante y Acciones Táctiles (WCAG 2.5.5) -->
+                            <div class="d-flex justify-space-between align-center pt-1">
+                                <div>
+                                    @if (!string.IsNullOrWhiteSpace(inscripcion.RutaArchivoJustificante))
+                                    {
+                                        <MudButton Variant="Variant.Outlined" 
+                                                   Color="Color.Primary" 
+                                                   Size="Size.Small" 
+                                                   Target="_blank"
+                                                   Href="@($"/api/justificantes/{inscripcion.Id}/archivo")"
+                                                   StartIcon="@Icons.Material.Filled.FileDownload"
+                                                   Style="min-height: 44px; font-weight: 600; border-radius: 8px;">
+                                            Justificante
+                                        </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                                            @(inscripcion.ImporteEuros <= 0 ? "Gratuita" : "Sin justificante")
+                                        </MudChip>
+                                    }
+                                </div>
+
+                                <div class="d-flex align-center gap-2">
+                                    @if (inscripcion.Estado == EstadoInscripcion.EnRevision || inscripcion.Estado == EstadoInscripcion.RequiereSubsanacion)
+                                    {
+                                        <MudButton Variant="Variant.Outlined" 
+                                                   Color="Color.Warning" 
+                                                   Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.ReportProblem"
+                                                   Style="min-height: 44px; font-weight: 700; border-radius: 8px;"
+                                                   OnClick="@(() => AbrirModalSubsanacionAsync(inscripcion))">
+                                            Subsanar
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Filled" 
+                                                   Color="Color.Success" 
+                                                   Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.CheckCircle"
+                                                   Style="min-height: 44px; font-weight: 700; border-radius: 8px;"
+                                                   OnClick="@(() => ConfirmarPlazaAsync(inscripcion))">
+                                            Confirmar
+                                        </MudButton>
+                                    }
+                                    else if (inscripcion.Estado == EstadoInscripcion.Confirmada)
+                                    {
+                                        <MudButton Variant="Variant.Outlined" 
+                                                   Color="Color.Default" 
+                                                   Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.EditNote"
+                                                   Style="min-height: 44px; font-weight: 600; border-radius: 8px;"
+                                                   OnClick="@(() => AbrirModalSubsanacionAsync(inscripcion))">
+                                            Reabrir
+                                        </MudButton>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (totalPaginas > 1)
+                {
+                    <div class="d-flex justify-center align-center pt-4">
+                        <MudPagination Count="@totalPaginas" @bind-Selected="@_paginaMovil" Color="Color.Primary" Size="Size.Small" />
+                    </div>
+                }
+            }
+        </div>
     </MudCard>
 
 </MudContainer>
@@ -340,6 +542,8 @@
     private bool _cargando = true;
     private List<InscripcionActividad> _inscripciones = new();
     private List<ActividadScout> _actividades = new();
+    private ModoVisualizacion _modoVista = ModoVisualizacion.Auto;
+    private int _paginaMovil = 1;
 
     private Guid? _actividadSeleccionadaId;
     private RamaScout? _ramaFiltro;
