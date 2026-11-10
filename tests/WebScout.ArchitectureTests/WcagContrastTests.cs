@@ -84,4 +84,13 @@ public class WcagContrastTests
         Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#92400E", "#FFFBEB"),
             $"El texto de alerta ámbar ({ratioAmbar:F2}:1) debe cumplir WCAG AA");
     }
+
+    [Fact]
+    public void DrawerActiveLink_GreenOnLightGreenPastel_ShouldComplyWithWcagAa()
+    {
+        // Enlace activo del menú lateral: verde bosque #1B5E20 sobre fondo pastel #F0FDF4
+        var ratio = WcagContrastCalculator.CalculateContrastRatio("#1B5E20", "#F0FDF4");
+        Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#1B5E20", "#F0FDF4"),
+            $"El enlace activo en el menú lateral ({ratio:F2}:1) debe cumplir WCAG 2.2 AA (>= 4.5:1)");
+    }
 }
