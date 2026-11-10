@@ -1,0 +1,106 @@
+@using MudBlazor
+@using WebScout.Web.Infrastructure.Outbox.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudAvatar Color="@ObtenerColorEstado(Mensaje.Estado)" Variant="Variant.Filled" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.h6" Style="font-weight: 700; font-size: 1.1rem;">
+                    Detalle del Mensaje Outbox
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Identificador de envío: <code>@Mensaje.ClaveDeduplicacion</code>
+                </MudText>
+            </div>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-3">
+            <!-- Metadatos de Cabecera -->
+            <div class="p-3 rounded-lg border bg-light" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px;">
+                <MudGrid Spacing="1">
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Destinatario:</MudText>
+                        <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                            @Mensaje.DestinatarioNombre &lt;@Mensaje.DestinatarioEmail&gt;
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Estado de Envío:</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(Mensaje.Estado)" Variant="Variant.Filled">
+                            @Mensaje.Estado.ToString()
+                        </MudChip>
+                        <span class="mud-text-secondary ms-2" style="font-size: 0.8rem;">
+                            (Intento @Mensaje.Reintentos de @Mensaje.MaxReintentos)
+                        </span>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Asunto:</MudText>
+                        <MudText Typo="Typo.body2" Style="font-weight: 600; color: #0F172A;">
+                            @Mensaje.Asunto
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Fecha Creación:</MudText>
+                        <MudText Typo="Typo.caption">
+                            @Mensaje.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Fecha Entrega / Último Intento:</MudText>
+                        <MudText Typo="Typo.caption">
+                            @(Mensaje.FechaProcesadoUtc.HasValue ? Mensaje.FechaProcesadoUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") : "Pendiente")
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </div>
+
+            <!-- Alerta de Error si existe -->
+            @if (!string.IsNullOrWhiteSpace(Mensaje.ErrorUltimoReintento))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Dense="true" Class="rounded-lg">
+                    <strong>Error del servidor SMTP:</strong> @Mensaje.ErrorUltimoReintento
+                </MudAlert>
+            }
+
+            <!-- Pestañas para ver HTML renderizado y Texto plano -->
+            <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" Color="Color.Primary">
+                <MudTabPanel Text="Vista Previa (HTML)">
+                    <div class="border rounded-lg pa-4 mt-2" style="background-color: #FFFFFF; max-height: 380px; overflow-y: auto;">
+                        @((MarkupString)Mensaje.CuerpoHtml)
+                    </div>
+                </MudTabPanel>
+                <MudTabPanel Text="Texto Plano">
+                    <pre class="border rounded-lg pa-4 mt-2" style="background-color: #F1F5F9; font-family: monospace; font-size: 0.85rem; max-height: 380px; overflow-y: auto; white-space: pre-wrap;">@Mensaje.CuerpoTextoPlano</pre>
+                </MudTabPanel>
+            </MudTabs>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Cerrar">
+            Cerrar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public MensajeOutbox Mensaje { get; set; } = null!;
+
+    private void Cerrar() => MudDialog.Close();
+
+    private Color ObtenerColorEstado(EstadoMensajeOutbox estado) => estado switch
+    {
+        EstadoMensajeOutbox.Enviado => Color.Success,
+        EstadoMensajeOutbox.Pendiente => Color.Warning,
+        EstadoMensajeOutbox.EnProceso => Color.Info,
+        EstadoMensajeOutbox.Fallido => Color.Error,
+        _ => Color.Default
+    };
+}

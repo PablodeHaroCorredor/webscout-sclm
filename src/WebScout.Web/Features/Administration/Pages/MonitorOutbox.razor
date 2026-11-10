@@ -7,6 +7,7 @@
 @inject IServicioOutbox ServicioOutbox
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 <PageTitle>Monitor de Salida Outbox · @(Tenant.GroupName)</PageTitle>
 
@@ -14,17 +15,22 @@
     <!-- Encabezado de la página -->
     <div class="d-flex flex-wrap justify-space-between align-center gap-4 mb-6">
         <div>
-            <div class="d-flex align-center gap-2 mb-1">
+            <div class="d-flex align-center gap-2 mb-2">
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
                     @(Tenant.GroupName)
                 </MudChip>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Despacho y Notificaciones (ADR07 / PA11 / RF65)</MudText>
+                <div class="d-flex align-center gap-1 px-2 py-1 rounded-pill" style="background-color: #ECFDF5; border: 1px solid #A7F3D0;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10B981;"></span>
+                    <MudText Typo="Typo.caption" Style="color: #065F46; font-weight: 700; font-size: 0.75rem;">
+                        Despachador Activo
+                    </MudText>
+                </div>
             </div>
             <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
-                Monitor de Cola Outbox
+                Monitor de Cola de Salida (Outbox)
             </MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                Supervisión transaccional de correos enviados, reintentos con backoff exponencial e idempotencia garantizada.
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                Supervisión del envío de correos electrónicos a familias y scouters, historial de entrega y reintentos ante incidencias.
             </MudText>
         </div>
 
@@ -32,6 +38,7 @@
             <MudButton Variant="Variant.Outlined" 
                        Color="Color.Default" 
                        StartIcon="@Icons.Material.Filled.Refresh" 
+                       Disabled="_cargando"
                        OnClick="CargarDatosAsync">
                 Actualizar
             </MudButton>
@@ -41,198 +48,316 @@
                        StartIcon="@Icons.Material.Filled.Send" 
                        Disabled="_procesando"
                        OnClick="DespacharLoteAsync">
-                Despachar Cola Ahora
+                @if (_procesando)
+                {
+                    <span>Despachando...</span>
+                }
+                else
+                {
+                    <span>Despachar Cola @((_resumen?.Pendientes ?? 0) > 0 ? $"({_resumen?.Pendientes})" : "")</span>
+                }
             </MudButton>
         </div>
     </div>
 
-    <!-- Tarjetas de Métricas de Salud -->
+    <!-- TARJETAS DE MÉTRICAS (KPI STATS) -->
     <MudGrid Spacing="3" Class="mb-6">
+        <!-- 1. Total Registrados -->
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white p-4">
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
+                 style="@(_filtroEstado == null ? "border-color: #2563EB !important; background-color: #F8FAFC !important;" : "")"
+                 @onclick="@(() => OnSeleccionarFiltro(null))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Total Registrados</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A;">
+                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                            Total Correos
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; margin-top: 4px; line-height: 1.1;">
                             @(_resumen?.TotalMensajes ?? 0)
                         </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
+                            Registrados en la plataforma
+                        </MudText>
                     </div>
-                    <MudAvatar Color="Color.Primary" Variant="Variant.Outlined">
-                        <MudIcon Icon="@Icons.Material.Filled.AllInbox" />
-                    </MudAvatar>
+                    <div style="background-color: #EFF6FF; color: #2563EB; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <MudIcon Icon="@Icons.Material.Filled.AllInbox" Size="Size.Medium" />
+                    </div>
                 </div>
-            </MudCard>
+            </div>
         </MudItem>
 
+        <!-- 2. Pendientes en Cola -->
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white p-4">
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? "border-color: #D97706 !important; background-color: #FFFBEB !important;" : "")"
+                 @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Pendiente))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Pendientes en Cola</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #F59E0B;">
+                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                            Pendientes en Cola
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #D97706; margin-top: 4px; line-height: 1.1;">
                             @(_resumen?.Pendientes ?? 0)
                         </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
+                            Listos para ser enviados
+                        </MudText>
                     </div>
-                    <MudAvatar Color="Color.Warning" Variant="Variant.Outlined">
-                        <MudIcon Icon="@Icons.Material.Filled.HourglassTop" />
-                    </MudAvatar>
+                    <div style="background-color: #FFFBEB; color: #D97706; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <MudIcon Icon="@Icons.Material.Filled.HourglassTop" Size="Size.Medium" />
+                    </div>
                 </div>
-            </MudCard>
+            </div>
         </MudItem>
 
+        <!-- 3. Enviados con Éxito -->
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white p-4">
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? "border-color: #059669 !important; background-color: #ECFDF5 !important;" : "")"
+                 @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Enviado))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Enviados con Éxito</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #10B981;">
+                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                            Enviados con Éxito
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #059669; margin-top: 4px; line-height: 1.1;">
                             @(_resumen?.Enviados ?? 0)
                         </MudText>
-                    </div>
-                    <MudAvatar Color="Color.Success" Variant="Variant.Outlined">
-                        <MudIcon Icon="@Icons.Material.Filled.MarkEmailRead" />
-                    </MudAvatar>
-                </div>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white p-4">
-                <div class="d-flex justify-space-between align-center">
-                    <div>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Reintentos / Fallidos</MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #EF4444;">
-                            @((_resumen?.EnReintento ?? 0) + (_resumen?.Fallidos ?? 0))
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
+                            Entregados al servidor SMTP
                         </MudText>
                     </div>
-                    <MudAvatar Color="Color.Error" Variant="Variant.Outlined">
-                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" />
-                    </MudAvatar>
+                    <div style="background-color: #ECFDF5; color: #059669; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <MudIcon Icon="@Icons.Material.Filled.MarkEmailRead" Size="Size.Medium" />
+                    </div>
                 </div>
-            </MudCard>
+            </div>
+        </MudItem>
+
+        <!-- 4. Reintentos / Fallidos -->
+        <MudItem xs="12" sm="6" md="3">
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? "border-color: #DC2626 !important; background-color: #FEF2F2 !important;" : "")"
+                 @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Fallido))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                            Incidencias / Fallidos
+                        </MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #DC2626; margin-top: 4px; line-height: 1.1;">
+                            @((_resumen?.EnReintento ?? 0) + (_resumen?.Fallidos ?? 0))
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
+                            Con fallo en el último intento
+                        </MudText>
+                    </div>
+                    <div style="background-color: #FEF2F2; color: #DC2626; width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Size="Size.Medium" />
+                    </div>
+                </div>
+            </div>
         </MudItem>
     </MudGrid>
 
-    <!-- Tabla Principal de Mensajes Outbox -->
-    <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white">
-        <MudCardContent>
-            <!-- Filtros -->
-            <div class="d-flex flex-wrap gap-4 align-center mb-4">
+    <!-- BARRA DE PESTAÑAS / FILTROS RÁPIDOS Y BÚSQUEDA -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white pa-4 mb-4">
+        <div class="d-flex flex-wrap justify-space-between align-center gap-3">
+            <!-- Pestañas de estado estilo Segmented Control -->
+            <div class="d-flex flex-wrap align-center gap-2">
+                <MudButton Variant="@(_filtroEstado == null ? Variant.Filled : Variant.Text)" 
+                           Color="@(_filtroEstado == null ? Color.Primary : Color.Default)" 
+                           Size="Size.Small" 
+                           Class="rounded-pill px-3"
+                           OnClick="@(() => OnSeleccionarFiltro(null))">
+                    Todos (@(_resumen?.TotalMensajes ?? 0))
+                </MudButton>
+
+                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? Variant.Filled : Variant.Text)" 
+                           Color="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? Color.Warning : Color.Default)" 
+                           Size="Size.Small" 
+                           Class="rounded-pill px-3"
+                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Pendiente))">
+                    Pendientes (@(_resumen?.Pendientes ?? 0))
+                </MudButton>
+
+                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? Variant.Filled : Variant.Text)" 
+                           Color="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? Color.Success : Color.Default)" 
+                           Size="Size.Small" 
+                           Class="rounded-pill px-3"
+                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Enviado))">
+                    Enviados (@(_resumen?.Enviados ?? 0))
+                </MudButton>
+
+                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? Variant.Filled : Variant.Text)" 
+                           Color="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? Color.Error : Color.Default)" 
+                           Size="Size.Small" 
+                           Class="rounded-pill px-3"
+                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Fallido))">
+                    Fallidos (@((_resumen?.EnReintento ?? 0) + (_resumen?.Fallidos ?? 0)))
+                </MudButton>
+            </div>
+
+            <!-- Búsqueda rápida -->
+            <div style="min-width: 280px; flex-grow: 1; max-width: 450px;">
                 <MudTextField T="string" 
-                              Label="Buscar por asunto, destinatario o evento" 
+                              Placeholder="Buscar por asunto, destinatario o correo..." 
                               @bind-Value="_busqueda" 
                               Variant="Variant.Outlined" 
                               Margin="Margin.Dense" 
+                              Clearable="true"
                               Adornment="Adornment.Start" 
                               AdornmentIcon="@Icons.Material.Filled.Search" 
                               Immediate="true"
                               DebounceInterval="300"
-                              OnDebounceIntervalElapsed="CargarDatosAsync"
-                              Style="min-width: 300px;" />
-
-                <MudSelect T="EstadoMensajeOutbox?" 
-                           Label="Filtrar por Estado" 
-                           Value="_filtroEstado" 
-                           ValueChanged="OnFiltroEstadoChanged"
-                           Variant="Variant.Outlined" 
-                           Dense="true" 
-                           Clearable="true" 
-                           Style="min-width: 200px;">
-                    <MudSelectItem T="EstadoMensajeOutbox?" Value="@((EstadoMensajeOutbox?)null)">Todos los estados</MudSelectItem>
-                    <MudSelectItem T="EstadoMensajeOutbox?" Value="@EstadoMensajeOutbox.Pendiente">Pendiente</MudSelectItem>
-                    <MudSelectItem T="EstadoMensajeOutbox?" Value="@EstadoMensajeOutbox.Enviado">Enviado</MudSelectItem>
-                    <MudSelectItem T="EstadoMensajeOutbox?" Value="@EstadoMensajeOutbox.EnProceso">En Proceso</MudSelectItem>
-                    <MudSelectItem T="EstadoMensajeOutbox?" Value="@EstadoMensajeOutbox.Fallido">Fallido</MudSelectItem>
-                </MudSelect>
+                              OnDebounceIntervalElapsed="CargarDatosAsync" />
             </div>
+        </div>
+    </MudCard>
 
-            @if (_cargando)
-            {
-                <div class="d-flex justify-center py-8">
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                </div>
-            }
-            else if (_mensajes.Count == 0)
-            {
-                <MudAlert Severity="Severity.Info" Variant="Variant.Text" Class="my-4">
-                    No se encontraron mensajes en la cola Outbox con los filtros indicados.
-                </MudAlert>
-            }
-            else
-            {
-                <MudTable Items="@_mensajes" Hover="true" Dense="true" Elevation="0">
-                    <HeaderContent>
-                        <MudTh>Fecha Creación</MudTh>
-                        <MudTh>Destinatario</MudTh>
-                        <MudTh>Asunto</MudTh>
-                        <MudTh>Tipo Evento</MudTh>
-                        <MudTh>Intentos</MudTh>
-                        <MudTh>Estado</MudTh>
-                        <MudTh>Detalle / Error</MudTh>
-                        <MudTh Style="text-align: right;">Acciones</MudTh>
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Fecha">
-                            @context.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
-                        </MudTd>
-                        <MudTd DataLabel="Destinatario">
-                            <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.DestinatarioNombre</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.DestinatarioEmail</MudText>
-                        </MudTd>
-                        <MudTd DataLabel="Asunto">
-                            <MudText Typo="Typo.body2" Style="font-weight: 600;">@context.Asunto</MudText>
-                        </MudTd>
-                        <MudTd DataLabel="Tipo Evento">
-                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
-                                @context.TipoEvento
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Intentos">
-                            <MudText Typo="Typo.body2">@context.Reintentos / @context.MaxReintentos</MudText>
-                        </MudTd>
-                        <MudTd DataLabel="Estado">
-                            <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                                @context.Estado.ToString()
-                            </MudChip>
-                        </MudTd>
-                        <MudTd DataLabel="Detalle">
-                            @if (!string.IsNullOrWhiteSpace(context.ErrorUltimoReintento))
-                            {
-                                <MudTooltip Text="@context.ErrorUltimoReintento">
-                                    <MudText Typo="Typo.caption" Color="Color.Error" Class="d-block text-truncate" Style="max-width: 250px;">
+    <!-- TABLA DE MENSAJES -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden">
+        @if (_cargando)
+        {
+            <div class="d-flex flex-column align-center justify-center py-12 gap-3">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando mensajes del Outbox...</MudText>
+            </div>
+        }
+        else if (_mensajes.Count == 0)
+        {
+            <div class="d-flex flex-column align-center justify-center py-12 px-4 text-center">
+                <MudAvatar Color="Color.Default" Variant="Variant.Outlined" Size="Size.Large" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" />
+                </MudAvatar>
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                    No se encontraron mensajes
+                </MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="max-width: 400px;">
+                    No hay correos en la cola con el estado seleccionado o el término de búsqueda actual.
+                </MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="@_mensajes" Hover="true" Dense="false" Elevation="0">
+                <HeaderContent>
+                    <MudTh Style="width: 170px;">Fecha y Hora</MudTh>
+                    <MudTh Style="min-width: 200px;">Destinatario</MudTh>
+                    <MudTh Style="min-width: 240px;">Asunto y Tipo</MudTh>
+                    <MudTh Style="width: 130px; text-align: center;">Estado</MudTh>
+                    <MudTh Style="width: 90px; text-align: center;">Intentos</MudTh>
+                    <MudTh Style="min-width: 180px;">Resultado / Entrega</MudTh>
+                    <MudTh Style="width: 140px; text-align: right;">Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Fecha">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600; color: #0F172A;">
+                            @context.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @context.FechaCreacionUtc.ToLocalTime().ToString("HH:mm:ss")
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd DataLabel="Destinatario">
+                        <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                            @context.DestinatarioNombre
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                            @context.DestinatarioEmail
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd DataLabel="Asunto">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600; color: #0F172A;">
+                            @context.Asunto
+                        </MudText>
+                        <div class="mt-1">
+                            <span class="px-2 py-0.5 rounded text-xs" style="background-color: #F1F5F9; color: #475569; font-size: 0.72rem; font-weight: 600;">
+                                @FormatearTipoEvento(context.TipoEvento)
+                            </span>
+                        </div>
+                    </MudTd>
+
+                    <MudTd DataLabel="Estado" Style="text-align: center;">
+                        <span class="px-2.5 py-1 rounded-pill" style="@ObtenerEstiloPillEstado(context.Estado)">
+                            @context.Estado.ToString()
+                        </span>
+                    </MudTd>
+
+                    <MudTd DataLabel="Intentos" Style="text-align: center;">
+                        <MudText Typo="Typo.body2" Style="@(context.Reintentos > 0 ? "font-weight: 700; color: #D97706;" : "color: #64748B;")">
+                            @context.Reintentos / @context.MaxReintentos
+                        </MudText>
+                    </MudTd>
+
+                    <MudTd DataLabel="Resultado">
+                        @if (!string.IsNullOrWhiteSpace(context.ErrorUltimoReintento))
+                        {
+                            <MudTooltip Text="@context.ErrorUltimoReintento">
+                                <div class="d-flex align-center gap-1" style="color: #DC2626;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" />
+                                    <MudText Typo="Typo.caption" Class="text-truncate" Style="font-weight: 600; max-width: 220px;">
                                         @context.ErrorUltimoReintento
                                     </MudText>
-                                </MudTooltip>
-                            }
-                            else if (context.FechaProcesadoUtc.HasValue)
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Success">
-                                    Entregado @context.FechaProcesadoUtc.Value.ToLocalTime().ToString("HH:mm:ss")
+                                </div>
+                            </MudTooltip>
+                        }
+                        else if (context.FechaProcesadoUtc.HasValue)
+                        {
+                            <div class="d-flex align-center gap-1" style="color: #059669;">
+                                <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                                <MudText Typo="Typo.caption" Style="font-weight: 600;">
+                                    Entregado @context.FechaProcesadoUtc.Value.ToLocalTime().ToString("dd/MM HH:mm")
                                 </MudText>
-                            }
-                            else
-                            {
-                                <MudText Typo="Typo.caption" Class="mud-text-secondary">En espera de despacho</MudText>
-                            }
-                        </MudTd>
-                        <MudTd DataLabel="Acciones" Style="text-align: right;">
+                            </div>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                En cola de salida
+                            </MudText>
+                        }
+                    </MudTd>
+
+                    <MudTd DataLabel="Acciones" Style="text-align: right;">
+                        <div class="d-flex align-center justify-end gap-1">
+                            <MudTooltip Text="Ver contenido del correo">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                               Size="Size.Small" 
+                                               Color="Color.Default" 
+                                               OnClick="@(() => VerDetalleMensaje(context))" />
+                            </MudTooltip>
+
                             @if (context.Estado != EstadoMensajeOutbox.Enviado)
                             {
-                                <MudButton Variant="Variant.Outlined" 
-                                           Color="Color.Warning" 
-                                           Size="Size.Small" 
-                                           StartIcon="@Icons.Material.Filled.Replay"
-                                           OnClick="@(() => ReintentarMensajeAsync(context.Id))">
-                                    Reintentar
-                                </MudButton>
+                                <MudTooltip Text="Forzar reintento">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Replay" 
+                                                   Size="Size.Small" 
+                                                   Color="Color.Warning" 
+                                                   OnClick="@(() => ReintentarMensajeAsync(context.Id))" />
+                                </MudTooltip>
                             }
-                        </MudTd>
-                    </RowTemplate>
-                </MudTable>
-            }
-        </MudCardContent>
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
     </MudCard>
 </MudContainer>
+
+<style>
+    .stat-card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
 
 @code {
     private bool _cargando = true;
@@ -266,7 +391,7 @@
         }
     }
 
-    private async Task OnFiltroEstadoChanged(EstadoMensajeOutbox? estado)
+    private async Task OnSeleccionarFiltro(EstadoMensajeOutbox? estado)
     {
         _filtroEstado = estado;
         await CargarDatosAsync();
@@ -305,12 +430,34 @@
         }
     }
 
-    private Color ObtenerColorEstado(EstadoMensajeOutbox estado) => estado switch
+    private async Task VerDetalleMensaje(MensajeOutbox mensaje)
     {
-        EstadoMensajeOutbox.Enviado => Color.Success,
-        EstadoMensajeOutbox.Pendiente => Color.Warning,
-        EstadoMensajeOutbox.EnProceso => Color.Info,
-        EstadoMensajeOutbox.Fallido => Color.Error,
-        _ => Color.Default
+        var parameters = new DialogParameters<VerMensajeOutboxDialog>
+        {
+            { x => x.Mensaje, mensaje }
+        };
+
+        await DialogService.ShowAsync<VerMensajeOutboxDialog>(
+            "Detalle del Correo",
+            parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true });
+    }
+
+    private string FormatearTipoEvento(string tipoEvento) => tipoEvento switch
+    {
+        "BienvenidaAltaEducandoCenso" => "Alta en Censo Familiar",
+        "InscripcionSubsanacionRequerida" => "Subsanación de Justificante",
+        "SolicitudAdmisionPresentada" => "Acuse de Solicitud de Admisión",
+        "ConfirmacionInscripcion" => "Plaza Confirmada",
+        _ => tipoEvento
+    };
+
+    private string ObtenerEstiloPillEstado(EstadoMensajeOutbox estado) => estado switch
+    {
+        EstadoMensajeOutbox.Enviado => "background-color: #ECFDF5; color: #065F46; font-weight: 700; font-size: 0.75rem; border: 1px solid #A7F3D0;",
+        EstadoMensajeOutbox.Pendiente => "background-color: #FFFBEB; color: #92400E; font-weight: 700; font-size: 0.75rem; border: 1px solid #FDE68A;",
+        EstadoMensajeOutbox.EnProceso => "background-color: #EFF6FF; color: #1E40AF; font-weight: 700; font-size: 0.75rem; border: 1px solid #BFDBFE;",
+        EstadoMensajeOutbox.Fallido => "background-color: #FEF2F2; color: #991B1B; font-weight: 700; font-size: 0.75rem; border: 1px solid #FECACA;",
+        _ => "background-color: #F1F5F9; color: #475569; font-weight: 700; font-size: 0.75rem;"
     };
 }
