@@ -123,11 +123,11 @@
                         </MudTd>
                         <MudTd DataLabel="Detalles">
                             <span style="font-size: 0.85rem; color: #475569;">
-                                @(string.IsNullOrWhiteSpace(context.Detalles) ? "—" : context.Detalles)
+                                @(string.IsNullOrWhiteSpace(context.Detalles) ? "-" : context.Detalles)
                             </span>
                         </MudTd>
                         <MudTd DataLabel="IP">
-                            <code style="font-size: 0.8rem;">@(context.DireccionIp ?? "—")</code>
+                            <code style="font-size: 0.8rem;">@(context.DireccionIp ?? "-")</code>
                         </MudTd>
                     </RowTemplate>
                     <PagerContent>
