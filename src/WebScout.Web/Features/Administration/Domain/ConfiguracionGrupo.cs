@@ -15,9 +15,7 @@ public class ConfiguracionGrupo : IEntidadOrganizacion
     /// </summary>
     public Guid OrganizacionId { get; set; }
 
-    // ==========================================
-    // ÁREA 1: INSTITUCIONAL Y RONDA SOLAR
-    // ==========================================
+    // Área 1: Institucional y ronda solar
     public string? Cif { get; set; }
     public string? DireccionBase { get; set; }
     public string? TelefonoContacto { get; set; }
@@ -26,22 +24,16 @@ public class ConfiguracionGrupo : IEntidadOrganizacion
     public DateOnly FechaInicioRonda { get; set; } = new(2026, 10, 1);
     public DateOnly FechaFinRonda { get; set; } = new(2027, 7, 31);
 
-    // ==========================================
-    // ÁREA 2: ECONÓMICA Y CUENTA BANCARIA
-    // ==========================================
+    // Área 2: Económica y cuenta bancaria
     public string? IbanCuentaBancaria { get; set; }
     public string? TitularCuenta { get; set; }
     public string? ConceptoCuotaSugerido { get; set; }
 
-    // ==========================================
-    // ÁREA 3: SECRETARÍA Y ADMISIONES
-    // ==========================================
+    // Área 3: Secretaría y admisiones
     public bool AdmisionesAbiertas { get; set; } = true;
     public string? MensajeBienvenidaAdmisiones { get; set; }
 
-    // ==========================================
-    // ÁREA 4: OPERACIÓN Y RESPALDO (PA19 / RF65)
-    // ==========================================
+    // Área 4: Operación y respaldo (PA19 / RF65)
     public DateTime? FechaUltimoBackupUtc { get; set; }
     public string? EstadoUltimoBackup { get; set; } = "Verificado (Simulación DR periódica)";
     public int ObjetivoRpoHoras { get; set; } = 1;
