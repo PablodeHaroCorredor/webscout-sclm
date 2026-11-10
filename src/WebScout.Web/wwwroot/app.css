@@ -1,12 +1,8 @@
-/* ==========================================================================
-   WebScout SCLM · Design System & Tokens
+/* WebScout SCLM · Design System & Tokens
    Manual de Identidad Corporativa y Guía de Estilo Visual (v1.0.0)
-   Normativa: SCLM-DIR-DIS-01 · WCAG 2.2 Nivel AA
-   ========================================================================== */
+   Normativa: SCLM-DIR-DIS-01 · WCAG 2.2 Nivel AA */
 
-/* --------------------------------------------------------------------------
-   1. Variables de Diseño y Tokens CSS
-   -------------------------------------------------------------------------- */
+/* 1. Variables de Diseño y Tokens CSS */
 :root {
     /* Identidad del Tenant Activo (Sobrescrito dinámicamente en runtime) */
     --scout-primary: #1B5E20;
@@ -88,9 +84,7 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 }
 
-/* --------------------------------------------------------------------------
-   2. Reset & Accesibilidad Universal
-   -------------------------------------------------------------------------- */
+/* 2. Reset & Accesibilidad Universal */
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -113,9 +107,7 @@ body {
     outline-offset: 2px !important;
 }
 
-/* --------------------------------------------------------------------------
-   3. Tipografía y Jerarquía Formal
-   -------------------------------------------------------------------------- */
+/* 3. Tipografía y Jerarquía Formal */
 .scout-title-xl {
     font-size: 2rem;
     font-weight: 800;
@@ -167,9 +159,7 @@ body {
     font-weight: 500;
 }
 
-/* --------------------------------------------------------------------------
-   4. Botones y Objetivos Táctiles Móviles (>= 44x44px, WCAG 2.5.8)
-   -------------------------------------------------------------------------- */
+/* 4. Botones y Objetivos Táctiles Móviles (>= 44x44px, WCAG 2.5.8) */
 .scout-btn {
     display: inline-flex;
     align-items: center;
@@ -256,9 +246,7 @@ body {
     box-shadow: none;
 }
 
-/* --------------------------------------------------------------------------
-   5. Insignias Semánticas y Badges de Rama
-   -------------------------------------------------------------------------- */
+/* 5. Insignias Semánticas y Badges de Rama */
 .scout-badge {
     display: inline-flex;
     align-items: center;
@@ -345,9 +333,7 @@ body {
     border-color: var(--branch-clan-border);
 }
 
-/* --------------------------------------------------------------------------
-   6. Tarjetas Modulares y Contenedores
-   -------------------------------------------------------------------------- */
+/* 6. Tarjetas Modulares y Contenedores */
 .scout-card {
     background-color: var(--scout-bg-surface);
     border: 1px solid var(--scout-border-subtle);
@@ -381,9 +367,7 @@ body {
     gap: 1rem;
 }
 
-/* --------------------------------------------------------------------------
-   7. Formularios Accesibles
-   -------------------------------------------------------------------------- */
+/* 7. Formularios Accesibles */
 .scout-form-group {
     margin-bottom: 1.25rem;
 }
@@ -438,9 +422,7 @@ body {
     margin-top: 0.35rem;
 }
 
-/* --------------------------------------------------------------------------
-   8. Banners de Alerta y Notificación
-   -------------------------------------------------------------------------- */
+/* 8. Banners de Alerta y Notificación */
 .scout-alert {
     display: flex;
     align-items: flex-start;
@@ -477,9 +459,7 @@ body {
     border-color: var(--state-info-border);
 }
 
-/* --------------------------------------------------------------------------
-   9. Disposición y Contenedores
-   -------------------------------------------------------------------------- */
+/* 9. Disposición y Contenedores */
 .scout-container {
     max-width: 1120px;
     margin-left: auto;
@@ -515,10 +495,7 @@ body {
     gap: 0.75rem;
 }
 
-/* ==========================================================================
-   Utilidades Globales de Alineación y Tipografía
-   Garantiza que clases comunes funcionen uniformemente con MudBlazor
-   ========================================================================== */
+/* Utilidades Globales de Alineación y Tipografía (MudBlazor) */
 .text-center { text-align: center !important; }
 .text-end { text-align: right !important; }
 .text-start { text-align: left !important; }
@@ -526,9 +503,7 @@ body {
 .font-weight-semibold { font-weight: 600 !important; }
 .font-weight-medium { font-weight: 500 !important; }
 
-/* ==========================================================================
-   Menú Lateral (Drawer) Moderno, Ergonómico y Accesible (WCAG 2.2 AA)
-   ========================================================================== */
+/* Menú Lateral (Drawer) Moderno, Ergonómico y Accesible (WCAG 2.2 AA) */
 .scout-drawer .mud-drawer-content {
     display: flex !important;
     flex-direction: column !important;

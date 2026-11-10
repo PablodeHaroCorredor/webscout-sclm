@@ -167,9 +167,17 @@
                                     </MudTd>
                                     <MudTd DataLabel="Tutor">
                                         <MudText Typo="Typo.body2">@context.NombreTutor (@context.RelacionTutor)</MudText>
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
-                                            📞 <a href="tel:@context.TelefonoTutor">@context.TelefonoTutor</a> · ✉️ @context.EmailTutor
-                                        </MudText>
+                                        <div class="d-flex align-center gap-2 mt-0.5" style="font-size: 0.78rem;">
+                                            <a href="tel:@context.TelefonoTutor" class="d-inline-flex align-center gap-1 text-decoration-none" style="color: #64748B;" aria-label="Llamar a @context.NombreTutor al @context.TelefonoTutor">
+                                                <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Style="font-size: 0.875rem;" aria-hidden="true" />
+                                                <span>@context.TelefonoTutor</span>
+                                            </a>
+                                            <span style="color: #CBD5E1;">·</span>
+                                            <a href="mailto:@context.EmailTutor" class="d-inline-flex align-center gap-1 text-decoration-none" style="color: #64748B;" aria-label="Enviar correo a @context.EmailTutor">
+                                                <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Style="font-size: 0.875rem;" aria-hidden="true" />
+                                                <span>@context.EmailTutor</span>
+                                            </a>
+                                        </div>
                                     </MudTd>
                                     <MudTd DataLabel="Estado">
                                         <MudChip T="string" Color="@ObtenerColorEstado(context.Estado)" Size="Size.Small" Variant="Variant.Outlined">
@@ -360,9 +368,20 @@
                                     </MudTd>
                                     <MudTd DataLabel="Remitente">
                                         <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.NombreRemitente</MudText>
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                            ✉️ @context.EmailRemitente @(!string.IsNullOrWhiteSpace(context.TelefonoRemitente) ? $" · 📞 {context.TelefonoRemitente}" : "")
-                                        </MudText>
+                                        <div class="d-flex align-center gap-2 mt-0.5" style="font-size: 0.78rem;">
+                                            <a href="mailto:@context.EmailRemitente" class="d-inline-flex align-center gap-1 text-decoration-none" style="color: #64748B;" aria-label="Enviar correo a @context.EmailRemitente">
+                                                <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" Style="font-size: 0.875rem;" aria-hidden="true" />
+                                                <span>@context.EmailRemitente</span>
+                                            </a>
+                                            @if (!string.IsNullOrWhiteSpace(context.TelefonoRemitente))
+                                            {
+                                                <span style="color: #CBD5E1;">·</span>
+                                                <a href="tel:@context.TelefonoRemitente" class="d-inline-flex align-center gap-1 text-decoration-none" style="color: #64748B;" aria-label="Llamar al @context.TelefonoRemitente">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Style="font-size: 0.875rem;" aria-hidden="true" />
+                                                    <span>@context.TelefonoRemitente</span>
+                                                </a>
+                                            }
+                                        </div>
                                     </MudTd>
                                     <MudTd DataLabel="Asunto">
                                         <MudText Typo="Typo.body2" Style="font-weight: 600;">@context.Asunto</MudText>
