@@ -1,6 +1,12 @@
 @inherits LayoutComponentBase
+@implements IDisposable
+@using Microsoft.EntityFrameworkCore
+@using WebScout.Web.Infrastructure.Navigation
+@using WebScout.Web.Infrastructure.Persistence
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
+@inject UserContextModeService ContextService
+@inject IServiceScopeFactory ScopeFactory
 
 <MudThemeProvider Theme="@CurrentTheme" />
 <MudPopoverProvider />
@@ -31,6 +37,18 @@
         <AuthorizeView>
             <Authorized>
                 <div class="d-flex align-center gap-3">
+                    @if (_isDualUser)
+                    {
+                        <MudChip T="string" 
+                                 Size="Size.Small" 
+                                 Variant="Variant.Outlined" 
+                                 Color="Color.Primary" 
+                                 Class="d-none d-md-flex font-weight-bold"
+                                 Icon="@(ContextService.CurrentMode == ScoutContextMode.Kraal ? Icons.Material.Filled.Diversity3 : Icons.Material.Filled.FamilyRestroom)"
+                                 Style="font-size: 0.75rem;">
+                            @(ContextService.CurrentMode == ScoutContextMode.Kraal ? "Modo Kraal" : "Modo Familiar")
+                        </MudChip>
+                    }
                     <div class="d-none d-sm-block text-end">
                         <MudText Typo="Typo.body2" Style="font-weight: 600; line-height: 1.2; color: #0F172A;">
                             @context.User.Identity?.Name
@@ -60,7 +78,7 @@
         </AuthorizeView>
     </MudAppBar>
 
-    <!-- Menú Lateral Simplificado: SOLO lo desarrollado -->
+    <!-- Menú Lateral Responsivo y Adaptable al Rol del Usuario -->
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="DrawerVariant.Responsive">
         <MudDrawerHeader Class="d-flex align-center gap-3 py-3">
             <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Medium">
@@ -71,8 +89,59 @@
                 <MudText Typo="Typo.caption" Class="mud-text-secondary">@(Tenant.IsResolved ? Tenant.GroupName : "Castilla-La Mancha")</MudText>
             </div>
         </MudDrawerHeader>
-        
-        <MudDivider />
+
+        <!-- Conmutador Segmentado de Contexto de Trabajo (Exclusivo para Scouter-Padre / Rol Dual) -->
+        @if (_isDualUser)
+        {
+            <div class="px-3 pt-3 pb-3" style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0;">
+                <div class="d-flex align-center justify-space-between mb-2">
+                    <MudText Typo="Typo.caption" Style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; font-size: 0.72rem;">
+                        Entorno Activo
+                    </MudText>
+                    <MudChip T="string" 
+                             Size="Size.Small" 
+                             Variant="Variant.Filled" 
+                             Color="Color.Primary" 
+                             Style="font-size: 0.65rem; height: 18px; padding: 0 6px; font-weight: 700;">
+                        Scouter-Padre
+                    </MudChip>
+                </div>
+                
+                <div class="d-flex align-center p-1 rounded-lg gap-1" style="background-color: #E2E8F0; border: 1px solid #CBD5E1;" role="tablist" aria-label="Selector de entorno de trabajo">
+                    <MudButton Variant="@(ContextService.CurrentMode == ScoutContextMode.Kraal ? Variant.Filled : Variant.Text)"
+                               Color="@(ContextService.CurrentMode == ScoutContextMode.Kraal ? Color.Primary : Color.Default)"
+                               Size="Size.Small"
+                               Class="flex-grow-1 text-none font-weight-bold"
+                               Style="@(ContextService.CurrentMode == ScoutContextMode.Kraal 
+                                        ? "box-shadow: 0 1px 3px rgba(0,0,0,0.15); font-size: 0.78rem; border-radius: 6px; min-height: 32px;" 
+                                        : "font-size: 0.78rem; color: #1E293B; min-height: 32px;")"
+                               StartIcon="@Icons.Material.Filled.Diversity3"
+                               OnClick="@(() => CambiarModo(ScoutContextMode.Kraal))"
+                               role="tab"
+                               aria-selected="@(ContextService.CurrentMode == ScoutContextMode.Kraal ? "true" : "false")">
+                        Kraal
+                    </MudButton>
+
+                    <MudButton Variant="@(ContextService.CurrentMode == ScoutContextMode.Familia ? Variant.Filled : Variant.Text)"
+                               Color="@(ContextService.CurrentMode == ScoutContextMode.Familia ? Color.Primary : Color.Default)"
+                               Size="Size.Small"
+                               Class="flex-grow-1 text-none font-weight-bold"
+                               Style="@(ContextService.CurrentMode == ScoutContextMode.Familia 
+                                        ? "box-shadow: 0 1px 3px rgba(0,0,0,0.15); font-size: 0.78rem; border-radius: 6px; min-height: 32px;" 
+                                        : "font-size: 0.78rem; color: #1E293B; min-height: 32px;")"
+                               StartIcon="@Icons.Material.Filled.FamilyRestroom"
+                               OnClick="@(() => CambiarModo(ScoutContextMode.Familia))"
+                               role="tab"
+                               aria-selected="@(ContextService.CurrentMode == ScoutContextMode.Familia ? "true" : "false")">
+                        Familia
+                    </MudButton>
+                </div>
+            </div>
+        }
+        else
+        {
+            <MudDivider />
+        }
 
         <MudNavMenu Bordered="true">
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
@@ -82,78 +151,89 @@
                 Contacto y Admisiones
             </MudNavLink>
 
-            <AuthorizeView Roles="Familia">
-                <Authorized>
-                    <MudNavGroup Title="Portal Familias" Icon="@Icons.Material.Filled.FamilyRestroom" Expanded="true">
-                        <MudNavLink Href="/familias" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
-                            Mi Espacio Familiar
-                        </MudNavLink>
-                        <MudNavLink Href="/familias/educandos" Icon="@Icons.Material.Filled.ChildCare">
-                            Educandos y Fichas Médicas
-                        </MudNavLink>
-                        <MudNavLink Href="/familias/actividades" Icon="@Icons.Material.Filled.EventAvailable">
-                            Actividades y Salidas
-                        </MudNavLink>
-                        <MudNavLink Href="/familias/inscripciones" Icon="@Icons.Material.Filled.AssignmentTurnedIn">
-                            Mis Inscripciones y Pagos
-                        </MudNavLink>
-                        <MudNavLink Href="/familias/pedidos" Icon="@Icons.Material.Filled.ShoppingBag">
-                            Material y Uniformidad
-                        </MudNavLink>
-                    </MudNavGroup>
-                </Authorized>
-            </AuthorizeView>
+            <!-- Bloque Portal Familias (Visible para Familias puras o en Modo Familiar) -->
+            @if (!_isDualUser || ContextService.CurrentMode == ScoutContextMode.Familia)
+            {
+                <AuthorizeView Roles="Familia,Scouter,Coordinacion,Administracion,SuperAdmin">
+                    <Authorized>
+                        @if (context.User.IsInRole(RolesScout.Familia) || _isDualUser)
+                        {
+                            <MudNavGroup Title="Portal Familias" Icon="@Icons.Material.Filled.FamilyRestroom" Expanded="true">
+                                <MudNavLink Href="/familias" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+                                    Mi Espacio Familiar
+                                </MudNavLink>
+                                <MudNavLink Href="/familias/educandos" Icon="@Icons.Material.Filled.ChildCare">
+                                    Educandos y Fichas Médicas
+                                </MudNavLink>
+                                <MudNavLink Href="/familias/actividades" Icon="@Icons.Material.Filled.EventAvailable">
+                                    Actividades y Salidas
+                                </MudNavLink>
+                                <MudNavLink Href="/familias/inscripciones" Icon="@Icons.Material.Filled.AssignmentTurnedIn">
+                                    Mis Inscripciones y Pagos
+                                </MudNavLink>
+                                <MudNavLink Href="/familias/pedidos" Icon="@Icons.Material.Filled.ShoppingBag">
+                                    Material y Uniformidad
+                                </MudNavLink>
+                            </MudNavGroup>
+                        }
+                    </Authorized>
+                </AuthorizeView>
+            }
 
-            <AuthorizeView Roles="Scouter,Coordinacion,Administracion">
-                <Authorized>
-                    <MudNavGroup Title="Gestión Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
-                        <MudNavLink Href="/kraal/inscripciones" Icon="@Icons.Material.Filled.FactCheck">
-                            Mesa de Inscripciones
-                        </MudNavLink>
-                        <MudNavLink Href="/kraal/educandos" Icon="@Icons.Material.Filled.Groups">
-                            Censo de Educandos
-                        </MudNavLink>
-                        <MudNavLink Href="/kraal/actividades" Icon="@Icons.Material.Filled.Hiking">
-                            Gestor de Actividades
-                        </MudNavLink>
-                        <MudNavLink Href="/kraal/admisiones" Icon="@Icons.Material.Filled.Inbox">
-                            Buzón y Admisiones
-                        </MudNavLink>
-                        <MudNavLink Href="/kraal/pedidos" Icon="@Icons.Material.Filled.Inventory2">
-                            Pedidos de Material
-                        </MudNavLink>
-                    </MudNavGroup>
-                </Authorized>
-            </AuthorizeView>
+            <!-- Bloque Gestión Kraal y Administración (Visible para Kraal puro o en Modo Kraal) -->
+            @if (!_isDualUser || ContextService.CurrentMode == ScoutContextMode.Kraal)
+            {
+                <AuthorizeView Roles="Scouter,Coordinacion,Administracion">
+                    <Authorized>
+                        <MudNavGroup Title="Gestión Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
+                            <MudNavLink Href="/kraal/inscripciones" Icon="@Icons.Material.Filled.FactCheck">
+                                Mesa de Inscripciones
+                            </MudNavLink>
+                            <MudNavLink Href="/kraal/educandos" Icon="@Icons.Material.Filled.Groups">
+                                Censo de Educandos
+                            </MudNavLink>
+                            <MudNavLink Href="/kraal/actividades" Icon="@Icons.Material.Filled.Hiking">
+                                Gestor de Actividades
+                            </MudNavLink>
+                            <MudNavLink Href="/kraal/admisiones" Icon="@Icons.Material.Filled.Inbox">
+                                Buzón y Admisiones
+                            </MudNavLink>
+                            <MudNavLink Href="/kraal/pedidos" Icon="@Icons.Material.Filled.Inventory2">
+                                Pedidos de Material
+                            </MudNavLink>
+                        </MudNavGroup>
+                    </Authorized>
+                </AuthorizeView>
 
-            <AuthorizeView Roles="Coordinacion,Administracion,SuperAdmin">
-                <Authorized>
-                    <MudNavGroup Title="Administración" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
-                        <MudNavLink Href="/administracion/ajustes" Icon="@Icons.Material.Filled.Tune">
-                            Ajustes del Grupo
-                        </MudNavLink>
-                        <MudNavLink Href="/administracion/outbox" Icon="@Icons.Material.Filled.MarkEmailRead">
-                            Monitor Outbox
-                        </MudNavLink>
-                        <MudNavLink Href="/administracion/auditoria" Icon="@Icons.Material.Filled.HistoryEdu">
-                            Auditoría del Grupo
-                        </MudNavLink>
-                        <MudNavLink Href="/administracion/diagnostico" Icon="@Icons.Material.Filled.Dns">
-                            Diagnóstico y Backups
-                        </MudNavLink>
-                    </MudNavGroup>
-                </Authorized>
-            </AuthorizeView>
+                <AuthorizeView Roles="Coordinacion,Administracion,SuperAdmin">
+                    <Authorized>
+                        <MudNavGroup Title="Administración" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                            <MudNavLink Href="/administracion/ajustes" Icon="@Icons.Material.Filled.Tune">
+                                Ajustes del Grupo
+                            </MudNavLink>
+                            <MudNavLink Href="/administracion/outbox" Icon="@Icons.Material.Filled.MarkEmailRead">
+                                Monitor Outbox
+                            </MudNavLink>
+                            <MudNavLink Href="/administracion/auditoria" Icon="@Icons.Material.Filled.HistoryEdu">
+                                Auditoría del Grupo
+                            </MudNavLink>
+                            <MudNavLink Href="/administracion/diagnostico" Icon="@Icons.Material.Filled.Dns">
+                                Diagnóstico y Backups
+                            </MudNavLink>
+                        </MudNavGroup>
+                    </Authorized>
+                </AuthorizeView>
 
-            <AuthorizeView Roles="SuperAdmin">
-                <Authorized>
-                    <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
-                        <MudNavLink Href="/admin/grupos" Icon="@Icons.Material.Filled.Hub">
-                            Grupos y Tenants
-                        </MudNavLink>
-                    </MudNavGroup>
-                </Authorized>
-            </AuthorizeView>
+                <AuthorizeView Roles="SuperAdmin">
+                    <Authorized>
+                        <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                            <MudNavLink Href="/admin/grupos" Icon="@Icons.Material.Filled.Hub">
+                                Grupos y Tenants
+                            </MudNavLink>
+                        </MudNavGroup>
+                    </Authorized>
+                </AuthorizeView>
+            }
         </MudNavMenu>
     </MudDrawer>
 
@@ -170,11 +250,129 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private bool _drawerOpen = true;
+    private bool _isDualUser = false;
+    private string? _lastEvaluatedUserId;
     private MudTheme CurrentTheme => ScoutMudTheme.CreateTheme(Tenant.Palette);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        ContextService.OnModeChanged += HandleModeChanged;
+        await EvaluateUserDualContextAsync();
+        SyncContextModeFromUri(Navigation.Uri);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await EvaluateUserDualContextAsync();
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        ContextService.OnModeChanged -= HandleModeChanged;
+    }
 
     private void ToggleDrawer()
     {
         _drawerOpen = !_drawerOpen;
+    }
+
+    private void HandleModeChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        SyncContextModeFromUri(e.Location);
+    }
+
+    private async Task EvaluateUserDualContextAsync()
+    {
+        if (AuthStateTask == null) return;
+        var authState = await AuthStateTask;
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            _isDualUser = false;
+            _lastEvaluatedUserId = null;
+            return;
+        }
+
+        var userIdStr = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userIdStr == _lastEvaluatedUserId && _lastEvaluatedUserId != null)
+        {
+            return;
+        }
+        _lastEvaluatedUserId = userIdStr;
+
+        var isKraal = user.IsInRole(RolesScout.Scouter) || 
+                      user.IsInRole(RolesScout.Coordinacion) || 
+                      user.IsInRole(RolesScout.Administracion);
+
+        var isFamiliaRole = user.IsInRole(RolesScout.Familia);
+
+        if (isKraal && isFamiliaRole)
+        {
+            _isDualUser = true;
+            return;
+        }
+
+        if (isKraal && Guid.TryParse(userIdStr, out var userId))
+        {
+            using var scope = ScopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<WebScoutDbContext>();
+            var hasEducandos = await db.Educandos.IgnoreQueryFilters().AnyAsync(e => e.TutorLegalId == userId && e.Activo);
+            _isDualUser = hasEducandos;
+        }
+        else
+        {
+            _isDualUser = false;
+        }
+    }
+
+    private void SyncContextModeFromUri(string uri)
+    {
+        if (!_isDualUser) return;
+
+        var relativeUri = Navigation.ToBaseRelativePath(uri).ToLowerInvariant();
+        if (relativeUri.StartsWith("familias"))
+        {
+            if (ContextService.CurrentMode != ScoutContextMode.Familia)
+            {
+                ContextService.SetMode(ScoutContextMode.Familia);
+            }
+        }
+        else if (relativeUri.StartsWith("kraal") || relativeUri.StartsWith("administracion"))
+        {
+            if (ContextService.CurrentMode != ScoutContextMode.Kraal)
+            {
+                ContextService.SetMode(ScoutContextMode.Kraal);
+            }
+        }
+    }
+
+    private void CambiarModo(ScoutContextMode nuevoModo)
+    {
+        if (ContextService.CurrentMode == nuevoModo) return;
+
+        ContextService.SetMode(nuevoModo);
+
+        var currentRelative = Navigation.ToBaseRelativePath(Navigation.Uri).ToLowerInvariant();
+
+        if (nuevoModo == ScoutContextMode.Familia && (currentRelative.StartsWith("kraal") || currentRelative.StartsWith("administracion")))
+        {
+            Navigation.NavigateTo("/familias");
+        }
+        else if (nuevoModo == ScoutContextMode.Kraal && currentRelative.StartsWith("familias"))
+        {
+            Navigation.NavigateTo("/kraal/inscripciones");
+        }
     }
 }

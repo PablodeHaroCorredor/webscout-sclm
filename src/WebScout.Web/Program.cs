@@ -24,6 +24,7 @@ builder.Services.AddRazorComponents()
 
 // Registrar MudBlazor y componentes UI
 builder.Services.AddMudServices();
+builder.Services.AddScoped<WebScout.Web.Infrastructure.Navigation.UserContextModeService>();
 
 // Registrar Tenancy multitenant y Persistencia EF Core
 builder.Services.AddScoutTenancy(builder.Configuration);

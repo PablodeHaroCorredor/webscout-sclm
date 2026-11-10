@@ -86,15 +86,19 @@ public static class DatabaseInitializer
 
             // 4. Seed de Usuarios Demo para el Grupo Piloto (Lestonnac 330)
             var garciaUser = await SeedDemoUserAsync(userManager, logger, lestonnacId, "familia.garcia@scoutslestonnac.es", "Familia García Pérez", "12345678Z", RolesScout.Familia, RamaScout.Ninguna);
-            await SeedDemoUserAsync(userManager, logger, lestonnacId, "scouter.manada@scoutslestonnac.es", "Elena Akela", "87654321A", RolesScout.Scouter, RamaScout.Manada);
+            var elenaUser = await SeedDemoUserAsync(userManager, logger, lestonnacId, "scouter.manada@scoutslestonnac.es", "Elena Akela", "87654321A", RolesScout.Scouter, RamaScout.Manada);
+            if (elenaUser != null && !await userManager.IsInRoleAsync(elenaUser, RolesScout.Familia))
+            {
+                await userManager.AddToRoleAsync(elenaUser, RolesScout.Familia);
+            }
             await SeedDemoUserAsync(userManager, logger, lestonnacId, "coordinador@scoutslestonnac.es", "Roberto Coordinador", "45678901B", RolesScout.Coordinacion, RamaScout.Ninguna);
 
             // 5. Seed de Usuarios Demo para el Grupo de Contraste (San Vicente 412)
             var lopezUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "familia.lopez@scoutssanvicente.org", "Familia López Ruiz", "23456789C", RolesScout.Familia, RamaScout.Ninguna);
-            await SeedDemoUserAsync(userManager, logger, sanVicenteId, "scouter.tropa@scoutssanvicente.org", "David Baloo", "98765432D", RolesScout.Scouter, RamaScout.Tropa);
+            var davidUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "scouter.tropa@scoutssanvicente.org", "David Baloo", "98765432D", RolesScout.Scouter, RamaScout.Tropa);
 
             // 6. Seed de Educandos y Fichas Médicas Anuales
-            await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser);
+            await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser, elenaUser);
 
             // 7. Seed de Actividades y Campamentos por Ramas
             await SeedActivitiesAsync(db, logger, lestonnacId, sanVicenteId);
@@ -114,7 +118,8 @@ public static class DatabaseInitializer
         Guid lestonnacId,
         Guid sanVicenteId,
         UsuarioScout? garciaUser,
-        UsuarioScout? lopezUser)
+        UsuarioScout? lopezUser,
+        UsuarioScout? elenaUser = null)
     {
         // Educandos de Lestonnac 330 (Familia García Pérez)
         if (garciaUser != null && !await db.Educandos.IgnoreQueryFilters().AnyAsync(p => p.TutorLegalId == garciaUser.Id))
@@ -184,6 +189,41 @@ public static class DatabaseInitializer
             db.Educandos.AddRange(lucia, marcos);
             await db.SaveChangesAsync();
             logger.LogInformation("Educandos de Lestonnac 330 creados: Lucía (Manada) y Marcos (Tropa).");
+        }
+
+        // Educando de Elena Akela (Scouter-Padre en Lestonnac 330)
+        if (elenaUser != null && !await db.Educandos.IgnoreQueryFilters().AnyAsync(p => p.TutorLegalId == elenaUser.Id))
+        {
+            var mateo = new Educando
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = lestonnacId,
+                TutorLegalId = elenaUser.Id,
+                Nombre = "Mateo",
+                Apellidos = "Akela",
+                FechaNacimiento = new DateOnly(2019, 6, 10),
+                Sexo = "Masculino",
+                RamaActual = RamaScout.Castores,
+                Activo = true,
+                FechaCreacionUtc = DateTime.UtcNow,
+                FichaMedica = new FichaMedica
+                {
+                    Id = Guid.NewGuid(),
+                    OrganizacionId = lestonnacId,
+                    NumeroSeguridadSocial = "CIP-CLM-55443322",
+                    EntidadAseguradora = "SESCAM",
+                    AlergiasAlimentarias = "Sin alergias alimentarias conocidas",
+                    SabeNadar = true,
+                    VacunacionAlDia = true,
+                    TelefonoEmergenciaPrincipal = "+34 600 555 777",
+                    NombreContactoEmergenciaPrincipal = "Elena Akela (Madre y Scouter)",
+                    ObservacionesAdicionales = "Hijo de monitora de Manada. Iniciando etapa en Colonia de Castores."
+                }
+            };
+
+            db.Educandos.Add(mateo);
+            await db.SaveChangesAsync();
+            logger.LogInformation("Educando Mateo Akela (hijo de Scouter-Padre) registrado en Castores.");
         }
 
         // Educando de San Vicente 412 (Familia López Ruiz)
