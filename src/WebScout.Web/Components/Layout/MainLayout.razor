@@ -120,6 +120,25 @@
                 </Authorized>
             </AuthorizeView>
 
+            <AuthorizeView Roles="Coordinacion,Administracion,SuperAdmin">
+                <Authorized>
+                    <MudNavGroup Title="Administración" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                        <MudNavLink Href="/administracion/ajustes" Icon="@Icons.Material.Filled.Tune">
+                            Ajustes del Grupo
+                        </MudNavLink>
+                        <MudNavLink Href="/administracion/outbox" Icon="@Icons.Material.Filled.MarkEmailRead">
+                            Monitor Outbox
+                        </MudNavLink>
+                        <MudNavLink Href="/administracion/auditoria" Icon="@Icons.Material.Filled.HistoryEdu">
+                            Auditoría del Grupo
+                        </MudNavLink>
+                        <MudNavLink Href="/administracion/diagnostico" Icon="@Icons.Material.Filled.Dns">
+                            Diagnóstico y Backups
+                        </MudNavLink>
+                    </MudNavGroup>
+                </Authorized>
+            </AuthorizeView>
+
             <AuthorizeView Roles="SuperAdmin">
                 <Authorized>
                     <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
