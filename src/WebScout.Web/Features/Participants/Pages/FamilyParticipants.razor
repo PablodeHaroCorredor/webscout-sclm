@@ -1,7 +1,7 @@
 @page "/familias/educandos"
 @using Microsoft.AspNetCore.Identity
 @using WebScout.Web.Features.Participants.Components
-@attribute [Authorize(Roles = RolesScout.Familia)]
+@attribute [Authorize(Roles = $"{RolesScout.Familia},{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion},{RolesScout.SuperAdmin}")]
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserManager<UsuarioScout> UserManager
 @inject IServicioEducandos ServicioEducandos

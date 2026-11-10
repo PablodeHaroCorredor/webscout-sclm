@@ -46,4 +46,14 @@ public class WcagContrastTests
 
         Assert.Equal("#1A1A1A", recommendedText);
     }
+
+    [Fact]
+    public void SegmentedControl_InactiveTextOnSlateBackground_ShouldComplyWithWcagAa()
+    {
+        // Texto inactivo #1E293B sobre contenedor #E2E8F0 del conmutador de entorno
+        var ratio = WcagContrastCalculator.CalculateContrastRatio("#1E293B", "#E2E8F0");
+        var passes = WcagContrastCalculator.MeetsWcagAaNormalText("#1E293B", "#E2E8F0");
+
+        Assert.True(passes, $"El ratio de contraste {ratio:F2}:1 debe ser >= 4.5:1 para cumplir WCAG 2.2 AA");
+    }
 }
