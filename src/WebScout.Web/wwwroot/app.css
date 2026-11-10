@@ -526,3 +526,72 @@ body {
 .font-weight-semibold { font-weight: 600 !important; }
 .font-weight-medium { font-weight: 500 !important; }
 
+/* ==========================================================================
+   Menú Lateral (Drawer) Moderno, Ergonómico y Accesible (WCAG 2.2 AA)
+   ========================================================================== */
+.scout-drawer .mud-drawer-content {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.scout-drawer-scroll {
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+}
+
+.scout-drawer-scroll::-webkit-scrollbar {
+    width: 5px;
+}
+
+.scout-drawer-scroll::-webkit-scrollbar-thumb {
+    background-color: #CBD5E1;
+    border-radius: 4px;
+}
+
+.scout-drawer .mud-navmenu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.scout-drawer .mud-nav-link {
+    border-radius: 8px !important;
+    font-weight: 500;
+    font-size: 0.88rem;
+    padding: 8px 12px !important;
+    min-height: 40px;
+    margin-bottom: 2px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.scout-drawer .mud-nav-link:hover:not(.active) {
+    background-color: #F1F5F9 !important;
+    color: #0F172A !important;
+}
+
+.scout-drawer .mud-nav-link.active:not(.mud-nav-link-disabled) {
+    background-color: #F0FDF4 !important;
+    color: var(--scout-primary, #1B5E20) !important;
+    font-weight: 700 !important;
+    border-left: 4px solid var(--scout-primary, #1B5E20) !important;
+    border-right: none !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.scout-drawer .mud-nav-link.active:not(.mud-nav-link-disabled) .mud-nav-link-icon {
+    color: var(--scout-primary, #1B5E20) !important;
+}
+
+.scout-drawer .mud-nav-group .mud-nav-link {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: #475569;
+    margin-top: 6px;
+    border-radius: 6px !important;
+}
+
+
