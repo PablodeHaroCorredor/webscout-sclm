@@ -1,0 +1,108 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using WebScout.Web.Features.Orders.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                Justificante de Transferencia Bancaria
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-3 py-2">
+            <div class="rounded-xl pa-3" style="background-color: #F0FDF4; border: 1px solid #BBF7D0;">
+                <div class="d-flex align-center gap-2 mb-1">
+                    <MudIcon Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Success" />
+                    <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #166534;">
+                        Flexibilidad y Confianza Scout (Core 1.29 / PA07)
+                    </MudText>
+                </div>
+                <MudText Typo="Typo.body2" Style="color: #166534; font-size: 0.85rem;">
+                    Subir el justificante bancario es un trámite voluntario para facilitar la conciliación contable de secretaría. 
+                    <b>La entrega física del material en mano a los chavales no se bloqueará</b> aunque no hayas subido aún este comprobante.
+                </MudText>
+            </div>
+
+            @if (TieneComprobantePrevio)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true" Class="rounded-lg">
+                    Ya existe un justificante guardado: <b>@(NombreArchivoPrevio ?? "comprobante_bancario")</b>. Si seleccionas uno nuevo, se reemplazará manteniendo el estado de tu pedido intacto.
+                </MudAlert>
+            }
+
+            <div class="border-2 border-dashed rounded-xl pa-6 text-center d-flex flex-column align-center justify-center gap-2"
+                 style="border-color: #CBD5E1; background-color: #F8FAFC;">
+                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">
+                    Selecciona tu archivo de transferencia bancaria
+                </MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Formatos permitidos: PDF, JPG, PNG (máx. 10 MB)
+                </MudText>
+
+                <div class="mt-2">
+                    <InputFile id="fileInputJustificante" OnChange="OnFileSelected" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" />
+                    <MudButton HtmlTag="label"
+                               for="fileInputJustificante"
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.AttachFile">
+                        Examinar Archivo
+                    </MudButton>
+                </div>
+
+                @if (_archivoSeleccionado != null)
+                {
+                    <div class="d-flex align-center gap-2 mt-3 pa-2 rounded-lg" style="background-color: #FFFFFF; border: 1px solid #E2E8F0;">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                            @_archivoSeleccionado.Name
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            (@((_archivoSeleccionado.Size / 1024.0).ToString("N0")) KB)
+                        </MudText>
+                    </div>
+                }
+            </div>
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+            Cerrar
+        </MudButton>
+        <MudButton OnClick="SubirArchivo" 
+                   Color="Color.Success" 
+                   Variant="Variant.Filled" 
+                   Disabled="@(_archivoSeleccionado == null)">
+            Guardar Justificante
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public bool TieneComprobantePrevio { get; set; }
+
+    [Parameter]
+    public string? NombreArchivoPrevio { get; set; }
+
+    private IBrowserFile? _archivoSeleccionado;
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _archivoSeleccionado = e.File;
+    }
+
+    private void SubirArchivo()
+    {
+        if (_archivoSeleccionado == null)
+            return;
+
+        MudDialog.Close(DialogResult.Ok(_archivoSeleccionado));
+    }
+}
