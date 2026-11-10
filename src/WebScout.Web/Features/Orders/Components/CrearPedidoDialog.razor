@@ -2,7 +2,7 @@
 @using WebScout.Web.Features.Orders.Services
 @using WebScout.Web.Features.Participants.Domain
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Primary" />
@@ -110,14 +110,22 @@
         </div>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text" Disabled="_guardando">
             Cancelar
         </MudButton>
         <MudButton OnClick="ConfirmarPedido" 
                    Color="Color.Primary" 
                    Variant="Variant.Filled" 
-                   Disabled="@(Producto.RequiereTalla && string.IsNullOrWhiteSpace(_tallaSeleccionada))">
-            Confirmar Pedido (@((_cantidad * Producto.PrecioUnitario).ToString("F2")) €)
+                   Disabled="@(_guardando || (Producto.RequiereTalla && string.IsNullOrWhiteSpace(_tallaSeleccionada)))">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Registrando pedido...</span>
+            }
+            else
+            {
+                <span>Confirmar Pedido (@((_cantidad * Producto.PrecioUnitario).ToString("F2")) €)</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -136,6 +144,7 @@
     private string? _tallaSeleccionada;
     private int _cantidad = 1;
     private string? _observaciones;
+    private bool _guardando = false;
 
     protected override void OnInitialized()
     {
@@ -166,6 +175,7 @@
             return;
         }
 
+        _guardando = true;
         var lineas = new List<CrearLineaPedidoDto>
         {
             new(Producto.Id, Producto.RequiereTalla ? _tallaSeleccionada : "Talla Única", _cantidad)

@@ -1,7 +1,7 @@
 @inject IServicioActividades ServicioActividades
 @inject ISnackbar Snackbar
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@(EsNueva ? Icons.Material.Filled.AddCircle : Icons.Material.Filled.Edit)" Color="Color.Primary" />
@@ -158,9 +158,17 @@
         </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar">Cancelar</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="GuardarAsync" Disabled="@(!_formValido)">
-            @(EsNueva ? "Crear Convocatoria" : "Guardar Cambios")
+        <MudButton OnClick="Cancelar" Disabled="_guardando">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="GuardarAsync" Disabled="@(!_formValido || _guardando)">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Guardando...</span>
+            }
+            else
+            {
+                <span>@(EsNueva ? "Crear Convocatoria" : "Guardar Cambios")</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -179,6 +187,7 @@
     private bool EsNueva => ActividadExistente == null;
     private MudForm? _form;
     private bool _formValido;
+    private bool _guardando = false;
 
     private DateTime? _fechaInicio;
     private TimeSpan? _horaInicio;
@@ -288,6 +297,7 @@
             Modelo.FechaLimiteInscripcion = null;
         }
 
+        _guardando = true;
         try
         {
             if (EsNueva)
@@ -306,6 +316,10 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error al guardar: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _guardando = false;
         }
     }
 

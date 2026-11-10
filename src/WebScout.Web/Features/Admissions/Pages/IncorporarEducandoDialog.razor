@@ -3,7 +3,7 @@
 @using WebScout.Web.Features.Admissions.Domain
 @using WebScout.Web.Features.Identity.Domain
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.PersonAddAlt1" Color="Color.Primary" />
@@ -69,9 +69,17 @@
         </MudGrid>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar">Cancelar</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirmar" StartIcon="@Icons.Material.Filled.CheckCircle">
-            Confirmar Alta en Censo
+        <MudButton OnClick="Cancelar" Disabled="_guardando">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirmar" Disabled="_guardando" StartIcon="@(_guardando ? null : Icons.Material.Filled.CheckCircle)">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Incorporando...</span>
+            }
+            else
+            {
+                <span>Confirmar Alta en Censo</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -85,6 +93,7 @@
 
     private RamaScout _ramaSeleccionada;
     private string? _notasKraal;
+    private bool _guardando = false;
 
     protected override void OnInitialized()
     {
@@ -99,6 +108,7 @@
 
     private void Confirmar()
     {
+        _guardando = true;
         MudDialog.Close(DialogResult.Ok(new ResultadoIncorporacionDto(_ramaSeleccionada, _notasKraal)));
     }
 

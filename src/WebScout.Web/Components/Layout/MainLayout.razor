@@ -147,12 +147,11 @@
         <!-- Navegación Principal que inicia inmediatamente arriba -->
         <div class="scout-drawer-scroll flex-grow-1 pa-2">
             <MudNavMenu Bordered="false">
-                <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
-                    Inicio
-                </MudNavLink>
-
                 <AuthorizeView>
                     <NotAuthorized>
+                        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">
+                            Inicio
+                        </MudNavLink>
                         <MudNavLink Href="/contacto" Icon="@Icons.Material.Filled.ContactMail">
                             Contacto y Admisiones
                         </MudNavLink>

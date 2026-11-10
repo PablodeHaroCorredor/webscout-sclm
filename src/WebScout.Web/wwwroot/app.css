@@ -595,4 +595,10 @@ body {
     border-radius: 6px !important;
 }
 
+/* Modales y Diálogos con Acciones Fijadas (M6) */
+.scout-dialog-scrollable {
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+}
+
 

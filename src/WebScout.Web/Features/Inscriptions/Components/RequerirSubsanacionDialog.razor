@@ -1,7 +1,7 @@
 @using MudBlazor
 @using WebScout.Web.Features.Inscriptions.Domain
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" />
@@ -41,13 +41,21 @@
                       Class="mt-2" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Cancelar" Variant="Variant.Text" Color="Color.Default">Cancelar</MudButton>
+        <MudButton OnClick="Cancelar" Variant="Variant.Text" Color="Color.Default" Disabled="_guardando">Cancelar</MudButton>
         <MudButton OnClick="ConfirmarSubsanacion" 
                    Variant="Variant.Filled" 
                    Color="Color.Warning" 
-                   Disabled="@(string.IsNullOrWhiteSpace(_motivoSubsanacion))"
-                   StartIcon="@Icons.Material.Filled.Send">
-            Solicitar Subsanación
+                   Disabled="@(string.IsNullOrWhiteSpace(_motivoSubsanacion) || _guardando)"
+                   StartIcon="@(_guardando ? null : Icons.Material.Filled.Send)">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Solicitando...</span>
+            }
+            else
+            {
+                <span>Solicitar Subsanación</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -60,6 +68,7 @@
     public InscripcionActividad? Inscripcion { get; set; }
 
     private string _motivoSubsanacion = string.Empty;
+    private bool _guardando = false;
 
     private void Cancelar() => MudDialog.Cancel();
 
@@ -67,6 +76,7 @@
     {
         if (!string.IsNullOrWhiteSpace(_motivoSubsanacion))
         {
+            _guardando = true;
             MudDialog.Close(DialogResult.Ok(_motivoSubsanacion.Trim()));
         }
     }
