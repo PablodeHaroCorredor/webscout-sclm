@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
+using WebScout.Web.Features.Administration.Domain;
 using WebScout.Web.Features.Admissions.Domain;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
@@ -40,6 +41,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<MensajeOutbox> MensajesOutbox => Set<MensajeOutbox>();
     public DbSet<SolicitudAdmision> SolicitudesAdmision => Set<SolicitudAdmision>();
     public DbSet<MensajeContacto> MensajesContacto => Set<MensajeContacto>();
+    public DbSet<ConfiguracionGrupo> ConfiguracionesGrupo => Set<ConfiguracionGrupo>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -282,7 +284,26 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(m => new { m.OrganizacionId, m.FechaEnvioUtc });
         });
 
-        // 12. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
+        // 12. Configuración de Ajustes de Grupo por Áreas (RF64 / BL10)
+        modelBuilder.Entity<ConfiguracionGrupo>(b =>
+        {
+            b.ToTable("ConfiguracionesGrupo");
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Cif).HasMaxLength(30);
+            b.Property(c => c.DireccionBase).HasMaxLength(300);
+            b.Property(c => c.TelefonoContacto).HasMaxLength(50);
+            b.Property(c => c.EmailOficial).HasMaxLength(256);
+            b.Property(c => c.RondaSolarActiva).HasMaxLength(50).IsRequired();
+            b.Property(c => c.IbanCuentaBancaria).HasMaxLength(50);
+            b.Property(c => c.TitularCuenta).HasMaxLength(150);
+            b.Property(c => c.ConceptoCuotaSugerido).HasMaxLength(200);
+            b.Property(c => c.MensajeBienvenidaAdmisiones).HasMaxLength(2000);
+            b.Property(c => c.EstadoUltimoBackup).HasMaxLength(200);
+
+            b.HasIndex(c => c.OrganizacionId).IsUnique();
+        });
+
+        // 13. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))

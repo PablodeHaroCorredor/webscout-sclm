@@ -1,0 +1,170 @@
+@page "/administracion/auditoria"
+@using Microsoft.AspNetCore.Authorization
+@using WebScout.Web.Features.Audit.Domain
+@using WebScout.Web.Features.Audit.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@inject IServicioAuditoria ServicioAuditoria
+@inject ITenantContext Tenant
+@inject ISnackbar Snackbar
+
+<PageTitle>Auditoría del Grupo Scout · @(Tenant.GroupName)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-6">
+    <!-- Encabezado de la página -->
+    <div class="d-flex flex-wrap justify-space-between align-center gap-4 mb-4">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                    @(Tenant.GroupName)
+                </MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Seguridad y RGPD (RF60 / RNF09 / PA06)</MudText>
+            </div>
+            <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                Registro de Auditoría Funcional
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                Trazabilidad inmutable de accesos documentales, consultas de fichas sanitarias y acciones administrativas sensibles.
+            </MudText>
+        </div>
+
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Default" 
+                   StartIcon="@Icons.Material.Filled.Refresh" 
+                   OnClick="CargarDatosAsync">
+            Actualizar
+        </MudButton>
+    </div>
+
+    <!-- Aviso de Privacidad Operativa RNF09 -->
+    <MudAlert Severity="Severity.Normal" Variant="Variant.Text" Class="mb-6 rounded-lg border bg-white" Icon="@Icons.Material.Filled.Security">
+        <strong>Privacidad Operativa (RNF09 / Art. 32 RGPD):</strong> Las trazas de auditoría son inmutables y redactadas en origen.
+        No contienen contraseñas, diagnósticos clínicos confidenciales ni datos bancarios íntegros.
+    </MudAlert>
+
+    <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white">
+        <MudCardContent>
+            <!-- Filtros -->
+            <div class="d-flex flex-wrap gap-4 align-center mb-4">
+                <MudTextField T="string" 
+                              Label="Filtrar por Acción" 
+                              @bind-Value="_filtroAccion" 
+                              Variant="Variant.Outlined" 
+                              Margin="Margin.Dense" 
+                              Placeholder="Ej. DescargaJustificante, AltaEducando..."
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="CargarDatosAsync"
+                              Style="min-width: 250px;" />
+
+                <MudTextField T="string" 
+                              Label="Filtrar por Tipo de Recurso" 
+                              @bind-Value="_filtroRecurso" 
+                              Variant="Variant.Outlined" 
+                              Margin="Margin.Dense" 
+                              Placeholder="Ej. Educando, Inscripcion..."
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="CargarDatosAsync"
+                              Style="min-width: 250px;" />
+            </div>
+
+            @if (_cargando)
+            {
+                <div class="d-flex justify-center py-8">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                </div>
+            }
+            else if (_registros.Count == 0)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Text" Class="my-4">
+                    No se encontraron registros de auditoría con los filtros seleccionados.
+                </MudAlert>
+            }
+            else
+            {
+                <MudTable Items="@_registros" Hover="true" Dense="true" Elevation="0">
+                    <HeaderContent>
+                        <MudTh>Fecha y Hora</MudTh>
+                        <MudTh>Actor / Usuario</MudTh>
+                        <MudTh>Acción Realizada</MudTh>
+                        <MudTh>Recurso Afectado</MudTh>
+                        <MudTh>Detalles de Operación</MudTh>
+                        <MudTh>Dirección IP</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Fecha">
+                            @context.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                        </MudTd>
+                        <MudTd DataLabel="Actor">
+                            <MudText Typo="Typo.body2" Style="font-weight: 700;">
+                                @(string.IsNullOrWhiteSpace(context.EmailUsuario) ? "Anónimo / Sistema" : context.EmailUsuario)
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Acción">
+                            <MudChip T="string" Size="Size.Small" Color="@ObtenerColorAccion(context.Accion)" Variant="Variant.Filled">
+                                @context.Accion
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Recurso">
+                            <MudText Typo="Typo.body2">@context.TipoRecurso</MudText>
+                            @if (!string.IsNullOrWhiteSpace(context.RecursoId))
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary text-truncate" Style="max-width: 150px;">
+                                    @context.RecursoId
+                                </MudText>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Detalles">
+                            <span style="font-size: 0.85rem; color: #475569;">
+                                @(string.IsNullOrWhiteSpace(context.Detalles) ? "—" : context.Detalles)
+                            </span>
+                        </MudTd>
+                        <MudTd DataLabel="IP">
+                            <code style="font-size: 0.8rem;">@(context.DireccionIp ?? "—")</code>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private bool _cargando = true;
+    private string? _filtroAccion;
+    private string? _filtroRecurso;
+    private IReadOnlyList<RegistroAuditoria> _registros = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _registros = await ServicioAuditoria.ObtenerRegistrosAsync(_filtroAccion, _filtroRecurso);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private Color ObtenerColorAccion(string accion) => accion switch
+    {
+        var a when a.Contains("Descarga") || a.Contains("Exportacion") => Color.Info,
+        var a when a.Contains("FichaMedica") || a.Contains("Salud") => Color.Warning,
+        var a when a.Contains("Alta") || a.Contains("Creacion") => Color.Success,
+        var a when a.Contains("Actualizacion") => Color.Primary,
+        var a when a.Contains("Baja") || a.Contains("Eliminacion") => Color.Error,
+        _ => Color.Default
+    };
+}

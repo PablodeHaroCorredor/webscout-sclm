@@ -153,20 +153,30 @@
                                     </span>
                                 </MudTd>
                                 <MudTd DataLabel="Acciones" Style="text-align: right;">
-                                    <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
-                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.EnListaEspera))">
-                                            Pasar a Lista de Espera
-                                        </MudMenuItem>
-                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Admitida))">
-                                            Admitir en el Grupo
-                                        </MudMenuItem>
-                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Rechazada))">
-                                            Desestimar / Rechazar
-                                        </MudMenuItem>
-                                        <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Archivada))">
-                                            Archivar Solicitud
-                                        </MudMenuItem>
-                                    </MudMenu>
+                                    <div class="d-flex align-center justify-end gap-1">
+                                        <MudButton Variant="Variant.Outlined" 
+                                                   Color="Color.Primary" 
+                                                   Size="Size.Small" 
+                                                   StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+                                                   OnClick="@(() => AbrirIncorporacionDialog(context))">
+                                            Incorporar
+                                        </MudButton>
+
+                                        <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
+                                            <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.EnListaEspera))">
+                                                Pasar a Lista de Espera
+                                            </MudMenuItem>
+                                            <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Admitida))">
+                                                Admitir en el Grupo
+                                            </MudMenuItem>
+                                            <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Rechazada))">
+                                                Desestimar / Rechazar
+                                            </MudMenuItem>
+                                            <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.Archivada))">
+                                                Archivar Solicitud
+                                            </MudMenuItem>
+                                        </MudMenu>
+                                    </div>
                                 </MudTd>
                             </RowTemplate>
                         </MudTable>
@@ -364,6 +374,43 @@
         catch (Exception ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task AbrirIncorporacionDialog(SolicitudAdmision solicitud)
+    {
+        var parameters = new DialogParameters<IncorporarEducandoDialog>
+        {
+            { x => x.Solicitud, solicitud }
+        };
+
+        var dialog = await DialogService.ShowAsync<IncorporarEducandoDialog>(
+            "Incorporar Educando al Censo",
+            parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled && result.Data is IncorporarEducandoDialog.ResultadoIncorporacionDto dto)
+        {
+            try
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                var userIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var scouterId = Guid.TryParse(userIdStr, out var id) ? id : Guid.Empty;
+
+                var educando = await ServicioAdmisiones.ConvertirSolicitudEnEducandoAsync(
+                    solicitud.Id,
+                    dto.RamaAsignada,
+                    dto.NotasKraal,
+                    scouterId);
+
+                Snackbar.Add($"¡{educando.NombreCompleto} ha sido incorporado al censo en {dto.RamaAsignada.ObtenerNombre()}! Se ha notificado a la familia.", Severity.Success);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+            }
         }
     }
 
