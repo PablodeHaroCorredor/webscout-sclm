@@ -4,7 +4,7 @@
 <MudDialog>
     <TitleContent>
         <div class="d-flex align-center gap-2">
-            <MudAvatar Color="@ObtenerColorEstado(Mensaje.Estado)" Variant="Variant.Filled" Size="Size.Small">
+            <MudAvatar Color="@(Mensaje.Estado == EstadoMensajeOutbox.Enviado ? Color.Success : Mensaje.Estado == EstadoMensajeOutbox.Fallido ? Color.Error : Color.Info)" Variant="Variant.Filled" Size="Size.Small">
                 <MudIcon Icon="@Icons.Material.Filled.Email" Size="Size.Small" />
             </MudAvatar>
             <div>
@@ -30,9 +30,7 @@
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Estado de Envío:</MudText>
-                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(Mensaje.Estado)" Variant="Variant.Filled">
-                            @Mensaje.Estado.ToString()
-                        </MudChip>
+                        <ScoutStatusBadge Estado="Mensaje.Estado" />
                         <span class="mud-text-secondary ms-2" style="font-size: 0.8rem;">
                             (Intento @Mensaje.Reintentos de @Mensaje.MaxReintentos)
                         </span>
@@ -94,13 +92,4 @@
     public MensajeOutbox Mensaje { get; set; } = null!;
 
     private void Cerrar() => MudDialog.Close();
-
-    private Color ObtenerColorEstado(EstadoMensajeOutbox estado) => estado switch
-    {
-        EstadoMensajeOutbox.Enviado => Color.Success,
-        EstadoMensajeOutbox.Pendiente => Color.Warning,
-        EstadoMensajeOutbox.EnProceso => Color.Info,
-        EstadoMensajeOutbox.Fallido => Color.Error,
-        _ => Color.Default
-    };
 }

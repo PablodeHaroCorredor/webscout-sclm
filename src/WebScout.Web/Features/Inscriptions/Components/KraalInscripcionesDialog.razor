@@ -119,9 +119,7 @@
                         }
                     </MudTd>
                     <MudTd DataLabel="Estado">
-                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                            @ObtenerNombreEstado(context.Estado)
-                        </MudChip>
+                        <ScoutStatusBadge Estado="context.Estado" />
                         @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
                         {
                             <MudText Typo="Typo.caption" Class="d-block text-danger mt-1">
@@ -267,26 +265,6 @@
             }
         }
     }
-
-    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
-    {
-        EstadoInscripcion.PendienteJustificante => Color.Warning,
-        EstadoInscripcion.EnRevision => Color.Info,
-        EstadoInscripcion.Confirmada => Color.Success,
-        EstadoInscripcion.RequiereSubsanacion => Color.Error,
-        EstadoInscripcion.Cancelada => Color.Default,
-        _ => Color.Default
-    };
-
-    private string ObtenerNombreEstado(EstadoInscripcion estado) => estado switch
-    {
-        EstadoInscripcion.PendienteJustificante => "Pendiente Justificante",
-        EstadoInscripcion.EnRevision => "En Revisión",
-        EstadoInscripcion.Confirmada => "Plaza Confirmada",
-        EstadoInscripcion.RequiereSubsanacion => "Requiere Subsanación",
-        EstadoInscripcion.Cancelada => "Cancelada",
-        _ => estado.ToString()
-    };
 
     private void Cerrar() => MudDialog.Close();
 }
