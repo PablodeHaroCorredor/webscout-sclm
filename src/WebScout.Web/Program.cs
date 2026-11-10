@@ -9,6 +9,8 @@ using WebScout.Web.Features.Dossier.Endpoints;
 using WebScout.Web.Features.Identity;
 using WebScout.Web.Features.Inscriptions;
 using WebScout.Web.Features.Inscriptions.Endpoints;
+using WebScout.Web.Features.Orders;
+using WebScout.Web.Features.Orders.Endpoints;
 using WebScout.Web.Features.Participants;
 using WebScout.Web.Infrastructure.Outbox;
 using WebScout.Web.Infrastructure.Security;
@@ -50,6 +52,9 @@ builder.Services.AddAdmissionFeatures();
 
 // Registrar Dominio de Administración, Configuración y Diagnóstico (BL10)
 builder.Services.AddAdministrationFeatures();
+
+// Registrar Dominio de Pedidos y Catálogo de Material Scout Core 1.29 (BL07)
+builder.Services.AddOrderFeatures();
 
 // Registrar Motor Outbox Transaccional y Transporte SMTP (ADR07 / PA11)
 builder.Services.AddOutboxInfrastructure(builder.Configuration);
@@ -97,6 +102,9 @@ app.MapJustificanteEndpoints();
 
 // Endpoints de exportación de asistencia
 app.MapDossierEndpoints();
+
+// Endpoints de pedidos y aprovisionamiento de material scout (BL07)
+app.MapOrderEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

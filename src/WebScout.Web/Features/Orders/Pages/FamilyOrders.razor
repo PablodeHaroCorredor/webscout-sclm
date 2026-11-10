@@ -1,0 +1,518 @@
+@page "/familias/pedidos"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Orders.Components
+@using WebScout.Web.Features.Orders.Domain
+@using WebScout.Web.Features.Orders.Services
+@using WebScout.Web.Features.Participants.Domain
+@using WebScout.Web.Infrastructure.Persistence
+@using WebScout.Web.Infrastructure.Tenancy
+@attribute [Authorize(Roles = $"{RolesScout.Familia},{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion},{RolesScout.SuperAdmin}")]
+@inject IServicioPedidosMaterial ServicioPedidos
+@inject WebScoutDbContext DbContext
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ITenantContext Tenant
+
+<PageTitle>Material Scout y Uniformidad — WebScout SCLM</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="pa-0">
+    <!-- Encabezado de página -->
+    <div class="d-flex align-center justify-space-between flex-wrap gap-2 mb-4">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                    @(Tenant.IsResolved ? Tenant.GroupName : "Grupo Scout")
+                </MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Acuerdo Asociativo Core 1.29
+                </MudText>
+            </div>
+            <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A;">
+                Material Scout y Uniformidad
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                Encarga pañoletas, polos y material oficial para tus educandos, y haz seguimiento transparente de tus solicitudes.
+            </MudText>
+        </div>
+    </div>
+
+    <!-- Banner Pedagógico y Asociativo Core 1.29 (PA07) -->
+    <div class="rounded-2xl border pa-4 mb-5" style="background-color: #F0FDF4; border-color: #BBF7D0;">
+        <div class="d-flex align-start gap-3">
+            <MudIcon Icon="@Icons.Material.Filled.Handshake" Color="Color.Success" Size="Size.Medium" Class="mt-0.5" />
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 700; color: #166534;">
+                    Entrega Flexible en Mano (Sin Bloqueos Bancarios)
+                </MudText>
+                <MudText Typo="Typo.body2" Style="color: #166534; font-size: 0.88rem; line-height: 1.45;">
+                    En nuestro grupo scout, la uniformidad y el material se entregan directamente a los educandos en la base scout. 
+                    <b>No exigimos que hayas subido o verificado previamente la transferencia para recibir el material (PA07).</b> Puedes adjuntar tu justificante voluntariamente cuando te sea más cómodo para facilitar la contabilidad asociativa.
+                </MudText>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas: Catálogo vs Mis Solicitudes -->
+    <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-4" Color="Color.Primary">
+        <!-- PESTAÑA 1: CATÁLOGO DE MATERIAL -->
+        <MudTabPanel Text="Catálogo Oficial de Material" Icon="@Icons.Material.Filled.Storefront">
+            <!-- Filtro de Categorías -->
+            <div class="d-flex flex-wrap align-center gap-2 mb-4">
+                <MudChip T="string" 
+                         Variant="@(string.IsNullOrEmpty(_categoriaSeleccionada) ? Variant.Filled : Variant.Outlined)" 
+                         Color="Color.Primary" 
+                         OnClick="@(() => FiltrarPorCategoria(null))">
+                    Todos (@_catalogo.Count)
+                </MudChip>
+                @foreach (var cat in _categorias)
+                {
+                    <MudChip T="string" 
+                             Variant="@(_categoriaSeleccionada == cat ? Variant.Filled : Variant.Outlined)" 
+                             Color="Color.Primary" 
+                             OnClick="@(() => FiltrarPorCategoria(cat))">
+                        @cat (@_catalogo.Count(p => p.Categoria == cat))
+                    </MudChip>
+                }
+            </div>
+
+            @if (_cargando)
+            {
+                <div class="d-flex flex-column align-center justify-center py-12 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando catálogo oficial...</MudText>
+                </div>
+            }
+            else if (_productosFiltrados.Count == 0)
+            {
+                <div class="text-center py-12">
+                    <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Large" Class="mud-text-secondary mb-2" />
+                    <MudText Typo="Typo.h6">No hay artículos disponibles</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No se encontraron productos en la categoría seleccionada.</MudText>
+                </div>
+            }
+            else
+            {
+                <MudGrid Spacing="3">
+                    @foreach (var prod in _productosFiltrados)
+                    {
+                        <MudItem xs="12" sm="6" md="4">
+                            <div class="rounded-2xl border bg-white pa-5 h-100 d-flex flex-column justify-space-between product-card shadow-sm"
+                                 style="border-color: #E2E8F0; transition: transform 0.15s ease, box-shadow 0.15s ease;">
+                                <div>
+                                    <div class="d-flex justify-space-between align-start gap-2 mb-2">
+                                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default" Class="px-2" Style="background-color: #F1F5F9; font-weight: 600;">
+                                            @(prod.Categoria ?? "General")
+                                        </MudChip>
+                                        <MudText Typo="Typo.h6" Style="font-weight: 800; color: #1B5E20; line-height: 1;">
+                                            @prod.PrecioUnitario.ToString("F2") €
+                                        </MudText>
+                                    </div>
+
+                                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A; min-height: 48px; line-height: 1.3;">
+                                        @prod.Nombre
+                                    </MudText>
+
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1 mb-3" Style="font-size: 0.85rem; line-height: 1.45; min-height: 40px;">
+                                        @prod.Descripcion
+                                    </MudText>
+
+                                    @if (prod.RequiereTalla)
+                                    {
+                                        <div class="mb-3">
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-1" Style="font-weight: 600;">
+                                                Tallas disponibles:
+                                            </MudText>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @foreach (var t in prod.ObtenerTallas())
+                                                {
+                                                    <span class="size-badge">@t</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="mb-3">
+                                            <span class="size-badge" style="background-color: #F8FAFC; border-color: #CBD5E1; color: #64748B;">
+                                                Talla Única
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="pt-3 border-t mt-2" style="border-top: 1px solid #F1F5F9;">
+                                    <MudButton Variant="Variant.Filled" 
+                                               Color="Color.Primary" 
+                                               FullWidth="true" 
+                                               StartIcon="@Icons.Material.Filled.AddShoppingCart"
+                                               OnClick="@(() => AbrirDialogoSolicitudAsync(prod))">
+                                        Solicitar Artículo
+                                    </MudButton>
+                                </div>
+                            </div>
+                        </MudItem>
+                    }
+                </MudGrid>
+            }
+        </MudTabPanel>
+
+        <!-- PESTAÑA 2: MIS SOLICITUDES DE MATERIAL -->
+        <MudTabPanel Text="@($"Mis Solicitudes ({_misPedidos.Count})")" Icon="@Icons.Material.Filled.Assignment">
+            @if (_cargando)
+            {
+                <div class="d-flex flex-column align-center justify-center py-12 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando tus solicitudes...</MudText>
+                </div>
+            }
+            else if (_misPedidos.Count == 0)
+            {
+                <div class="rounded-2xl border bg-white pa-8 text-center my-4" style="border-color: #E2E8F0;">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Size="Size.Large" Color="Color.Default" Class="mb-3" />
+                    <MudText Typo="Typo.h6" Style="font-weight: 700;">No tienes pedidos registrados todavía</MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 450px; margin: 0 auto;">
+                        Consulta la pestaña del catálogo de material para solicitar pañoletas, polos o artículos scout para tu familia.
+                    </MudText>
+                </div>
+            }
+            else
+            {
+                <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden my-2">
+                    <MudTable Items="_misPedidos" Hover="true" Dense="false" Elevation="0">
+                        <HeaderContent>
+                            <MudTh>Código</MudTh>
+                            <MudTh>Fecha</MudTh>
+                            <MudTh>Educando</MudTh>
+                            <MudTh>Artículos y Tallas</MudTh>
+                            <MudTh class="text-end">Total</MudTh>
+                            <MudTh class="text-center">Comprobante</MudTh>
+                            <MudTh class="text-center">Estado</MudTh>
+                            <MudTh class="text-end">Acciones</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Código">
+                                <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                                    @context.CodigoPedido
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Fecha">
+                                <MudText Typo="Typo.body2">
+                                    @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Educando">
+                                <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                    @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
+                                </MudText>
+                                @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                        @context.RamaEducativa
+                                    </MudText>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Artículos">
+                                <div class="d-flex flex-column gap-1">
+                                    @foreach (var l in context.Lineas)
+                                    {
+                                        <MudText Typo="Typo.caption" Style="color: #334155;">
+                                            • @l.Cantidad x <b>@l.ProductoNombre</b> (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
+                                        </MudText>
+                                    }
+                                </div>
+                            </MudTd>
+                            <MudTd DataLabel="Total" Class="text-end font-weight-bold">
+                                <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
+                                    @context.TotalEstimado.ToString("F2") €
+                                </MudText>
+                            </MudTd>
+                            <MudTd DataLabel="Comprobante" Class="text-center">
+                                @if (context.TieneComprobante)
+                                {
+                                    <MudTooltip Text="@($"Justificante subido: {context.ComprobantePagoNombreOriginal}")">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
+                                            Adjunto
+                                        </MudChip>
+                                    </MudTooltip>
+                                }
+                                else
+                                {
+                                    <MudTooltip Text="Voluntario: la entrega física en mano no se bloqueará (PA07)">
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                            Sin Adjuntar
+                                        </MudChip>
+                                    </MudTooltip>
+                                }
+                            </MudTd>
+                            <MudTd DataLabel="Estado" Class="text-center">
+                                <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                                    @context.Estado
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Acciones" Class="text-end">
+                                <div class="d-flex justify-end align-center gap-1">
+                                    <MudTooltip Text="Ver detalle completo">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                                       Size="Size.Small" 
+                                                       Color="Color.Default" 
+                                                       OnClick="@(() => VerDetallePedidoAsync(context))" />
+                                    </MudTooltip>
+
+                                    @if (context.PermiteAdjuntarComprobante)
+                                    {
+                                        <MudTooltip Text="Subir comprobante de transferencia bancaria (RF51)">
+                                            <MudIconButton Icon="@Icons.Material.Filled.UploadFile" 
+                                                           Size="Size.Small" 
+                                                           Color="Color.Primary" 
+                                                           OnClick="@(() => AbrirDialogoComprobanteAsync(context))" />
+                                        </MudTooltip>
+                                    }
+
+                                    @if (context.PermiteCancelacionFamilia)
+                                    {
+                                        <MudTooltip Text="Cancelar solicitud (RF52)">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                                           Size="Size.Small" 
+                                                           Color="Color.Error" 
+                                                           OnClick="@(() => AbrirDialogoCancelarAsync(context))" />
+                                        </MudTooltip>
+                                    }
+                                    else if (context.Estado == EstadoPedidoMaterial.PedidoAlProveedor || context.Estado == EstadoPedidoMaterial.Entregado)
+                                    {
+                                        <MudTooltip Text="El pedido ya está en marcha o entregado. Contacta con el Kraal para cualquier consulta.">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
+                                                           Size="Size.Small" 
+                                                           Color="Color.Default" 
+                                                           Disabled="true" />
+                                        </MudTooltip>
+                                    }
+                                </div>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudCard>
+            }
+        </MudTabPanel>
+    </MudTabs>
+</MudContainer>
+
+<style>
+    .size-badge {
+        display: inline-block;
+        padding: 2px 7px;
+        background-color: #F1F5F9;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #475569;
+    }
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03) !important;
+    }
+</style>
+
+@code {
+    private List<ProductoMaterial> _catalogo = new();
+    private List<ProductoMaterial> _productosFiltrados = new();
+    private List<PedidoMaterial> _misPedidos = new();
+    private List<Educando> _educandosFamilia = new();
+    private List<string> _categorias = new();
+    private string? _categoriaSeleccionada;
+
+    private bool _cargando = true;
+    private Guid _usuarioActualId;
+    private string _usuarioNombre = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userIdStr = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdStr, out var id))
+            {
+                _usuarioActualId = id;
+            }
+            _usuarioNombre = user.FindFirst(ClaimTypes.Name)?.Value ?? user.Identity.Name ?? "Usuario";
+        }
+
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            var orgId = Tenant.CurrentTenantId;
+            _catalogo = await ServicioPedidos.ObtenerCatalogoAsync(orgId);
+            _categorias = _catalogo
+                .Where(p => !string.IsNullOrWhiteSpace(p.Categoria))
+                .Select(p => p.Categoria!)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            FiltrarPorCategoria(_categoriaSeleccionada);
+
+            if (_usuarioActualId != Guid.Empty)
+            {
+                _misPedidos = await ServicioPedidos.ObtenerPedidosFamiliaAsync(orgId, _usuarioActualId);
+                _educandosFamilia = await DbContext.Educandos
+                    .Where(e => e.TutorLegalId == _usuarioActualId && e.Activo)
+                    .OrderBy(e => e.Nombre)
+                    .ToListAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar datos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void FiltrarPorCategoria(string? categoria)
+    {
+        _categoriaSeleccionada = categoria;
+        if (string.IsNullOrWhiteSpace(categoria))
+        {
+            _productosFiltrados = _catalogo;
+        }
+        else
+        {
+            _productosFiltrados = _catalogo.Where(p => p.Categoria == categoria).ToList();
+        }
+    }
+
+    private async Task AbrirDialogoSolicitudAsync(ProductoMaterial producto)
+    {
+        var parameters = new DialogParameters<CrearPedidoDialog>
+        {
+            { x => x.Producto, producto },
+            { x => x.EducandosFamilia, _educandosFamilia }
+        };
+
+        var dialog = await DialogService.ShowAsync<CrearPedidoDialog>("Solicitud de Material", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled && result.Data is CrearPedidoDto dto)
+        {
+            try
+            {
+                var orgId = Tenant.CurrentTenantId;
+                var pedido = await ServicioPedidos.CrearPedidoAsync(orgId, _usuarioActualId, dto, _usuarioNombre);
+                Snackbar.Add($"¡Solicitud {pedido.CodigoPedido} creada con éxito!", Severity.Success);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error al crear la solicitud: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task AbrirDialogoComprobanteAsync(PedidoMaterial pedido)
+    {
+        var parameters = new DialogParameters<SubirComprobanteDialog>
+        {
+            { x => x.TieneComprobantePrevio, pedido.TieneComprobante },
+            { x => x.NombreArchivoPrevio, pedido.ComprobantePagoNombreOriginal }
+        };
+
+        var dialog = await DialogService.ShowAsync<SubirComprobanteDialog>("Adjuntar Comprobante", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled && result.Data is IBrowserFile file)
+        {
+            try
+            {
+                using var stream = file.OpenReadStream(10 * 1024 * 1024);
+                await ServicioPedidos.AdjuntarComprobantePagoAsync(pedido.Id, file.Name, stream, _usuarioNombre);
+                Snackbar.Add("Justificante guardado correctamente. ¡Gracias por colaborar con la secretaría!", Severity.Success);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error al adjuntar comprobante: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task AbrirDialogoCancelarAsync(PedidoMaterial pedido)
+    {
+        var parameters = new DialogParameters<CancelarPedidoDialog>
+        {
+            { x => x.CodigoPedido, pedido.CodigoPedido }
+        };
+
+        var dialog = await DialogService.ShowAsync<CancelarPedidoDialog>("Cancelar Solicitud", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.ExtraSmall,
+            FullWidth = true,
+            CloseButton = true
+        });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled && result.Data is string motivo)
+        {
+            try
+            {
+                await ServicioPedidos.CancelarPedidoFamiliaAsync(pedido.Id, _usuarioActualId, motivo, _usuarioNombre);
+                Snackbar.Add($"Solicitud {pedido.CodigoPedido} cancelada correctamente.", Severity.Info);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error al cancelar: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task VerDetallePedidoAsync(PedidoMaterial pedido)
+    {
+        var parameters = new DialogParameters<DetallePedidoDialog>
+        {
+            { x => x.Pedido, pedido }
+        };
+
+        await DialogService.ShowAsync<DetallePedidoDialog>($"Detalle {pedido.CodigoPedido}", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        });
+    }
+
+    private Color ObtenerColorEstado(EstadoPedidoMaterial estado) => estado switch
+    {
+        EstadoPedidoMaterial.Solicitado => Color.Info,
+        EstadoPedidoMaterial.Revisado => Color.Warning,
+        EstadoPedidoMaterial.PedidoAlProveedor => Color.Primary,
+        EstadoPedidoMaterial.Entregado => Color.Success,
+        EstadoPedidoMaterial.Rechazado => Color.Error,
+        EstadoPedidoMaterial.Cancelado => Color.Dark,
+        _ => Color.Default
+    };
+}

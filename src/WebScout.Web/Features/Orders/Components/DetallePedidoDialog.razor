@@ -1,0 +1,184 @@
+@using WebScout.Web.Features.Orders.Domain
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">
+                Detalle del Pedido @Pedido.CodigoPedido
+            </MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <div class="d-flex flex-column gap-4 py-2">
+            <!-- Cabecera de estado y totales -->
+            <div class="d-flex flex-wrap justify-space-between align-center p-3 rounded-xl border bg-light pa-3" style="background-color: #F8FAFC; border: 1px solid #E2E8F0;">
+                <div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Fecha de Solicitud</MudText>
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                        @Pedido.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Estado Actual</MudText>
+                    <div>
+                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(Pedido.Estado)" Variant="Variant.Filled">
+                            @Pedido.Estado
+                        </MudChip>
+                    </div>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Importe Total Estimado</MudText>
+                    <MudText Typo="Typo.h6" Style="font-weight: 800; color: #1B5E20;">
+                        @Pedido.TotalEstimado.ToString("F2") €
+                    </MudText>
+                </div>
+            </div>
+
+            <!-- Datos del Solicitante y Educando -->
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <div class="pa-3 rounded-lg border h-100" style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase" Style="font-weight: 700;">
+                            Solicitante (Familia)
+                        </MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: 600; color: #0F172A; margin-top: 2px;">
+                            @Pedido.SolicitanteNombre
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            @Pedido.SolicitanteEmail
+                        </MudText>
+                        @if (!string.IsNullOrWhiteSpace(Pedido.SolicitanteTelefono))
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">
+                                Tel: @Pedido.SolicitanteTelefono
+                            </MudText>
+                        }
+                    </div>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <div class="pa-3 rounded-lg border h-100" style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary text-uppercase" Style="font-weight: 700;">
+                            Educando Destinatario
+                        </MudText>
+                        <MudText Typo="Typo.body1" Style="font-weight: 600; color: #0F172A; margin-top: 2px;">
+                            @(string.IsNullOrWhiteSpace(Pedido.EducandoNombre) ? "Para la familia / General" : Pedido.EducandoNombre)
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            Rama: @(string.IsNullOrWhiteSpace(Pedido.RamaEducativa) ? "No especificada" : Pedido.RamaEducativa)
+                        </MudText>
+                    </div>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Artículos Solicitados -->
+            <div>
+                <MudText Typo="Typo.subtitle2" Style="font-weight: 700; margin-bottom: 6px;">
+                    Artículos y Uniformidad
+                </MudText>
+                <MudSimpleTable Dense="true" Hover="true" Outlined="true" Class="rounded-lg">
+                    <thead>
+                        <tr>
+                            <th>Artículo</th>
+                            <th>Talla</th>
+                            <th class="text-center">Unidades</th>
+                            <th class="text-end">Precio Unit.</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var linea in Pedido.Lineas)
+                        {
+                            <tr>
+                                <td>
+                                    <b>@linea.ProductoNombre</b>
+                                </td>
+                                <td>
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default">
+                                        @(string.IsNullOrWhiteSpace(linea.Talla) ? "Talla Única" : linea.Talla)
+                                    </MudChip>
+                                </td>
+                                <td class="text-center">@linea.Cantidad</td>
+                                <td class="text-end">@linea.PrecioUnitario.ToString("F2") €</td>
+                                <td class="text-end font-weight-bold">@linea.Subtotal.ToString("F2") €</td>
+                            </tr>
+                        }
+                    </tbody>
+                </MudSimpleTable>
+            </div>
+
+            <!-- Justificante Bancario -->
+            <div class="pa-3 rounded-xl border d-flex justify-space-between align-center" style="background-color: #F8FAFC; border-color: #E2E8F0;">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@(Pedido.TieneComprobante ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Info)" 
+                             Color="@(Pedido.TieneComprobante ? Color.Success : Color.Default)" />
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 600;">
+                            Justificante de Pago
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @(Pedido.TieneComprobante 
+                                ? $"Adjuntado: {Pedido.ComprobantePagoNombreOriginal} ({Pedido.ComprobantePagoFechaUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")})" 
+                                : "Sin justificante adjunto (Entrega en mano permitida según acuerdo PA07)")
+                        </MudText>
+                    </div>
+                </div>
+                @if (Pedido.TieneComprobante)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">
+                        Registrado
+                    </MudChip>
+                }
+            </div>
+
+            <!-- Observaciones y Motivo -->
+            @if (!string.IsNullOrWhiteSpace(Pedido.ObservacionesFamilia))
+            {
+                <div class="pa-3 rounded-lg border" style="background-color: #FFFFFF; border-color: #E2E8F0;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700;">
+                        Observaciones de la Familia:
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: #334155; margin-top: 2px;">
+                        @Pedido.ObservacionesFamilia
+                    </MudText>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Pedido.MotivoEstado))
+            {
+                <div class="pa-3 rounded-lg border" style="background-color: #FFFBEB; border-color: #FDE68A;">
+                    <MudText Typo="Typo.caption" Style="color: #92400E; font-weight: 700;">
+                        Motivo / Aclaración del Estado:
+                    </MudText>
+                    <MudText Typo="Typo.body2" Style="color: #92400E; margin-top: 2px;">
+                        @Pedido.MotivoEstado
+                    </MudText>
+                </div>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Primary" Variant="Variant.Filled">
+            Cerrar
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public PedidoMaterial Pedido { get; set; } = default!;
+
+    private Color ObtenerColorEstado(EstadoPedidoMaterial estado) => estado switch
+    {
+        EstadoPedidoMaterial.Solicitado => Color.Info,
+        EstadoPedidoMaterial.Revisado => Color.Warning,
+        EstadoPedidoMaterial.PedidoAlProveedor => Color.Primary,
+        EstadoPedidoMaterial.Entregado => Color.Success,
+        EstadoPedidoMaterial.Rechazado => Color.Error,
+        EstadoPedidoMaterial.Cancelado => Color.Dark,
+        _ => Color.Default
+    };
+}
