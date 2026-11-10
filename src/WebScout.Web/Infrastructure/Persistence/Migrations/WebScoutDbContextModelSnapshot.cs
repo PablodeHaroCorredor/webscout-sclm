@@ -273,6 +273,85 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("Actividades", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Administration.Domain.ConfiguracionGrupo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AdmisionesAbiertas")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Cif")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("ConceptoCuotaSugerido")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DireccionBase")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("EmailOficial")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("EstadoUltimoBackup")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly>("FechaFinRonda")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("FechaInicioRonda")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaModificacionUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("FechaUltimoBackupUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IbanCuentaBancaria")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("MensajeBienvenidaAdmisiones")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("ObjetivoRpoHoras")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ObjetivoRtoHoras")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RondaSolarActiva")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TelefonoContacto")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("TitularCuenta")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizacionId")
+                        .IsUnique();
+
+                    b.ToTable("ConfiguracionesGrupo", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Admissions.Domain.MensajeContacto", b =>
                 {
                     b.Property<Guid>("Id")

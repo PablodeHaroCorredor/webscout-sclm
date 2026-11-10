@@ -3,7 +3,9 @@ using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Admissions.Domain;
 using WebScout.Web.Features.Admissions.Templates;
+using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Outbox.Services;
 using WebScout.Web.Infrastructure.Persistence;
 using WebScout.Web.Infrastructure.Tenancy;
@@ -293,6 +295,152 @@ public class ServicioAdmisiones : IServicioAdmisiones
 
         mensaje.Leido = leido;
         await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Educando> ConvertirSolicitudEnEducandoAsync(
+        Guid solicitudId,
+        RamaScout ramaAsignada,
+        string? notasKraal,
+        Guid scouterId,
+        CancellationToken cancellationToken = default)
+    {
+        ValidarTenantActivo();
+
+        var solicitud = await _dbContext.SolicitudesAdmision
+            .FirstOrDefaultAsync(s => s.Id == solicitudId, cancellationToken);
+
+        if (solicitud == null)
+        {
+            throw new KeyNotFoundException($"No se encontró la solicitud de admisión con ID {solicitudId}.");
+        }
+
+        var tutorEmailNormalizado = solicitud.EmailTutor.Trim().ToUpperInvariant();
+        var tutor = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.OrganizacionId == _tenantContext.CurrentTenantId
+                                   && u.NormalizedEmail == tutorEmailNormalizado, cancellationToken);
+
+        if (tutor == null)
+        {
+            tutor = new UsuarioScout
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = _tenantContext.CurrentTenantId,
+                UserName = solicitud.EmailTutor.Trim(),
+                NormalizedUserName = tutorEmailNormalizado,
+                Email = solicitud.EmailTutor.Trim(),
+                NormalizedEmail = tutorEmailNormalizado,
+                NombreCompleto = solicitud.NombreTutor.Trim(),
+                PhoneNumber = solicitud.TelefonoTutor.Trim(),
+                SecurityStamp = Guid.NewGuid().ToString("D"),
+                EmailConfirmed = true
+            };
+
+            await _dbContext.Users.AddAsync(tutor, cancellationToken);
+
+            var rolFamilia = await _dbContext.Roles
+                .FirstOrDefaultAsync(r => r.NormalizedName == "FAMILIA", cancellationToken);
+
+            if (rolFamilia != null)
+            {
+                await _dbContext.UserRoles.AddAsync(new Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>
+                {
+                    UserId = tutor.Id,
+                    RoleId = rolFamilia.Id
+                }, cancellationToken);
+            }
+
+            _logger.LogInformation("Creada nueva cuenta familiar '{Email}' para el tutor de {Educando}",
+                solicitud.EmailTutor, solicitud.NombreCompletoEducando);
+        }
+
+        var educando = new Educando
+        {
+            Id = Guid.NewGuid(),
+            OrganizacionId = _tenantContext.CurrentTenantId,
+            TutorLegalId = tutor.Id,
+            Nombre = solicitud.NombreEducando.Trim(),
+            Apellidos = solicitud.ApellidosEducando.Trim(),
+            FechaNacimiento = solicitud.FechaNacimiento,
+            RamaActual = ramaAsignada,
+            Activo = true,
+            FechaCreacionUtc = DateTime.UtcNow
+        };
+
+        await _dbContext.Educandos.AddAsync(educando, cancellationToken);
+
+        var ficha = new FichaMedica
+        {
+            Id = Guid.NewGuid(),
+            OrganizacionId = _tenantContext.CurrentTenantId,
+            EducandoId = educando.Id,
+            NumeroSeguridadSocial = "",
+            TelefonoEmergenciaPrincipal = solicitud.TelefonoTutor.Trim(),
+            NombreContactoEmergenciaPrincipal = solicitud.NombreTutor.Trim(),
+            UltimaActualizacionUtc = DateTime.UtcNow
+        };
+
+        await _dbContext.FichasMedicas.AddAsync(ficha, cancellationToken);
+
+        // Despacho transaccional Outbox de bienvenida (PA11 / RF14)
+        var grupo = await _dbContext.GruposScout.FindAsync([_tenantContext.CurrentTenantId], cancellationToken);
+        var nombreGrupo = grupo?.Nombre ?? "Grupo Scout";
+
+        var cuerpoHtml = $"""
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <h2 style="color: #0F172A;">¡Bienvenida al {nombreGrupo}!</h2>
+                <p>Estimada familia de <strong>{solicitud.NombreCompletoEducando}</strong>:</p>
+                <p>Nos complace comunicaros que la solicitud de admisión ha sido <strong>admitida</strong> y el educando ha sido incorporado formalmente al censo en la sección de <strong>{ramaAsignada.ObtenerNombre()}</strong>.</p>
+                <p>Se ha activado vuestra cuenta familiar en el <strong>Portal de Familias</strong> vinculada al correo <code>{solicitud.EmailTutor}</code>.</p>
+                <p>Ya podéis acceder al portal para revisar y completar la ficha médica anual, consultar las próximas salidas de fin de semana y gestionar el material scout:</p>
+                <p style="text-align: center; margin: 30px 0;">
+                    <a href="/login" style="background-color: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Acceder al Portal de Familias</a>
+                </p>
+                <p style="font-size: 0.85em; color: #64748B;">Siempre Listos,<br/>Kraal de Scouters y Secretaría · {nombreGrupo}</p>
+            </div>
+            """;
+
+        var cuerpoTexto = $"¡Bienvenida al {nombreGrupo}! {solicitud.NombreCompletoEducando} ha sido admitido en {ramaAsignada.ObtenerNombre()}. Accede al Portal de Familias en /login con tu email {solicitud.EmailTutor}.";
+
+        await _servicioOutbox.EncolarMensajeAsync(
+            organizacionId: _tenantContext.CurrentTenantId,
+            tipoEvento: "BienvenidaAltaEducandoCenso",
+            destinatarioEmail: solicitud.EmailTutor,
+            destinatarioNombre: solicitud.NombreTutor,
+            asunto: $"¡Bienvenida al {nombreGrupo}! - Alta en Censo de {solicitud.NombreCompletoEducando}",
+            cuerpoHtml: cuerpoHtml,
+            cuerpoTextoPlano: cuerpoTexto,
+            claveDeduplicacion: $"alta-censo-{solicitud.Id}",
+            replyToEmail: grupo?.EmailContacto,
+            remitenteNombre: nombreGrupo,
+            guardarInmediatamente: false,
+            cancellationToken: cancellationToken);
+
+        solicitud.Estado = EstadoSolicitudAdmision.Admitida;
+        solicitud.AtendidoPorUsuarioId = scouterId;
+        solicitud.FechaResolucionUtc = DateTime.UtcNow;
+        solicitud.NotasKraal = !string.IsNullOrWhiteSpace(notasKraal)
+            ? notasKraal
+            : $"Incorporado a {ramaAsignada.ObtenerNombre()} como educando activo por Secretaría.";
+
+        var eventoAuditoria = new RegistroAuditoria
+        {
+            OrganizacionId = _tenantContext.CurrentTenantId,
+            UsuarioId = scouterId,
+            Accion = "AltaEducandoDesdeAdmision",
+            TipoRecurso = nameof(Educando),
+            RecursoId = educando.Id.ToString(),
+            Detalles = $"Educando {educando.NombreCompleto} admitido en rama {ramaAsignada.ObtenerNombre()}. Tutor: {solicitud.EmailTutor}",
+            FechaCreacionUtc = DateTime.UtcNow
+        };
+
+        await _dbContext.RegistrosAuditoria.AddAsync(eventoAuditoria, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Educando {EducandoId} ({Nombre}) creado con éxito desde la solicitud {SolicitudId} en la rama {Rama}",
+            educando.Id, educando.NombreCompleto, solicitudId, ramaAsignada);
+
+        return educando;
     }
 
     private void ValidarTenantActivo()
