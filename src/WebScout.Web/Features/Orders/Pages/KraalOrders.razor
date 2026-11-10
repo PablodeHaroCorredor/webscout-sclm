@@ -1,0 +1,558 @@
+@page "/kraal/pedidos"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Orders.Components
+@using WebScout.Web.Features.Orders.Domain
+@using WebScout.Web.Features.Orders.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion},{RolesScout.SuperAdmin}")]
+@inject IServicioPedidosMaterial ServicioPedidos
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ITenantContext Tenant
+
+<PageTitle>Gestión de Pedidos de Material Scout — WebScout SCLM</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
+    <!-- Encabezado de página -->
+    <div class="d-flex align-center justify-space-between flex-wrap gap-3 mb-5">
+        <div>
+            <div class="d-flex align-center gap-2 mb-1">
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+                    @(Tenant.IsResolved ? Tenant.GroupName : "Kraal de Scouters")
+                </MudChip>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Intendencia y Aprovisionamiento (Core 1.29)
+                </MudText>
+            </div>
+            <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A;">
+                Bandeja de Pedidos de Material Scout
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                Gestión de pedidos de uniformidad, control de aprovisionamiento con distribuidores y entrega directa en mano (PA07).
+            </MudText>
+        </div>
+
+        <div class="d-flex align-center gap-2">
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Default" 
+                       StartIcon="@Icons.Material.Filled.Refresh" 
+                       OnClick="CargarDatosAsync"
+                       Disabled="_cargando">
+                Actualizar
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.FileDownload" 
+                       Href="/api/pedidos/aprovisionamiento/csv" 
+                       Target="_blank">
+                Exportar CSV para Compras
+            </MudButton>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE MÉTRICAS KPI QUE ACTÚAN COMO SELECTOR INTERACTIVO DIRECTO -->
+    <MudGrid Spacing="3" Class="mb-6">
+        <!-- 1. Total -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == null 
+                     ? "border-color: #2563EB !important; box-shadow: 0 0 0 1px #2563EB, 0 4px 6px -1px rgba(37, 99, 235, 0.1); background-color: #F8FAFC !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="@(() => OnSeleccionarFiltroEstado(null))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == null ? "background-color: #2563EB;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                Todos
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A; margin-top: 2px;">
+                            @(_resumen?.TotalPedidos ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Pedidos registrados
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #EFF6FF; color: #2563EB;">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- 2. Solicitados -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoPedidoMaterial.Solicitado 
+                     ? "border-color: #0284C7 !important; box-shadow: 0 0 0 1px #0284C7, 0 4px 6px -1px rgba(2, 132, 199, 0.1); background-color: #F0F9FF !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="@(() => OnSeleccionarFiltroEstado(EstadoPedidoMaterial.Solicitado))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoPedidoMaterial.Solicitado ? "background-color: #0284C7;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                Solicitados
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0284C7; margin-top: 2px;">
+                            @(_resumen?.Solicitados ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Nuevos por revisar
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #E0F2FE; color: #0284C7;">
+                        <MudIcon Icon="@Icons.Material.Filled.HourglassTop" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- 3. Revisados -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoPedidoMaterial.Revisado 
+                     ? "border-color: #D97706 !important; box-shadow: 0 0 0 1px #D97706, 0 4px 6px -1px rgba(217, 119, 6, 0.1); background-color: #FFFBEB !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="@(() => OnSeleccionarFiltroEstado(EstadoPedidoMaterial.Revisado))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoPedidoMaterial.Revisado ? "background-color: #D97706;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                Revisados
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #D97706; margin-top: 2px;">
+                            @(_resumen?.Revisados ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Stock / Encargo listo
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #FEF3C7; color: #D97706;">
+                        <MudIcon Icon="@Icons.Material.Filled.FactCheck" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- 4. En Proveedor -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoPedidoMaterial.PedidoAlProveedor 
+                     ? "border-color: #7C3AED !important; box-shadow: 0 0 0 1px #7C3AED, 0 4px 6px -1px rgba(124, 58, 237, 0.1); background-color: #FAF5FF !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="@(() => OnSeleccionarFiltroEstado(EstadoPedidoMaterial.PedidoAlProveedor))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoPedidoMaterial.PedidoAlProveedor ? "background-color: #7C3AED;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                En Proveedor
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #7C3AED; margin-top: 2px;">
+                            @(_resumen?.PedidosAlProveedor ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Encargo en fábrica
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #F3E8FF; color: #7C3AED;">
+                        <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- 5. Entregados (PA07) -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoPedidoMaterial.Entregado 
+                     ? "border-color: #16A34A !important; box-shadow: 0 0 0 1px #16A34A, 0 4px 6px -1px rgba(22, 163, 74, 0.1); background-color: #F0FDF4 !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="@(() => OnSeleccionarFiltroEstado(EstadoPedidoMaterial.Entregado))">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoPedidoMaterial.Entregado ? "background-color: #16A34A;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                Entregados
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #16A34A; margin-top: 2px;">
+                            @(_resumen?.Entregados ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Entregados en mano
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #DCFCE7; color: #16A34A;">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+
+        <!-- 6. Incidencias (Rechazados / Cancelados) -->
+        <MudItem xs="12" sm="6" md="2">
+            <div class="rounded-2xl border bg-white pa-4 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroIncidencias 
+                     ? "border-color: #DC2626 !important; box-shadow: 0 0 0 1px #DC2626, 0 4px 6px -1px rgba(220, 38, 38, 0.1); background-color: #FEF2F2 !important;" 
+                     : "border-color: #E2E8F0;")"
+                 @onclick="OnSeleccionarFiltroIncidencias">
+                <div class="d-flex justify-space-between align-center">
+                    <div>
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroIncidencias ? "background-color: #DC2626;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.70rem;">
+                                Incidencias
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h5" Style="font-weight: 800; color: #DC2626; margin-top: 2px;">
+                            @(_resumen?.Incidencias ?? 0)
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.72rem;">
+                            Rechazados o bajas
+                        </MudText>
+                    </div>
+                    <div class="pa-2 rounded-xl" style="background-color: #FEE2E2; color: #DC2626;">
+                        <MudIcon Icon="@Icons.Material.Filled.Cancel" Size="Size.Small" />
+                    </div>
+                </div>
+            </div>
+        </MudItem>
+    </MudGrid>
+
+    <!-- TABLA DE PEDIDOS CON CABECERA INTEGRADA -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden mb-6">
+        <!-- Barra de herramientas limpia integrada -->
+        <div class="d-flex flex-wrap justify-space-between align-center gap-3 px-5 py-3 border-b" style="border-bottom: 1px solid #E2E8F0; background-color: #FAFAFA;">
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                    @ObtenerTituloVistaFiltro()
+                </MudText>
+                @if (_filtroEstado != null || _filtroIncidencias || !string.IsNullOrWhiteSpace(_busqueda))
+                {
+                    <MudChip T="string" 
+                             Size="Size.Small" 
+                             Color="Color.Default" 
+                             Variant="Variant.Text" 
+                             OnClose="RestablecerFiltrosAsync">
+                        Ver todos
+                    </MudChip>
+                }
+            </div>
+
+            <!-- Búsqueda rápida integrada -->
+            <div style="min-width: 260px; max-width: 420px; flex-grow: 1;">
+                <MudTextField T="string" 
+                              Placeholder="Buscar por código, familia, educando o email..." 
+                              @bind-Value="_busqueda" 
+                              Variant="Variant.Outlined" 
+                              Margin="Margin.Dense"
+                              Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" 
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="CargarDatosAsync" />
+            </div>
+        </div>
+
+        @if (_cargando)
+        {
+            <div class="d-flex flex-column align-center justify-center py-12 gap-3">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando solicitudes de material...</MudText>
+            </div>
+        }
+        else if (_pedidos.Count == 0)
+        {
+            <div class="text-center py-12">
+                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mud-text-secondary mb-2" />
+                <MudText Typo="Typo.h6" Style="font-weight: 700;">No se encontraron pedidos</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">No hay solicitudes que coincidan con el filtro seleccionado.</MudText>
+            </div>
+        }
+        else
+        {
+            <MudTable Items="_pedidos" Hover="true" Dense="false" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Código</MudTh>
+                    <MudTh>Fecha</MudTh>
+                    <MudTh>Solicitante (Familia)</MudTh>
+                    <MudTh>Educando / Rama</MudTh>
+                    <MudTh>Artículos y Tallas</MudTh>
+                    <MudTh class="text-end">Importe</MudTh>
+                    <MudTh class="text-center">Comprobante (PA07)</MudTh>
+                    <MudTh class="text-center">Estado (Core 1.29)</MudTh>
+                    <MudTh class="text-end">Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Código">
+                        <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                            @context.CodigoPedido
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Fecha">
+                        <MudText Typo="Typo.body2">
+                            @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Solicitante">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                            @context.SolicitanteNombre
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            @context.SolicitanteEmail
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Educando">
+                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                            @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
+                        </MudText>
+                        @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                @context.RamaEducativa
+                            </MudText>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Artículos">
+                        <div class="d-flex flex-column gap-0.5">
+                            @foreach (var l in context.Lineas)
+                            {
+                                <MudText Typo="Typo.caption" Style="color: #334155;">
+                                    <b>@l.Cantidad x</b> @l.ProductoNombre (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
+                                </MudText>
+                            }
+                        </div>
+                    </MudTd>
+                    <MudTd DataLabel="Importe" Class="text-end">
+                        <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
+                            @context.TotalEstimado.ToString("F2") €
+                        </MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Comprobante" Class="text-center">
+                        @if (context.TieneComprobante)
+                        {
+                            <MudTooltip Text="@($"Justificante voluntario adjunto: {context.ComprobantePagoNombreOriginal}")">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
+                                    Adjunto
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Sin justificante (La entrega en mano no requiere bloqueo informático - PA07)">
+                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                    Sin Comprobante
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Estado" Class="text-center">
+                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                            @context.Estado
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Acciones" Class="text-end">
+                        <div class="d-flex justify-end align-center gap-1">
+                            <MudTooltip Text="Cambiar estado (Libertad asociativa y rectificación PA07/PA08)">
+                                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" 
+                                               Size="Size.Small" 
+                                               Color="Color.Primary" 
+                                               OnClick="@(() => AbrirDialogoCambiarEstadoAsync(context))" />
+                            </MudTooltip>
+
+                            <MudTooltip Text="Ver detalle completo">
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                               Size="Size.Small" 
+                                               Color="Color.Default" 
+                                               OnClick="@(() => VerDetallePedidoAsync(context))" />
+                            </MudTooltip>
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudCard>
+</MudContainer>
+
+<style>
+    .stat-card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+    .active-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        transition: background-color 0.2s ease;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+@code {
+    private List<PedidoMaterial> _pedidos = new();
+    private ResumenPedidosKraalDto? _resumen;
+    private EstadoPedidoMaterial? _filtroEstado;
+    private bool _filtroIncidencias = false;
+    private string? _busqueda;
+    private bool _cargando = true;
+
+    private string _scouterUsuario = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _scouterUsuario = authState.User.Identity?.Name ?? "Scouter Kraal";
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        _cargando = true;
+        try
+        {
+            var orgId = Tenant.CurrentTenantId;
+            _resumen = await ServicioPedidos.ObtenerResumenKraalAsync(orgId);
+
+            var filtro = new FiltroPedidosKraalDto(
+                Estado: _filtroIncidencias ? null : _filtroEstado,
+                TerminoBusqueda: _busqueda);
+
+            var lista = await ServicioPedidos.ObtenerPedidosKraalAsync(orgId, filtro);
+
+            if (_filtroIncidencias)
+            {
+                _pedidos = lista
+                    .Where(p => p.Estado == EstadoPedidoMaterial.Rechazado || p.Estado == EstadoPedidoMaterial.Cancelado)
+                    .ToList();
+            }
+            else
+            {
+                _pedidos = lista;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar pedidos: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task OnSeleccionarFiltroEstado(EstadoPedidoMaterial? estado)
+    {
+        _filtroEstado = estado;
+        _filtroIncidencias = false;
+        await CargarDatosAsync();
+    }
+
+    private async Task OnSeleccionarFiltroIncidencias()
+    {
+        _filtroIncidencias = true;
+        _filtroEstado = null;
+        await CargarDatosAsync();
+    }
+
+    private async Task RestablecerFiltrosAsync()
+    {
+        _filtroEstado = null;
+        _filtroIncidencias = false;
+        _busqueda = null;
+        await CargarDatosAsync();
+    }
+
+    private string ObtenerTituloVistaFiltro()
+    {
+        if (_filtroIncidencias)
+            return $"Incidencias, Rechazados y Bajas ({_pedidos.Count})";
+
+        return _filtroEstado switch
+        {
+            EstadoPedidoMaterial.Solicitado => $"Pedidos Solicitados ({_pedidos.Count})",
+            EstadoPedidoMaterial.Revisado => $"Pedidos Revisados ({_pedidos.Count})",
+            EstadoPedidoMaterial.PedidoAlProveedor => $"Pedidos en Proveedor ({_pedidos.Count})",
+            EstadoPedidoMaterial.Entregado => $"Pedidos Entregados en Mano ({_pedidos.Count})",
+            EstadoPedidoMaterial.Rechazado => $"Pedidos Rechazados ({_pedidos.Count})",
+            EstadoPedidoMaterial.Cancelado => $"Pedidos Cancelados ({_pedidos.Count})",
+            _ => $"Todos los Pedidos de Material ({_pedidos.Count})"
+        };
+    }
+
+    private async Task AbrirDialogoCambiarEstadoAsync(PedidoMaterial pedido)
+    {
+        var parameters = new DialogParameters<CambiarEstadoPedidoDialog>
+        {
+            { x => x.CodigoPedido, pedido.CodigoPedido },
+            { x => x.EstadoActual, pedido.Estado }
+        };
+
+        var dialog = await DialogService.ShowAsync<CambiarEstadoPedidoDialog>("Cambio de Estado", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true,
+            CloseButton = true
+        });
+
+        var result = await dialog.Result;
+        if (result != null && !result.Canceled && result.Data is ValueTuple<EstadoPedidoMaterial, string?> datos)
+        {
+            var (nuevoEstado, motivo) = datos;
+            try
+            {
+                await ServicioPedidos.CambiarEstadoPedidoAsync(pedido.Id, nuevoEstado, motivo, _scouterUsuario);
+                Snackbar.Add($"Pedido {pedido.CodigoPedido} actualizado a estado '{nuevoEstado}'.", Severity.Success);
+                await CargarDatosAsync();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error al cambiar estado: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task VerDetallePedidoAsync(PedidoMaterial pedido)
+    {
+        var parameters = new DialogParameters<DetallePedidoDialog>
+        {
+            { x => x.Pedido, pedido }
+        };
+
+        await DialogService.ShowAsync<DetallePedidoDialog>($"Detalle {pedido.CodigoPedido}", parameters, new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        });
+    }
+
+    private Color ObtenerColorEstado(EstadoPedidoMaterial estado) => estado switch
+    {
+        EstadoPedidoMaterial.Solicitado => Color.Info,
+        EstadoPedidoMaterial.Revisado => Color.Warning,
+        EstadoPedidoMaterial.PedidoAlProveedor => Color.Primary,
+        EstadoPedidoMaterial.Entregado => Color.Success,
+        EstadoPedidoMaterial.Rechazado => Color.Error,
+        EstadoPedidoMaterial.Cancelado => Color.Dark,
+        _ => Color.Default
+    };
+}

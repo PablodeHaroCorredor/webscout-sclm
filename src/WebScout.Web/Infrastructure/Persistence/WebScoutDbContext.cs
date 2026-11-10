@@ -10,6 +10,7 @@ using WebScout.Web.Features.Admissions.Domain;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
+using WebScout.Web.Features.Orders.Domain;
 using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Outbox.Domain;
 using WebScout.Web.Infrastructure.Security;
@@ -42,6 +43,9 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<SolicitudAdmision> SolicitudesAdmision => Set<SolicitudAdmision>();
     public DbSet<MensajeContacto> MensajesContacto => Set<MensajeContacto>();
     public DbSet<ConfiguracionGrupo> ConfiguracionesGrupo => Set<ConfiguracionGrupo>();
+    public DbSet<ProductoMaterial> ProductosMaterial => Set<ProductoMaterial>();
+    public DbSet<PedidoMaterial> PedidosMaterial => Set<PedidoMaterial>();
+    public DbSet<LineaPedidoMaterial> LineasPedidoMaterial => Set<LineaPedidoMaterial>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -303,7 +307,69 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(c => c.OrganizacionId).IsUnique();
         });
 
-        // 13. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
+        // 13. Configuración de Material Scout y Pedidos Core 1.29 (RF48-RF54 / BL07)
+        modelBuilder.Entity<ProductoMaterial>(b =>
+        {
+            b.ToTable("ProductosMaterial");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.Nombre).HasMaxLength(150).IsRequired();
+            b.Property(p => p.Descripcion).HasMaxLength(1000);
+            b.Property(p => p.Categoria).HasMaxLength(100);
+            b.Property(p => p.ImagenUrl).HasMaxLength(500);
+            b.Property(p => p.TallasDisponiblesCsv).HasMaxLength(200);
+            b.Property(p => p.PrecioUnitario).HasPrecision(10, 2);
+
+            b.HasIndex(p => new { p.OrganizacionId, p.Activo });
+            b.HasIndex(p => new { p.OrganizacionId, p.Categoria });
+        });
+
+        modelBuilder.Entity<PedidoMaterial>(b =>
+        {
+            b.ToTable("PedidosMaterial");
+            b.HasKey(p => p.Id);
+            b.Property(p => p.CodigoPedido).HasMaxLength(50).IsRequired();
+            b.Property(p => p.SolicitanteNombre).HasMaxLength(150).IsRequired();
+            b.Property(p => p.SolicitanteEmail).HasMaxLength(256).IsRequired();
+            b.Property(p => p.SolicitanteTelefono).HasMaxLength(50);
+            b.Property(p => p.EducandoNombre).HasMaxLength(150);
+            b.Property(p => p.RamaEducativa).HasMaxLength(50);
+            b.Property(p => p.MotivoEstado).HasMaxLength(1000);
+            b.Property(p => p.ObservacionesFamilia).HasMaxLength(1000);
+            b.Property(p => p.NotasInternasKraal).HasMaxLength(1000);
+            b.Property(p => p.ModificadoPor).HasMaxLength(150);
+            b.Property(p => p.ComprobantePagoRuta).HasMaxLength(500);
+            b.Property(p => p.ComprobantePagoNombreOriginal).HasMaxLength(255);
+            b.Property(p => p.TotalEstimado).HasPrecision(10, 2);
+
+            b.HasIndex(p => new { p.OrganizacionId, p.CodigoPedido }).IsUnique();
+            b.HasIndex(p => new { p.OrganizacionId, p.UsuarioId });
+            b.HasIndex(p => new { p.OrganizacionId, p.Estado });
+            b.HasIndex(p => new { p.OrganizacionId, p.FechaSolicitudUtc });
+
+            b.HasMany(p => p.Lineas)
+                .WithOne(l => l.Pedido)
+                .HasForeignKey(l => l.PedidoMaterialId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<LineaPedidoMaterial>(b =>
+        {
+            b.ToTable("LineasPedidoMaterial");
+            b.HasKey(l => l.Id);
+            b.Property(l => l.ProductoNombre).HasMaxLength(150).IsRequired();
+            b.Property(l => l.Talla).HasMaxLength(50);
+            b.Property(l => l.PrecioUnitario).HasPrecision(10, 2);
+
+            b.HasIndex(l => new { l.OrganizacionId, l.PedidoMaterialId });
+            b.HasIndex(l => new { l.OrganizacionId, l.ProductoMaterialId });
+
+            b.HasOne(l => l.Producto)
+                .WithMany()
+                .HasForeignKey(l => l.ProductoMaterialId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // 14. Aplicación automática de Global Query Filters en todas las entidades IEntidadOrganizacion
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(IEntidadOrganizacion).IsAssignableFrom(entityType.ClrType))
