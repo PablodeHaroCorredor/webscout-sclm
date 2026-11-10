@@ -169,35 +169,44 @@
 
     <!-- Tabla Reactiva de Inscripciones -->
     <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
-        @if (_cargando)
-        {
-            <div class="pa-12 text-center">
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-3">Cargando mesa de inscripciones...</MudText>
-            </div>
-        }
-        else if (!InscripcionesFiltradas.Any())
-        {
-            <div class="pa-12 text-center">
-                <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Size="Size.Large" Style="color: #CBD5E1; font-size: 3.5rem;" />
-                <MudText Typo="Typo.h6" Class="mt-3 font-weight-bold" Style="color: #334155;">No hay inscripciones que coincidan con los filtros</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
-                    Cambie los criterios de búsqueda o seleccione otra convocatoria.
-                </MudText>
-            </div>
-        }
-        else
-        {
-            <MudTable Items="InscripcionesFiltradas" Hover="true" Dense="false" Elevation="0" Class="w-100">
-                <HeaderContent>
-                    <MudTh Style="font-weight: 700;">Educando / Rama</MudTh>
-                    <MudTh Style="font-weight: 700;">Actividad</MudTh>
-                    <MudTh Style="font-weight: 700;">Tutor Legal</MudTh>
-                    <MudTh Style="font-weight: 700;">Comprobante de Pago</MudTh>
-                    <MudTh Style="font-weight: 700;">Estado</MudTh>
-                    <MudTh Style="font-weight: 700; text-align: right;">Acciones de Revisión</MudTh>
-                </HeaderContent>
-                <RowTemplate>
+        <MudTable Items="InscripcionesFiltradas" 
+                  Loading="_cargando" 
+                  FixedHeader="true" 
+                  Height="560px" 
+                  RowsPerPage="25" 
+                  Hover="true" 
+                  Dense="false" 
+                  Elevation="0" 
+                  Class="w-100">
+            <LoadingContent>
+                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando mesa de inscripciones...</MudText>
+                </div>
+            </LoadingContent>
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                        <MudIcon Icon="@Icons.Material.Filled.AssignmentTurnedIn" Color="Color.Default" Size="Size.Large" />
+                    </div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                        No hay inscripciones que coincidan con los filtros
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
+                        Cambie los criterios de búsqueda o seleccione otra convocatoria.
+                    </MudText>
+                </div>
+            </NoRecordsContent>
+            <HeaderContent>
+                <MudTh Style="font-weight: 700;">Educando / Rama</MudTh>
+                <MudTh Style="font-weight: 700;">Actividad</MudTh>
+                <MudTh Style="font-weight: 700;">Tutor Legal</MudTh>
+                <MudTh Style="font-weight: 700;">Comprobante de Pago</MudTh>
+                <MudTh Style="font-weight: 700;">Estado</MudTh>
+                <MudTh Style="font-weight: 700; text-align: right;">Acciones de Revisión</MudTh>
+            </HeaderContent>
+            <RowTemplate>
                     <!-- Columna Educando -->
                     <MudTd DataLabel="Educando">
                         <div class="d-flex align-center gap-2">
@@ -317,8 +326,12 @@
                         </div>
                     </MudTd>
                 </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }"
+                                   RowsPerPageString="Filas por página:"
+                                   InfoFormat="{first_item}-{last_item} de {all_items}" />
+                </PagerContent>
             </MudTable>
-        }
     </MudCard>
 
 </MudContainer>
