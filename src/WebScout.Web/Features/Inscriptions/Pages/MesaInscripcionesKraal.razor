@@ -316,9 +316,7 @@
 
                     <!-- Columna Estado -->
                     <MudTd DataLabel="Estado">
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(context.Estado)">
-                            @context.Estado.ObtenerNombre()
-                        </MudChip>
+                        <ScoutStatusBadge Estado="context.Estado" />
                         @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
                         {
                             <span class="d-block mt-1 text-truncate" style="max-width: 220px; font-size: 0.75rem; color: #DC2626; font-style: italic;" title="@context.NotasKraal">
@@ -419,9 +417,7 @@
                                     </div>
                                 </div>
 
-                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorEstado(inscripcion.Estado)" Style="font-weight: 700; font-size: 0.75rem;">
-                                    @inscripcion.Estado.ObtenerNombre()
-                                </MudChip>
+                                <ScoutStatusBadge Estado="inscripcion.Estado" />
                             </div>
 
                             <!-- Información de la Actividad y Tutor -->
@@ -722,16 +718,6 @@
         RamaScout.Tropa => Color.Success,
         RamaScout.Escultas => Color.Error,
         RamaScout.Clan => Color.Info,
-        _ => Color.Default
-    };
-
-    private Color ObtenerColorEstado(EstadoInscripcion estado) => estado switch
-    {
-        EstadoInscripcion.PendienteJustificante => Color.Default,
-        EstadoInscripcion.EnRevision => Color.Warning,
-        EstadoInscripcion.RequiereSubsanacion => Color.Error,
-        EstadoInscripcion.Confirmada => Color.Success,
-        EstadoInscripcion.Cancelada => Color.Dark,
         _ => Color.Default
     };
 }

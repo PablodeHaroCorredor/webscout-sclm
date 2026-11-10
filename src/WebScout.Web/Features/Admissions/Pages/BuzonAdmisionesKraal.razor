@@ -180,9 +180,7 @@
                                         </div>
                                     </MudTd>
                                     <MudTd DataLabel="Estado">
-                                        <MudChip T="string" Color="@ObtenerColorEstado(context.Estado)" Size="Size.Small" Variant="Variant.Outlined">
-                                            @context.Estado.ToString()
-                                        </MudChip>
+                                        <ScoutStatusBadge Estado="context.Estado" />
                                     </MudTd>
                                     <MudTd DataLabel="Notas Kraal">
                                         <span style="font-size: 0.85rem; color: #475569;">
@@ -248,9 +246,7 @@
                                                     </span>
                                                 </div>
                                             </div>
-                                            <MudChip T="string" Color="@ObtenerColorEstado(solicitud.Estado)" Size="Size.Small" Variant="Variant.Outlined" Style="font-weight: 700;">
-                                                @solicitud.Estado.ToString()
-                                            </MudChip>
+                                            <ScoutStatusBadge Estado="solicitud.Estado" />
                                         </div>
 
                                         <div class="d-flex flex-wrap gap-2 mb-2">
@@ -676,16 +672,6 @@
         RamaScout.Tropa => Color.Info,
         RamaScout.Escultas => Color.Error,
         RamaScout.Clan => Color.Success,
-        _ => Color.Default
-    };
-
-    private Color ObtenerColorEstado(EstadoSolicitudAdmision estado) => estado switch
-    {
-        EstadoSolicitudAdmision.Pendiente => Color.Warning,
-        EstadoSolicitudAdmision.EnListaEspera => Color.Info,
-        EstadoSolicitudAdmision.Admitida => Color.Success,
-        EstadoSolicitudAdmision.Rechazada => Color.Error,
-        EstadoSolicitudAdmision.Archivada => Color.Default,
         _ => Color.Default
     };
 }

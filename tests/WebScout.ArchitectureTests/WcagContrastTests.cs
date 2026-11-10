@@ -1,3 +1,4 @@
+using WebScout.Web.Common.Components;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Common.Wcag;
 using Xunit;
@@ -92,5 +93,20 @@ public class WcagContrastTests
         var ratio = WcagContrastCalculator.CalculateContrastRatio("#1B5E20", "#F0FDF4");
         Assert.True(WcagContrastCalculator.MeetsWcagAaNormalText("#1B5E20", "#F0FDF4"),
             $"El enlace activo en el menú lateral ({ratio:F2}:1) debe cumplir WCAG 2.2 AA (>= 4.5:1)");
+    }
+
+    [Fact]
+    public void ScoutStatusBadge_AllSemanticStyles_MustComplyWithWcagAaNormalText()
+    {
+        var estilos = ScoutStatusBadgeStyleResolver.ObtenerTodosLosEstilos();
+        
+        foreach (var estilo in estilos)
+        {
+            var ratio = WcagContrastCalculator.CalculateContrastRatio(estilo.TextColorHex, estilo.BackgroundColorHex);
+            var cumple = WcagContrastCalculator.MeetsWcagAaNormalText(estilo.TextColorHex, estilo.BackgroundColorHex);
+
+            Assert.True(cumple, 
+                $"El estilo semántico '{estilo.Text}' ({estilo.TextColorHex} sobre {estilo.BackgroundColorHex}) tiene un ratio {ratio:F2}:1 y debe ser >= 4.5:1 para cumplir WCAG 2.2 AA");
+        }
     }
 }

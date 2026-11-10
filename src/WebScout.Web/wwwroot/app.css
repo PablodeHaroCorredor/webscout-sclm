@@ -247,6 +247,32 @@ body {
 }
 
 /* 5. Insignias Semánticas y Badges de Rama */
+.scout-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.625rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.015em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.scout-status-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.scout-status-badge-text {
+    display: inline-block;
+}
+
 .scout-badge {
     display: inline-flex;
     align-items: center;
