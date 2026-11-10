@@ -1,6 +1,6 @@
 @using WebScout.Web.Features.Orders.Domain
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2 text-danger">
             <MudIcon Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" />
@@ -32,14 +32,23 @@
         </div>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text" Disabled="_guardando">
             Volver
         </MudButton>
         <MudButton OnClick="Confirmar" 
                    Color="Color.Error" 
                    Variant="Variant.Filled" 
-                   Disabled="@(string.IsNullOrWhiteSpace(_motivo))">
-            Confirmar Cancelación
+                   Disabled="@(string.IsNullOrWhiteSpace(_motivo) || _guardando)"
+                   StartIcon="@(_guardando ? null : Icons.Material.Filled.DeleteForever)">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Cancelando...</span>
+            }
+            else
+            {
+                <span>Confirmar Cancelación</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -52,12 +61,14 @@
     public string CodigoPedido { get; set; } = string.Empty;
 
     private string _motivo = string.Empty;
+    private bool _guardando = false;
 
     private void Confirmar()
     {
         if (string.IsNullOrWhiteSpace(_motivo))
             return;
 
+        _guardando = true;
         MudDialog.Close(DialogResult.Ok(_motivo.Trim()));
     }
 }
