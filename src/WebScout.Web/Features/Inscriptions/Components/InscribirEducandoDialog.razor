@@ -46,7 +46,7 @@
                     @foreach (var educando in EducandosDisponibles)
                     {
                         <MudSelectItem Value="@educando.Id">
-                            @educando.NombreCompleto — Rama @educando.RamaActual.ObtenerNombre() (@educando.CalcularEdad() años)
+                            @educando.NombreCompleto · Rama @educando.RamaActual.ObtenerNombre() (@educando.CalcularEdad() años)
                         </MudSelectItem>
                     }
                 </MudSelect>

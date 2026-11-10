@@ -10,7 +10,7 @@
 @inject NavigationManager Navigation
 @inject ITenantContext Tenant
 
-<PageTitle>Dossier Operativo — @(_dossier?.Actividad.Titulo ?? "Cargando...")</PageTitle>
+<PageTitle>Dossier Operativo · @(_dossier?.Actividad.Titulo ?? "Cargando...")</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-0">
     @if (_cargando)
@@ -99,7 +99,7 @@
         <div class="only-print mb-4 pb-2" style="border-bottom: 2px solid #0F172A;">
             <div class="d-flex align-center justify-space-between">
                 <div>
-                    <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold;">WebScout SCLM — Dossier Oficial de Actividad</h2>
+                    <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold;">WebScout SCLM · Dossier Oficial de Actividad</h2>
                     <p style="margin: 2px 0; color: #475569;">Grupo Scout: @(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</p>
                 </div>
                 <div style="text-align: right;">
