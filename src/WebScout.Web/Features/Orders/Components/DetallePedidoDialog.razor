@@ -22,9 +22,7 @@
                 <div>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Estado Actual</MudText>
                     <div>
-                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(Pedido.Estado)" Variant="Variant.Filled">
-                            @Pedido.Estado
-                        </MudChip>
+                        <ScoutStatusBadge Estado="Pedido.Estado" />
                     </div>
                 </div>
                 <div>
@@ -170,15 +168,4 @@
 
     [Parameter]
     public PedidoMaterial Pedido { get; set; } = default!;
-
-    private Color ObtenerColorEstado(EstadoPedidoMaterial estado) => estado switch
-    {
-        EstadoPedidoMaterial.Solicitado => Color.Info,
-        EstadoPedidoMaterial.Revisado => Color.Warning,
-        EstadoPedidoMaterial.PedidoAlProveedor => Color.Primary,
-        EstadoPedidoMaterial.Entregado => Color.Success,
-        EstadoPedidoMaterial.Rechazado => Color.Error,
-        EstadoPedidoMaterial.Cancelado => Color.Dark,
-        _ => Color.Default
-    };
 }

@@ -402,9 +402,7 @@
                         }
                     </MudTd>
                     <MudTd DataLabel="Estado" Class="text-center">
-                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                            @context.Estado
-                        </MudChip>
+                        <ScoutStatusBadge Estado="context.Estado" />
                     </MudTd>
                     <MudTd DataLabel="Acciones" Class="text-end">
                         <div class="d-flex justify-end align-center gap-1">
@@ -490,9 +488,7 @@
                                         @pedido.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
                                     </span>
                                 </div>
-                                <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(pedido.Estado)" Variant="Variant.Filled" Style="font-weight: 700; font-size: 0.75rem;">
-                                    @pedido.Estado
-                                </MudChip>
+                                <ScoutStatusBadge Estado="pedido.Estado" />
                             </div>
 
                             <!-- Información Principal -->
@@ -742,15 +738,4 @@
             CloseButton = true
         });
     }
-
-    private Color ObtenerColorEstado(EstadoPedidoMaterial estado) => estado switch
-    {
-        EstadoPedidoMaterial.Solicitado => Color.Info,
-        EstadoPedidoMaterial.Revisado => Color.Warning,
-        EstadoPedidoMaterial.PedidoAlProveedor => Color.Primary,
-        EstadoPedidoMaterial.Entregado => Color.Success,
-        EstadoPedidoMaterial.Rechazado => Color.Error,
-        EstadoPedidoMaterial.Cancelado => Color.Dark,
-        _ => Color.Default
-    };
 }

@@ -1,0 +1,21 @@
+@namespace WebScout.Web.Common.Components
+
+@code {
+    [Parameter] public object? Estado { get; set; }
+    [Parameter] public string? Texto { get; set; }
+    [Parameter] public bool ConPunto { get; set; } = true;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    private ScoutStatusBadgeStyle EstiloActual => ScoutStatusBadgeStyleResolver.Resolver(Estado, Texto);
+}
+
+<span class="scout-status-badge @Class" 
+      style="background-color: @EstiloActual.BackgroundColorHex; color: @EstiloActual.TextColorHex; border-color: @EstiloActual.BorderColorHex; @Style"
+      role="status">
+    @if (ConPunto)
+    {
+        <span class="scout-status-badge-dot" style="background-color: @EstiloActual.DotColorHex;" aria-hidden="true"></span>
+    }
+    <span class="scout-status-badge-text">@EstiloActual.Text</span>
+</span>
