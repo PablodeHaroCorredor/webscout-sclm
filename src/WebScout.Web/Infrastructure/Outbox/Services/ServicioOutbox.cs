@@ -189,4 +189,58 @@ public class ServicioOutbox : IServicioOutbox
 
         return enviadosExitosos;
     }
+
+    public async Task<IReadOnlyList<MensajeOutbox>> ObtenerMensajesAsync(
+        EstadoMensajeOutbox? filtroEstado = null,
+        string? busqueda = null,
+        int limite = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.MensajesOutbox.AsQueryable();
+
+        if (filtroEstado.HasValue)
+        {
+            query = query.Where(m => m.Estado == filtroEstado.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(busqueda))
+        {
+            var b = busqueda.Trim().ToLower();
+            query = query.Where(m => m.DestinatarioEmail.ToLower().Contains(b)
+                                  || m.Asunto.ToLower().Contains(b)
+                                  || m.TipoEvento.ToLower().Contains(b));
+        }
+
+        return await query
+            .OrderByDescending(m => m.FechaCreacionUtc)
+            .Take(limite)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ResumenOutboxDto> ObtenerResumenEstadisticasAsync(CancellationToken cancellationToken = default)
+    {
+        var total = await _dbContext.MensajesOutbox.CountAsync(cancellationToken);
+        var pendientes = await _dbContext.MensajesOutbox.CountAsync(m => m.Estado == EstadoMensajeOutbox.Pendiente && m.Reintentos == 0, cancellationToken);
+        var enviados = await _dbContext.MensajesOutbox.CountAsync(m => m.Estado == EstadoMensajeOutbox.Enviado, cancellationToken);
+        var enReintento = await _dbContext.MensajesOutbox.CountAsync(m => m.Estado == EstadoMensajeOutbox.Pendiente && m.Reintentos > 0, cancellationToken);
+        var fallidos = await _dbContext.MensajesOutbox.CountAsync(m => m.Estado == EstadoMensajeOutbox.Fallido, cancellationToken);
+
+        return new ResumenOutboxDto(total, pendientes, enviados, enReintento, fallidos);
+    }
+
+    public async Task ReintentarMensajeAsync(Guid mensajeId, CancellationToken cancellationToken = default)
+    {
+        var mensaje = await _dbContext.MensajesOutbox.FirstOrDefaultAsync(m => m.Id == mensajeId, cancellationToken);
+        if (mensaje == null)
+        {
+            throw new KeyNotFoundException($"No se encontró el mensaje Outbox con ID {mensajeId}.");
+        }
+
+        mensaje.Estado = EstadoMensajeOutbox.Pendiente;
+        mensaje.ProximoReintentoUtc = DateTime.UtcNow;
+        mensaje.Reintentos = 0; // Se reinicia para permitir un nuevo ciclo completo
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("Mensaje Outbox {MensajeId} restablecido para reintento manual inmediato.", mensajeId);
+    }
 }

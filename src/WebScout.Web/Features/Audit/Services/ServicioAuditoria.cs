@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Infrastructure.Persistence;
@@ -14,6 +15,12 @@ public interface IServicioAuditoria
         string tipoRecurso,
         string? recursoId,
         string? detalles = null,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<RegistroAuditoria>> ObtenerRegistrosAsync(
+        string? filtroAccion = null,
+        string? filtroRecurso = null,
+        int limite = 100,
         CancellationToken cancellationToken = default);
 }
 
@@ -87,5 +94,31 @@ public class ServicioAuditoria : IServicioAuditoria
         {
             _logger.LogError(ex, "Error al persistir registro de auditoría para la acción {Accion}", accion);
         }
+    }
+
+    public async Task<IReadOnlyList<RegistroAuditoria>> ObtenerRegistrosAsync(
+        string? filtroAccion = null,
+        string? filtroRecurso = null,
+        int limite = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.RegistrosAuditoria.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filtroAccion))
+        {
+            var a = filtroAccion.Trim().ToLower();
+            query = query.Where(r => r.Accion.ToLower().Contains(a));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtroRecurso))
+        {
+            var rec = filtroRecurso.Trim().ToLower();
+            query = query.Where(r => r.TipoRecurso.ToLower().Contains(rec));
+        }
+
+        return await query
+            .OrderByDescending(r => r.FechaCreacionUtc)
+            .Take(limite)
+            .ToListAsync(cancellationToken);
     }
 }

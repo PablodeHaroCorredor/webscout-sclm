@@ -1,0 +1,338 @@
+@page "/administracion/ajustes"
+@using Microsoft.AspNetCore.Authorization
+@using WebScout.Web.Features.Administration.Domain
+@using WebScout.Web.Features.Administration.Services
+@using WebScout.Web.Infrastructure.Tenancy
+@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@inject IServicioConfiguracionGrupo ServicioConfiguracion
+@inject ITenantContext Tenant
+@inject ISnackbar Snackbar
+
+<PageTitle>Ajustes del Grupo Scout · @(Tenant.GroupName)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-6">
+    <!-- Encabezado de la página -->
+    <div class="mb-6">
+        <div class="d-flex align-center gap-2 mb-1">
+            <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                @(Tenant.GroupName)
+            </MudChip>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">Gobernanza y Operación (RF64 / PA16)</MudText>
+        </div>
+        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+            Ajustes del Grupo Scout
+        </MudText>
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            Configuración segmentada por áreas institucionales, económicas y de secretaría con guardado parcial atómico.
+        </MudText>
+    </div>
+
+    @if (_cargando)
+    {
+        <div class="d-flex justify-center py-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+    else
+    {
+        <MudTabs Color="Color.Primary" Rounded="true" Class="mud-tabs-modern" ApplyEffectsToContainer="true">
+            
+            <!-- ÁREA 1: INSTITUCIONAL Y RONDA SOLAR -->
+            <MudTabPanel Text="Institucional y Ronda Solar" Icon="@Icons.Material.Filled.AccountBalance">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white mt-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Datos Institucionales y Ronda Solar</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Identidad legal, sede asociativa y calendario oficial de la ronda scout en curso.
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="CIF / NIF de la Asociación" 
+                                              @bind-Value="_cif" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Ej. G02123456" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Email Oficial de Contacto" 
+                                              @bind-Value="_emailOficial" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Buzón institucional de jefatura" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Teléfono de Contacto" 
+                                              @bind-Value="_telefonoContacto" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Teléfono para familias y urgencias" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudTextField Label="Dirección de la Base / Locales Scouts" 
+                                              @bind-Value="_direccionBase" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Ubicación física de reuniones semanales" />
+                            </MudItem>
+                            
+                            <MudItem xs="12">
+                                <MudDivider Class="my-2" />
+                                <MudText Typo="Typo.subtitle2" Style="font-weight: 700;" Class="mb-2">
+                                    Vigencia de la Ronda Solar Activa
+                                </MudText>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="4">
+                                <MudTextField Label="Nombre de Ronda Solar" 
+                                              @bind-Value="_rondaSolar" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Ej. 2026/2027" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudDatePicker Label="Inicio de Ronda" 
+                                               Date="_fechaInicioRonda.ToDateTime(TimeOnly.MinValue)" 
+                                               DateChanged="@(d => _fechaInicioRonda = d.HasValue ? DateOnly.FromDateTime(d.Value) : _fechaInicioRonda)" 
+                                               Variant="Variant.Outlined" 
+                                               Margin="Margin.Dense" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudDatePicker Label="Fin de Ronda" 
+                                               Date="_fechaFinRonda.ToDateTime(TimeOnly.MinValue)" 
+                                               DateChanged="@(d => _fechaFinRonda = d.HasValue ? DateOnly.FromDateTime(d.Value) : _fechaFinRonda)" 
+                                               Variant="Variant.Outlined" 
+                                               Margin="Margin.Dense" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions Class="px-6 pb-6 pt-2">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   Disabled="_guardando"
+                                   OnClick="GuardarInstitucionalAsync">
+                            Guardar Área Institucional
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudTabPanel>
+
+            <!-- ÁREA 2: ECONÓMICA Y CUENTA BANCARIA -->
+            <MudTabPanel Text="Económica y Cuotas" Icon="@Icons.Material.Filled.Savings">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white mt-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Datos Bancarios y Tesorería</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Cuenta bancaria para el abono de cuotas de actividades e inscripciones familiares (PA16).
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12" sm="8">
+                                <MudTextField Label="IBAN Cuenta Bancaria del Grupo" 
+                                              @bind-Value="_iban" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Ej. ES12 3456 7890 1234 5678 9012" />
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudTextField Label="Titular de la Cuenta" 
+                                              @bind-Value="_titularCuenta" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Nombre de la entidad titular" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField Label="Concepto Sugerido por Defecto" 
+                                              @bind-Value="_conceptoCuota" 
+                                              Variant="Variant.Outlined" 
+                                              Margin="Margin.Dense" 
+                                              HelperText="Texto de referencia para que las familias indiquen en sus transferencias" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions Class="px-6 pb-6 pt-2">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   Disabled="_guardando"
+                                   OnClick="GuardarEconomicoAsync">
+                            Guardar Área Económica
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudTabPanel>
+
+            <!-- ÁREA 3: SECRETARÍA Y ADMISIONES -->
+            <MudTabPanel Text="Secretaría y Admisiones" Icon="@Icons.Material.Filled.HowToReg">
+                <MudCard Elevation="0" Outlined="true" Class="rounded-xl border bg-white mt-4">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Style="font-weight: 700;">Convocatoria de Admisiones</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Control de recepción de solicitudes de ingreso en el portal público (RF11 / RF12).
+                            </MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid Spacing="3">
+                            <MudItem xs="12">
+                                <MudSwitch @bind-Value="_admisionesAbiertas" 
+                                           Color="Color.Primary" 
+                                           Label="Permitir recepción pública de nuevas solicitudes de admisión" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudTextField Label="Mensaje o Indicaciones de Admisión" 
+                                              @bind-Value="_mensajeAdmisiones" 
+                                              Lines="4" 
+                                              Variant="Variant.Outlined" 
+                                              HelperText="Instrucciones que se mostrarán en la cabecera del formulario de solicitud de ingreso" />
+                            </MudItem>
+                        </MudGrid>
+                    </MudCardContent>
+                    <MudCardActions Class="px-6 pb-6 pt-2">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary" 
+                                   StartIcon="@Icons.Material.Filled.Save"
+                                   Disabled="_guardando"
+                                   OnClick="GuardarAdmisionesAsync">
+                            Guardar Área de Admisiones
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+@code {
+    private bool _cargando = true;
+    private bool _guardando = false;
+    private ConfiguracionGrupo? _config;
+
+    // Área Institucional
+    private string? _cif;
+    private string? _direccionBase;
+    private string? _telefonoContacto;
+    private string? _emailOficial;
+    private string _rondaSolar = "2026/2027";
+    private DateOnly _fechaInicioRonda = new(2026, 10, 1);
+    private DateOnly _fechaFinRonda = new(2027, 7, 31);
+
+    // Área Económica
+    private string? _iban;
+    private string? _titularCuenta;
+    private string? _conceptoCuota;
+
+    // Área Admisiones
+    private bool _admisionesAbiertas = true;
+    private string? _mensajeAdmisiones;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarConfiguracionAsync();
+    }
+
+    private async Task CargarConfiguracionAsync()
+    {
+        _cargando = true;
+        try
+        {
+            _config = await ServicioConfiguracion.ObtenerConfiguracionAsync();
+
+            _cif = _config.Cif;
+            _direccionBase = _config.DireccionBase;
+            _telefonoContacto = _config.TelefonoContacto;
+            _emailOficial = _config.EmailOficial;
+            _rondaSolar = _config.RondaSolarActiva;
+            _fechaInicioRonda = _config.FechaInicioRonda;
+            _fechaFinRonda = _config.FechaFinRonda;
+
+            _iban = _config.IbanCuentaBancaria;
+            _titularCuenta = _config.TitularCuenta;
+            _conceptoCuota = _config.ConceptoCuotaSugerido;
+
+            _admisionesAbiertas = _config.AdmisionesAbiertas;
+            _mensajeAdmisiones = _config.MensajeBienvenidaAdmisiones;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task GuardarInstitucionalAsync()
+    {
+        _guardando = true;
+        try
+        {
+            var dto = new AjustesInstitucionalesDto(
+                _cif,
+                _direccionBase,
+                _telefonoContacto,
+                _emailOficial,
+                _rondaSolar,
+                _fechaInicioRonda,
+                _fechaFinRonda);
+
+            _config = await ServicioConfiguracion.GuardarAreaInstitucionalAsync(dto);
+            Snackbar.Add("Área Institucional guardada correctamente.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
+    private async Task GuardarEconomicoAsync()
+    {
+        _guardando = true;
+        try
+        {
+            var dto = new AjustesEconomicosDto(_iban, _titularCuenta, _conceptoCuota);
+            _config = await ServicioConfiguracion.GuardarAreaEconomicaAsync(dto);
+            Snackbar.Add("Área Económica guardada correctamente.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+
+    private async Task GuardarAdmisionesAsync()
+    {
+        _guardando = true;
+        try
+        {
+            var dto = new AjustesAdmisionesDto(_admisionesAbiertas, _mensajeAdmisiones);
+            _config = await ServicioConfiguracion.GuardarAreaAdmisionesAsync(dto);
+            Snackbar.Add("Área de Admisiones guardada correctamente.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _guardando = false;
+        }
+    }
+}
