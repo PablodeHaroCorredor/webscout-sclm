@@ -68,7 +68,7 @@ public class ServicioConfiguracionGrupo : IServicioConfiguracionGrupo
             accion: "ActualizacionAjustesInstitucionales",
             tipoRecurso: nameof(ConfiguracionGrupo),
             recursoId: config.Id.ToString(),
-            detalles: $"Ronda solar: {config.RondaSolarActiva}, CIF: {config.Cif ?? "—"}",
+            detalles: $"Ronda solar: {config.RondaSolarActiva}, CIF: {config.Cif ?? "No especificado"}",
             cancellationToken: cancellationToken);
 
         _logger.LogInformation("Ajustes institucionales guardados para el tenant {TenantId}", _tenantContext.CurrentTenantId);

@@ -11,7 +11,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject UserContextModeService ContextService
 
-<PageTitle>@(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? $"{Tenant.GroupName} · Scouts de Castilla-La Mancha" : "WebScout SCLM — Federación de Scouts de Castilla-La Mancha")</PageTitle>
+<PageTitle>@(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? $"{Tenant.GroupName} · Scouts de Castilla-La Mancha" : "WebScout SCLM · Federación de Scouts de Castilla-La Mancha")</PageTitle>
 
 @if (Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty)
 {
