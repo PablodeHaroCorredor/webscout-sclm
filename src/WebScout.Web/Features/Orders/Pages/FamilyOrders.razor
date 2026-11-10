@@ -89,10 +89,17 @@
             }
             else if (_productosFiltrados.Count == 0)
             {
-                <div class="text-center py-12">
-                    <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Large" Class="mud-text-secondary mb-2" />
-                    <MudText Typo="Typo.h6">No hay artículos disponibles</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">No se encontraron productos en la categoría seleccionada.</MudText>
+                <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory2" Color="Color.Default" Size="Size.Large" />
+                    </div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                        No hay artículos disponibles
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                        No se encontraron productos en la categoría seleccionada.
+                    </MudText>
                 </div>
             }
             else
@@ -163,140 +170,140 @@
 
         <!-- PESTAÑA 2: MIS SOLICITUDES DE MATERIAL -->
         <MudTabPanel Text="@($"Mis Solicitudes ({_misPedidos.Count})")" Icon="@Icons.Material.Filled.Assignment">
-            @if (_cargando)
-            {
-                <div class="d-flex flex-column align-center justify-center py-12 gap-3">
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando tus solicitudes...</MudText>
-                </div>
-            }
-            else if (_misPedidos.Count == 0)
-            {
-                <div class="rounded-2xl border bg-white pa-8 text-center my-4" style="border-color: #E2E8F0;">
-                    <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Size="Size.Large" Color="Color.Default" Class="mb-3" />
-                    <MudText Typo="Typo.h6" Style="font-weight: 700;">No tienes pedidos registrados todavía</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 450px; margin: 0 auto;">
-                        Consulta la pestaña del catálogo de material para solicitar pañoletas, polos o artículos scout para tu familia.
-                    </MudText>
-                </div>
-            }
-            else
-            {
-                <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden my-2">
-                    <MudTable Items="_misPedidos" Hover="true" Dense="false" Elevation="0">
-                        <HeaderContent>
-                            <MudTh>Código</MudTh>
-                            <MudTh>Fecha</MudTh>
-                            <MudTh>Educando</MudTh>
-                            <MudTh>Artículos y Tallas</MudTh>
-                            <MudTh class="text-end">Total</MudTh>
-                            <MudTh class="text-center">Comprobante</MudTh>
-                            <MudTh class="text-center">Estado</MudTh>
-                            <MudTh class="text-end">Acciones</MudTh>
-                        </HeaderContent>
-                        <RowTemplate>
-                            <MudTd DataLabel="Código">
-                                <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
-                                    @context.CodigoPedido
+            <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden my-2">
+                <MudTable Items="_misPedidos" Loading="_cargando" Hover="true" Dense="false" Elevation="0">
+                    <LoadingContent>
+                        <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando tus solicitudes...</MudText>
+                        </div>
+                    </LoadingContent>
+                    <NoRecordsContent>
+                        <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                            <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                                 style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                                <MudIcon Icon="@Icons.Material.Filled.ShoppingBag" Color="Color.Default" Size="Size.Large" />
+                            </div>
+                            <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                                No tienes pedidos registrados todavía
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 450px; margin: 0 auto;">
+                                Consulta la pestaña del catálogo de material para solicitar pañoletas, polos o artículos scout para tu familia.
+                            </MudText>
+                        </div>
+                    </NoRecordsContent>
+                    <HeaderContent>
+                        <MudTh>Código</MudTh>
+                        <MudTh>Fecha</MudTh>
+                        <MudTh>Educando</MudTh>
+                        <MudTh>Artículos y Tallas</MudTh>
+                        <MudTh class="text-end">Total</MudTh>
+                        <MudTh class="text-center">Comprobante</MudTh>
+                        <MudTh class="text-center">Estado</MudTh>
+                        <MudTh class="text-end">Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Código">
+                            <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                                @context.CodigoPedido
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Fecha">
+                            <MudText Typo="Typo.body2">
+                                @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Educando">
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                                @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
+                            </MudText>
+                            @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                            {
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    @context.RamaEducativa
                                 </MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Fecha">
-                                <MudText Typo="Typo.body2">
-                                    @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
-                                </MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Educando">
-                                <MudText Typo="Typo.body2" Style="font-weight: 600;">
-                                    @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
-                                </MudText>
-                                @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Artículos">
+                            <div class="d-flex flex-column gap-1">
+                                @foreach (var l in context.Lineas)
                                 {
-                                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                        @context.RamaEducativa
+                                    <MudText Typo="Typo.caption" Style="color: #334155;">
+                                        • @l.Cantidad x <b>@l.ProductoNombre</b> (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
                                     </MudText>
                                 }
-                            </MudTd>
-                            <MudTd DataLabel="Artículos">
-                                <div class="d-flex flex-column gap-1">
-                                    @foreach (var l in context.Lineas)
-                                    {
-                                        <MudText Typo="Typo.caption" Style="color: #334155;">
-                                            • @l.Cantidad x <b>@l.ProductoNombre</b> (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
-                                        </MudText>
-                                    }
-                                </div>
-                            </MudTd>
-                            <MudTd DataLabel="Total" Class="text-end font-weight-bold">
-                                <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
-                                    @context.TotalEstimado.ToString("F2") €
-                                </MudText>
-                            </MudTd>
-                            <MudTd DataLabel="Comprobante" Class="text-center">
-                                @if (context.TieneComprobante)
+                            </div>
+                        </MudTd>
+                        <MudTd DataLabel="Total" Class="text-end font-weight-bold">
+                            <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
+                                @context.TotalEstimado.ToString("F2") €
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Comprobante" Class="text-center">
+                            @if (context.TieneComprobante)
+                            {
+                                <MudTooltip Text="@($"Justificante subido: {context.ComprobantePagoNombreOriginal}")">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
+                                        Adjunto
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <MudTooltip Text="Voluntario: la entrega física en mano no se bloqueará (PA07)">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                        Sin Adjuntar
+                                    </MudChip>
+                                </MudTooltip>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Estado" Class="text-center">
+                            <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                                @context.Estado
+                            </MudChip>
+                        </MudTd>
+                        <MudTd DataLabel="Acciones" Class="text-end">
+                            <div class="d-flex justify-end align-center gap-1">
+                                <MudTooltip Text="Ver detalle completo">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                                   Size="Size.Small" 
+                                                   Color="Color.Default" 
+                                                   OnClick="@(() => VerDetallePedidoAsync(context))" />
+                                </MudTooltip>
+
+                                @if (context.PermiteAdjuntarComprobante)
                                 {
-                                    <MudTooltip Text="@($"Justificante subido: {context.ComprobantePagoNombreOriginal}")">
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
-                                            Adjunto
-                                        </MudChip>
+                                    <MudTooltip Text="Subir comprobante de transferencia bancaria (RF51)">
+                                        <MudIconButton Icon="@Icons.Material.Filled.UploadFile" 
+                                                       Size="Size.Small" 
+                                                       Color="Color.Primary" 
+                                                       OnClick="@(() => AbrirDialogoComprobanteAsync(context))" />
                                     </MudTooltip>
                                 }
-                                else
+
+                                @if (context.PermiteCancelacionFamilia)
                                 {
-                                    <MudTooltip Text="Voluntario: la entrega física en mano no se bloqueará (PA07)">
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
-                                            Sin Adjuntar
-                                        </MudChip>
+                                    <MudTooltip Text="Cancelar solicitud (RF52)">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                                       Size="Size.Small" 
+                                                       Color="Color.Error" 
+                                                       OnClick="@(() => AbrirDialogoCancelarAsync(context))" />
                                     </MudTooltip>
                                 }
-                            </MudTd>
-                            <MudTd DataLabel="Estado" Class="text-center">
-                                <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                                    @context.Estado
-                                </MudChip>
-                            </MudTd>
-                            <MudTd DataLabel="Acciones" Class="text-end">
-                                <div class="d-flex justify-end align-center gap-1">
-                                    <MudTooltip Text="Ver detalle completo">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                else if (context.Estado == EstadoPedidoMaterial.PedidoAlProveedor || context.Estado == EstadoPedidoMaterial.Entregado)
+                                {
+                                    <MudTooltip Text="El pedido ya está en marcha o entregado. Contacta con el Kraal para cualquier consulta.">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Info" 
                                                        Size="Size.Small" 
                                                        Color="Color.Default" 
-                                                       OnClick="@(() => VerDetallePedidoAsync(context))" />
+                                                       Disabled="true" />
                                     </MudTooltip>
-
-                                    @if (context.PermiteAdjuntarComprobante)
-                                    {
-                                        <MudTooltip Text="Subir comprobante de transferencia bancaria (RF51)">
-                                            <MudIconButton Icon="@Icons.Material.Filled.UploadFile" 
-                                                           Size="Size.Small" 
-                                                           Color="Color.Primary" 
-                                                           OnClick="@(() => AbrirDialogoComprobanteAsync(context))" />
-                                        </MudTooltip>
-                                    }
-
-                                    @if (context.PermiteCancelacionFamilia)
-                                    {
-                                        <MudTooltip Text="Cancelar solicitud (RF52)">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                                                           Size="Size.Small" 
-                                                           Color="Color.Error" 
-                                                           OnClick="@(() => AbrirDialogoCancelarAsync(context))" />
-                                        </MudTooltip>
-                                    }
-                                    else if (context.Estado == EstadoPedidoMaterial.PedidoAlProveedor || context.Estado == EstadoPedidoMaterial.Entregado)
-                                    {
-                                        <MudTooltip Text="El pedido ya está en marcha o entregado. Contacta con el Kraal para cualquier consulta.">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Info" 
-                                                           Size="Size.Small" 
-                                                           Color="Color.Default" 
-                                                           Disabled="true" />
-                                        </MudTooltip>
-                                    }
-                                </div>
-                            </MudTd>
-                        </RowTemplate>
-                    </MudTable>
-                </MudCard>
-            }
+                                }
+                            </div>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudCard>
         </MudTabPanel>
     </MudTabs>
 </MudContainer>

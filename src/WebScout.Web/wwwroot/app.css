@@ -514,3 +514,15 @@ body {
     flex-wrap: wrap;
     gap: 0.75rem;
 }
+
+/* ==========================================================================
+   Utilidades Globales de Alineación y Tipografía
+   Garantiza que clases comunes funcionen uniformemente con MudBlazor
+   ========================================================================== */
+.text-center { text-align: center !important; }
+.text-end { text-align: right !important; }
+.text-start { text-align: left !important; }
+.font-weight-bold { font-weight: 700 !important; }
+.font-weight-semibold { font-weight: 600 !important; }
+.font-weight-medium { font-weight: 500 !important; }
+

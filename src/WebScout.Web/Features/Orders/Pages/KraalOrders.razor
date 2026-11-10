@@ -267,123 +267,139 @@
             </div>
         </div>
 
-        @if (_cargando)
-        {
-            <div class="d-flex flex-column align-center justify-center py-12 gap-3">
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando solicitudes de material...</MudText>
-            </div>
-        }
-        else if (_pedidos.Count == 0)
-        {
-            <div class="text-center py-12">
-                <MudIcon Icon="@Icons.Material.Filled.Inbox" Size="Size.Large" Class="mud-text-secondary mb-2" />
-                <MudText Typo="Typo.h6" Style="font-weight: 700;">No se encontraron pedidos</MudText>
-                <MudText Typo="Typo.body2" Class="mud-text-secondary">No hay solicitudes que coincidan con el filtro seleccionado.</MudText>
-            </div>
-        }
-        else
-        {
-            <MudTable Items="_pedidos" Hover="true" Dense="false" Elevation="0">
-                <HeaderContent>
-                    <MudTh>Código</MudTh>
-                    <MudTh>Fecha</MudTh>
-                    <MudTh>Solicitante (Familia)</MudTh>
-                    <MudTh>Educando / Rama</MudTh>
-                    <MudTh>Artículos y Tallas</MudTh>
-                    <MudTh class="text-end">Importe</MudTh>
-                    <MudTh class="text-center">Comprobante (PA07)</MudTh>
-                    <MudTh class="text-center">Estado (Core 1.29)</MudTh>
-                    <MudTh class="text-end">Acciones</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Código">
-                        <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
-                            @context.CodigoPedido
-                        </MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Fecha">
-                        <MudText Typo="Typo.body2">
-                            @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
-                        </MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Solicitante">
-                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
-                            @context.SolicitanteNombre
-                        </MudText>
+        <MudTable Items="_pedidos" Loading="_cargando" Hover="true" Dense="false" Elevation="0">
+            <LoadingContent>
+                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando solicitudes de material...</MudText>
+                </div>
+            </LoadingContent>
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Inbox" Color="Color.Default" Size="Size.Large" />
+                    </div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                        No se encontraron pedidos
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
+                        @(_filtroEstado != null || _filtroIncidencias || !string.IsNullOrWhiteSpace(_busqueda)
+                            ? "No hay pedidos en la cola con el filtro o el término de búsqueda actual."
+                            : "Aún no se ha registrado ningún pedido de material en esta ronda solar.")
+                    </MudText>
+                    @if (_filtroEstado != null || _filtroIncidencias || !string.IsNullOrWhiteSpace(_busqueda))
+                    {
+                        <div class="mt-4">
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Small" 
+                                       StartIcon="@Icons.Material.Filled.FilterAltOff"
+                                       OnClick="RestablecerFiltrosAsync">
+                                Limpiar filtros y ver todos
+                            </MudButton>
+                        </div>
+                    }
+                </div>
+            </NoRecordsContent>
+            <HeaderContent>
+                <MudTh>Código</MudTh>
+                <MudTh>Fecha</MudTh>
+                <MudTh>Solicitante (Familia)</MudTh>
+                <MudTh>Educando / Rama</MudTh>
+                <MudTh>Artículos y Tallas</MudTh>
+                <MudTh class="text-end">Importe</MudTh>
+                <MudTh class="text-center">Comprobante (PA07)</MudTh>
+                <MudTh class="text-center">Estado (Core 1.29)</MudTh>
+                <MudTh class="text-end">Acciones</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Código">
+                    <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                        @context.CodigoPedido
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Fecha">
+                    <MudText Typo="Typo.body2">
+                        @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Solicitante">
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                        @context.SolicitanteNombre
+                    </MudText>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        @context.SolicitanteEmail
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Educando">
+                    <MudText Typo="Typo.body2" Style="font-weight: 600;">
+                        @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
+                    </MudText>
+                    @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                    {
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                            @context.SolicitanteEmail
+                            @context.RamaEducativa
                         </MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Educando">
-                        <MudText Typo="Typo.body2" Style="font-weight: 600;">
-                            @(string.IsNullOrWhiteSpace(context.EducandoNombre) ? "Para la familia" : context.EducandoNombre)
-                        </MudText>
-                        @if (!string.IsNullOrWhiteSpace(context.RamaEducativa))
+                    }
+                </MudTd>
+                <MudTd DataLabel="Artículos">
+                    <div class="d-flex flex-column gap-0.5">
+                        @foreach (var l in context.Lineas)
                         {
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                @context.RamaEducativa
+                            <MudText Typo="Typo.caption" Style="color: #334155;">
+                                <b>@l.Cantidad x</b> @l.ProductoNombre (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
                             </MudText>
                         }
-                    </MudTd>
-                    <MudTd DataLabel="Artículos">
-                        <div class="d-flex flex-column gap-0.5">
-                            @foreach (var l in context.Lineas)
-                            {
-                                <MudText Typo="Typo.caption" Style="color: #334155;">
-                                    <b>@l.Cantidad x</b> @l.ProductoNombre (@(string.IsNullOrWhiteSpace(l.Talla) ? "Talla Única" : l.Talla))
-                                </MudText>
-                            }
-                        </div>
-                    </MudTd>
-                    <MudTd DataLabel="Importe" Class="text-end">
-                        <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
-                            @context.TotalEstimado.ToString("F2") €
-                        </MudText>
-                    </MudTd>
-                    <MudTd DataLabel="Comprobante" Class="text-center">
-                        @if (context.TieneComprobante)
-                        {
-                            <MudTooltip Text="@($"Justificante voluntario adjunto: {context.ComprobantePagoNombreOriginal}")">
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
-                                    Adjunto
-                                </MudChip>
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudTooltip Text="Sin justificante (La entrega en mano no requiere bloqueo informático - PA07)">
-                                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
-                                    Sin Comprobante
-                                </MudChip>
-                            </MudTooltip>
-                        }
-                    </MudTd>
-                    <MudTd DataLabel="Estado" Class="text-center">
-                        <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
-                            @context.Estado
-                        </MudChip>
-                    </MudTd>
-                    <MudTd DataLabel="Acciones" Class="text-end">
-                        <div class="d-flex justify-end align-center gap-1">
-                            <MudTooltip Text="Cambiar estado (Libertad asociativa y rectificación PA07/PA08)">
-                                <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" 
-                                               Size="Size.Small" 
-                                               Color="Color.Primary" 
-                                               OnClick="@(() => AbrirDialogoCambiarEstadoAsync(context))" />
-                            </MudTooltip>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Importe" Class="text-end">
+                    <MudText Typo="Typo.body2" Style="font-weight: 800; color: #1B5E20;">
+                        @context.TotalEstimado.ToString("F2") €
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Comprobante" Class="text-center">
+                    @if (context.TieneComprobante)
+                    {
+                        <MudTooltip Text="@($"Justificante voluntario adjunto: {context.ComprobantePagoNombreOriginal}")">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" Icon="@Icons.Material.Filled.Check">
+                                Adjunto
+                            </MudChip>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="Sin justificante (La entrega en mano no requiere bloqueo informático - PA07)">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                Sin Comprobante
+                            </MudChip>
+                        </MudTooltip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Estado" Class="text-center">
+                    <MudChip T="string" Size="Size.Small" Color="@ObtenerColorEstado(context.Estado)" Variant="Variant.Filled">
+                        @context.Estado
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Acciones" Class="text-end">
+                    <div class="d-flex justify-end align-center gap-1">
+                        <MudTooltip Text="Cambiar estado (Libertad asociativa y rectificación PA07/PA08)">
+                            <MudIconButton Icon="@Icons.Material.Filled.SwapHoriz" 
+                                           Size="Size.Small" 
+                                           Color="Color.Primary" 
+                                           OnClick="@(() => AbrirDialogoCambiarEstadoAsync(context))" />
+                        </MudTooltip>
 
-                            <MudTooltip Text="Ver detalle completo">
-                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
-                                               Size="Size.Small" 
-                                               Color="Color.Default" 
-                                               OnClick="@(() => VerDetallePedidoAsync(context))" />
-                            </MudTooltip>
-                        </div>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        }
+                        <MudTooltip Text="Ver detalle completo">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                           Size="Size.Small" 
+                                           Color="Color.Default" 
+                                           OnClick="@(() => VerDetallePedidoAsync(context))" />
+                        </MudTooltip>
+                    </div>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
     </MudCard>
 </MudContainer>
 
