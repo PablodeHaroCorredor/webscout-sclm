@@ -48,6 +48,10 @@ postgres-data/
 minio-data/
 mailpit-data/
 
+## Scratch / Temporary agent files
+scratch/
+
+
 ## OS-generated files
 .DS_Store
 Thumbs.db

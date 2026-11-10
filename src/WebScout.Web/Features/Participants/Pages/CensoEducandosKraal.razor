@@ -154,44 +154,76 @@
         </MudCardContent>
     </MudCard>
 
-    <!-- Tabla del Censo de Educandos -->
-    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
-        <MudTable Items="EducandosFiltrados" 
-                  Loading="_cargando" 
-                  FixedHeader="true" 
-                  Height="560px" 
-                  RowsPerPage="25" 
-                  Hover="true" 
-                  Elevation="0" 
-                  Class="w-100">
-            <LoadingContent>
-                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
-                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando censo de educandos...</MudText>
-                </div>
-            </LoadingContent>
-            <NoRecordsContent>
-                <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
-                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
-                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
-                        <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Color="Color.Default" Size="Size.Large" />
+    <!-- Tabla del Censo de Educandos (o Tarjetas Móviles) -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-xl overflow-hidden mb-6" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+        <div class="pa-4 border-b d-flex justify-space-between align-center" style="border-color: #E2E8F0;">
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 800; color: #0F172A;">
+                    Censo Activo (@EducandosFiltrados.Count())
+                </MudText>
+                @if (_ramaSeleccionada != null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="@ObtenerColorRama(_ramaSeleccionada.Value)" Variant="Variant.Filled" Style="font-weight: 700;">
+                        @_ramaSeleccionada.Value.ObtenerNombre()
+                    </MudChip>
+                }
+            </div>
+
+            <div class="d-flex align-center p-0.5 rounded-lg border flex-shrink-0" style="background-color: #F8FAFC; border-color: #E2E8F0;">
+                <MudTooltip Text="Vista en tabla">
+                    <MudIconButton Icon="@Icons.Material.Filled.TableRows" 
+                                   Size="Size.Small" 
+                                   Color="@(_modoVista == ModoVisualizacion.Tabla ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => _modoVista = _modoVista == ModoVisualizacion.Tabla ? ModoVisualizacion.Auto : ModoVisualizacion.Tabla)" />
+                </MudTooltip>
+                <MudTooltip Text="Vista en tarjetas táctiles">
+                    <MudIconButton Icon="@Icons.Material.Filled.ViewAgenda" 
+                                   Size="Size.Small" 
+                                   Color="@(_modoVista == ModoVisualizacion.Tarjetas ? Color.Primary : Color.Default)"
+                                   OnClick="@(() => _modoVista = _modoVista == ModoVisualizacion.Tarjetas ? ModoVisualizacion.Auto : ModoVisualizacion.Tarjetas)" />
+                </MudTooltip>
+            </div>
+        </div>
+
+        <!-- VISTA TABULAR: md+ -->
+        <div class="@(_modoVista == ModoVisualizacion.Tarjetas ? "d-none" : (_modoVista == ModoVisualizacion.Tabla ? "d-block" : "d-none d-md-block"))">
+            <MudTable Items="EducandosFiltrados" 
+                      Loading="_cargando" 
+                      FixedHeader="true" 
+                      Height="560px" 
+                      RowsPerPage="25" 
+                      Hover="true" 
+                      Elevation="0" 
+                      Breakpoint="Breakpoint.None"
+                      Class="w-100">
+                <LoadingContent>
+                    <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando censo de educandos...</MudText>
                     </div>
-                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
-                        No se han encontrado educandos
-                    </MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
-                        No hay miembros juveniles registrados para esta sección o con los criterios indicados.
-                    </MudText>
-                </div>
-            </NoRecordsContent>
-            <HeaderContent>
-                <MudTh Style="font-weight: 700;">Educando</MudTh>
-                <MudTh Style="font-weight: 700;">Rama</MudTh>
-                <MudTh Style="font-weight: 700;">Alertas Médicas y Dietas</MudTh>
-                <MudTh Style="font-weight: 700;">Contacto de Emergencia</MudTh>
-                <MudTh Style="font-weight: 700; text-align: right;">Acciones</MudTh>
-            </HeaderContent>
-            <RowTemplate>
+                </LoadingContent>
+                <NoRecordsContent>
+                    <div class="d-flex flex-column align-center justify-center py-16 px-4 text-center">
+                        <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                             style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                            <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Color="Color.Default" Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                            No se han encontrado educandos
+                        </MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1" Style="max-width: 440px; margin: 0 auto;">
+                            No hay miembros juveniles registrados para esta sección o con los criterios indicados.
+                        </MudText>
+                    </div>
+                </NoRecordsContent>
+                <HeaderContent>
+                    <MudTh Style="font-weight: 700;">Educando</MudTh>
+                    <MudTh Style="font-weight: 700;">Rama</MudTh>
+                    <MudTh Style="font-weight: 700;">Alertas Médicas y Dietas</MudTh>
+                    <MudTh Style="font-weight: 700;">Contacto de Emergencia</MudTh>
+                    <MudTh Style="font-weight: 700; text-align: right;">Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
                     <!-- Columna Educando -->
                     <MudTd DataLabel="Educando">
                         <div class="d-flex align-center gap-3">
@@ -321,6 +353,154 @@
                                    InfoFormat="{first_item}-{last_item} de {all_items}" />
                 </PagerContent>
             </MudTable>
+        </div>
+
+        <!-- VISTA MÓVIL: xs/sm (Tarjetas Táctiles WCAG 2.5.5) -->
+        <div class="@(_modoVista == ModoVisualizacion.Tabla ? "d-none" : (_modoVista == ModoVisualizacion.Tarjetas ? "d-block" : "d-block d-md-none")) pa-3">
+            @if (_cargando)
+            {
+                <div class="d-flex flex-column align-center justify-center py-16 gap-3">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Cargando censo de educandos...</MudText>
+                </div>
+            }
+            else if (!EducandosFiltrados.Any())
+            {
+                <div class="d-flex flex-column align-center justify-center py-12 px-4 text-center">
+                    <div class="pa-4 rounded-circle mb-3 d-flex align-center justify-center" 
+                         style="background-color: #F8FAFC; border: 1px solid #E2E8F0; width: 64px; height: 64px;">
+                        <MudIcon Icon="@Icons.Material.Filled.PersonSearch" Color="Color.Default" Size="Size.Large" />
+                    </div>
+                    <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                        No se han encontrado educandos
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-1">
+                        No hay educandos registrados para esta rama o filtro.
+                    </MudText>
+                </div>
+            }
+            else
+            {
+                var educandosPagina = EducandosFiltrados.Skip((_paginaMovil - 1) * 10).Take(10).ToList();
+                var totalPaginas = (int)Math.Ceiling(EducandosFiltrados.Count() / 10.0);
+
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var educando in educandosPagina)
+                    {
+                        <div class="pa-4 rounded-2xl" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            <!-- Cabecera de la Tarjeta Móvil -->
+                            <div class="d-flex justify-space-between align-start mb-2">
+                                <div class="d-flex align-center gap-3">
+                                    <MudAvatar Color="@ObtenerColorRama(educando.RamaActual)" Size="Size.Medium" Style="font-weight: 800;">
+                                        @(educando.Nombre.FirstOrDefault())
+                                    </MudAvatar>
+                                    <div>
+                                        <span style="font-weight: 800; font-size: 0.95rem; color: #0F172A; display: block;">
+                                            @educando.NombreCompleto
+                                        </span>
+                                        <span style="font-size: 0.75rem; color: #64748B;">
+                                            @educando.FechaNacimiento.ToString("dd/MM/yyyy") (@educando.CalcularEdad() años)
+                                        </span>
+                                    </div>
+                                </div>
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@ObtenerColorRama(educando.RamaActual)" Style="font-weight: 700; font-size: 0.75rem;">
+                                    @educando.RamaActual.ObtenerNombre()
+                                </MudChip>
+                            </div>
+
+                            <!-- Alertas Médicas -->
+                            <div class="py-2.5 my-2 border-t border-b" style="border-color: #F1F5F9;">
+                                <div class="mb-1">
+                                    <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #64748B;">Salud y Dietas:</span>
+                                </div>
+                                @if (educando.FichaMedica == null)
+                                {
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Sin ficha médica</MudChip>
+                                }
+                                else
+                                {
+                                    var tieneAlergias = !string.IsNullOrWhiteSpace(educando.FichaMedica.AlergiasAlimentarias);
+                                    var tieneDieta = !string.IsNullOrWhiteSpace(educando.FichaMedica.RegimenAlimenticio);
+                                    var tieneMed = !string.IsNullOrWhiteSpace(educando.FichaMedica.MedicacionActiva);
+
+                                    @if (!tieneAlergias && !tieneDieta && !tieneMed)
+                                    {
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">
+                                            Sin alertas médicas
+                                        </MudChip>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex flex-wrap gap-1 mt-1">
+                                            @if (tieneAlergias)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Style="font-size: 0.75rem;">
+                                                    @educando.FichaMedica.AlergiasAlimentarias
+                                                </MudChip>
+                                            }
+                                            @if (tieneDieta)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Style="font-size: 0.75rem;">
+                                                    @educando.FichaMedica.RegimenAlimenticio
+                                                </MudChip>
+                                            }
+                                            @if (tieneMed)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Style="font-size: 0.75rem;">
+                                                    Medicación activa
+                                                </MudChip>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            <!-- Contacto de Emergencia con Botón Llamar de un Toque (WCAG 2.5.5) -->
+                            <div class="mb-3">
+                                @{
+                                    var telefono = educando.FichaMedica?.TelefonoEmergenciaPrincipal ?? educando.TutorLegal?.PhoneNumber;
+                                    var contacto = educando.FichaMedica?.NombreContactoEmergenciaPrincipal ?? educando.TutorLegal?.NombreCompleto ?? "Tutor Legal";
+                                }
+                                @if (!string.IsNullOrWhiteSpace(telefono))
+                                {
+                                    <MudButton Variant="Variant.Outlined" 
+                                               Color="Color.Primary" 
+                                               Size="Size.Small" 
+                                               Href="@($"tel:{telefono}")"
+                                               StartIcon="@Icons.Material.Filled.Call"
+                                               Style="width: 100%; min-height: 44px; font-weight: 700; border-radius: 8px;">
+                                        Llamar a @contacto (@telefono)
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <span style="font-size: 0.8rem; color: #94A3B8;">Sin teléfono de emergencia registrado</span>
+                                }
+                            </div>
+
+                            <!-- Botón Ficha Médica Completa -->
+                            <div class="pt-1 border-t" style="border-color: #F1F5F9;">
+                                <MudButton Variant="Variant.Filled" 
+                                           Color="Color.Primary" 
+                                           Size="Size.Small" 
+                                           StartIcon="@Icons.Material.Filled.HealthAndSafety"
+                                           Style="width: 100%; min-height: 44px; font-weight: 700; border-radius: 8px;"
+                                           OnClick="@(() => AbrirFichaSanitariaAsync(educando))">
+                                    Ver Ficha Médica y Sanitaria
+                                </MudButton>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (totalPaginas > 1)
+                {
+                    <div class="d-flex justify-center align-center pt-4">
+                        <MudPagination Count="@totalPaginas" @bind-Selected="@_paginaMovil" Color="Color.Primary" Size="Size.Small" />
+                    </div>
+                }
+            }
+        </div>
     </MudCard>
 
 </MudContainer>
@@ -332,6 +512,8 @@
     private RamaScout _ramaAsignada = RamaScout.Ninguna;
     private bool _bloquearFiltroRama = false;
     private string? _textoBusqueda;
+    private ModoVisualizacion _modoVista = ModoVisualizacion.Auto;
+    private int _paginaMovil = 1;
 
     protected override async Task OnInitializedAsync()
     {
