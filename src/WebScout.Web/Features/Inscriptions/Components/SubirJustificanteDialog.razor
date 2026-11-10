@@ -3,7 +3,7 @@
 @inject IServicioInscripciones ServicioInscripciones
 @inject ISnackbar Snackbar
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.UploadFile" Color="Color.Primary" />
@@ -103,7 +103,7 @@
         </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Text" OnClick="Cancelar">Cerrar</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="Cancelar" Disabled="_subiendo">Cerrar</MudButton>
         <MudButton Variant="Variant.Filled" 
                    Color="Color.Primary" 
                    Disabled="@(_archivoSeleccionado == null || _subiendo)" 

@@ -1,7 +1,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using WebScout.Web.Features.Orders.Domain
 
-<MudDialog>
+<MudDialog ContentClass="scout-dialog-scrollable">
     <TitleContent>
         <div class="d-flex align-center gap-2">
             <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Primary" />
@@ -69,14 +69,22 @@
         </div>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text">
+        <MudButton OnClick="@(() => MudDialog.Cancel())" Color="Color.Default" Variant="Variant.Text" Disabled="_guardando">
             Cerrar
         </MudButton>
         <MudButton OnClick="SubirArchivo" 
                    Color="Color.Success" 
                    Variant="Variant.Filled" 
-                   Disabled="@(_archivoSeleccionado == null)">
-            Guardar Justificante
+                   Disabled="@(_archivoSeleccionado == null || _guardando)">
+            @if (_guardando)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="ms-n1 me-2" />
+                <span>Guardando...</span>
+            }
+            else
+            {
+                <span>Guardar Justificante</span>
+            }
         </MudButton>
     </DialogActions>
 </MudDialog>
@@ -92,6 +100,7 @@
     public string? NombreArchivoPrevio { get; set; }
 
     private IBrowserFile? _archivoSeleccionado;
+    private bool _guardando = false;
 
     private void OnFileSelected(InputFileChangeEventArgs e)
     {
@@ -103,6 +112,7 @@
         if (_archivoSeleccionado == null)
             return;
 
+        _guardando = true;
         MudDialog.Close(DialogResult.Ok(_archivoSeleccionado));
     }
 }
