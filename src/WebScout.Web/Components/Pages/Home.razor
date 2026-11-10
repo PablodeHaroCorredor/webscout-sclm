@@ -9,6 +9,7 @@
 @inject NavigationManager Navigation
 @inject WebScoutDbContext DbContext
 @inject AuthenticationStateProvider AuthStateProvider
+@inject UserContextModeService ContextService
 
 <PageTitle>@(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? $"{Tenant.GroupName} · Scouts de Castilla-La Mancha" : "WebScout SCLM — Federación de Scouts de Castilla-La Mancha")</PageTitle>
 
@@ -644,11 +645,33 @@ else
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            if (user.IsInRole(RolesScout.Familia))
+            if (user.IsInRole(RolesScout.SuperAdmin))
             {
-                Navigation.NavigateTo("/familias");
+                Navigation.NavigateTo("/admin/grupos");
                 return;
             }
+
+            var isKraal = user.IsInRole(RolesScout.Scouter) || user.IsInRole(RolesScout.Coordinacion) || user.IsInRole(RolesScout.Administracion);
+            var isFamilia = user.IsInRole(RolesScout.Familia);
+
+            if (isKraal && isFamilia)
+            {
+                if (ContextService.CurrentMode == ScoutContextMode.Familia)
+                {
+                    Navigation.NavigateTo("/familias");
+                    return;
+                }
+
+                if (user.IsInRole(RolesScout.Coordinacion) || user.IsInRole(RolesScout.Administracion))
+                {
+                    Navigation.NavigateTo("/kraal/actividades");
+                    return;
+                }
+
+                Navigation.NavigateTo("/kraal/inscripciones");
+                return;
+            }
+
             if (user.IsInRole(RolesScout.Scouter))
             {
                 Navigation.NavigateTo("/kraal/inscripciones");
@@ -659,9 +682,9 @@ else
                 Navigation.NavigateTo("/kraal/actividades");
                 return;
             }
-            if (user.IsInRole(RolesScout.SuperAdmin))
+            if (user.IsInRole(RolesScout.Familia))
             {
-                Navigation.NavigateTo("/admin/grupos");
+                Navigation.NavigateTo("/familias");
                 return;
             }
         }
