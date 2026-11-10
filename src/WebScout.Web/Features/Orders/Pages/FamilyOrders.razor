@@ -171,7 +171,14 @@
         <!-- PESTAÑA 2: MIS SOLICITUDES DE MATERIAL -->
         <MudTabPanel Text="@($"Mis Solicitudes ({_misPedidos.Count})")" Icon="@Icons.Material.Filled.Assignment">
             <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden my-2">
-                <MudTable Items="_misPedidos" Loading="_cargando" Hover="true" Dense="false" Elevation="0">
+                <MudTable Items="_misPedidos" 
+                          Loading="_cargando" 
+                          Hover="true" 
+                          Dense="false" 
+                          Elevation="0"
+                          FixedHeader="true"
+                          Height="480px"
+                          RowsPerPage="10">
                     <LoadingContent>
                         <div class="d-flex flex-column align-center justify-center py-16 gap-3">
                             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
@@ -302,6 +309,11 @@
                             </div>
                         </MudTd>
                     </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50 }"
+                                       RowsPerPageString="Filas por página:"
+                                       InfoFormat="{first_item}-{last_item} de {all_items}" />
+                    </PagerContent>
                 </MudTable>
             </MudCard>
         </MudTabPanel>

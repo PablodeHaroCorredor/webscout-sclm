@@ -51,7 +51,14 @@
     }
     else
     {
-        <MudTable Items="@_inscripciones" Dense="true" Hover="true" Elevation="0" Outlined="true">
+        <MudTable Items="@_inscripciones" 
+                  Dense="true" 
+                  Hover="true" 
+                  Elevation="0" 
+                  Outlined="true"
+                  FixedHeader="true"
+                  Height="500px"
+                  RowsPerPage="10">
             <HeaderContent>
                 <MudTh>Educando</MudTh>
                 <MudTh>Actividad y Fechas</MudTh>
@@ -143,6 +150,11 @@
                     }
                 </MudTd>
             </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 25, 50 }"
+                               RowsPerPageString="Filas por página:"
+                               InfoFormat="{first_item}-{last_item} de {all_items}" />
+            </PagerContent>
         </MudTable>
     }
 </MudContainer>

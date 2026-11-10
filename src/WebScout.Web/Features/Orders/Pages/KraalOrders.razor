@@ -267,7 +267,14 @@
             </div>
         </div>
 
-        <MudTable Items="_pedidos" Loading="_cargando" Hover="true" Dense="false" Elevation="0">
+        <MudTable Items="_pedidos" 
+                  Loading="_cargando" 
+                  Hover="true" 
+                  Dense="false" 
+                  Elevation="0"
+                  FixedHeader="true"
+                  Height="540px"
+                  RowsPerPage="25">
             <LoadingContent>
                 <div class="d-flex flex-column align-center justify-center py-16 gap-3">
                     <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Medium" />
@@ -399,6 +406,11 @@
                     </div>
                 </MudTd>
             </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }"
+                               RowsPerPageString="Filas por página:"
+                               InfoFormat="{first_item}-{last_item} de {all_items}" />
+            </PagerContent>
         </MudTable>
     </MudCard>
 </MudContainer>

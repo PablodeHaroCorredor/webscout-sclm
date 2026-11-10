@@ -238,7 +238,13 @@
         }
         else
         {
-            <MudTable Items="@_mensajes" Hover="true" Dense="false" Elevation="0">
+            <MudTable Items="@_mensajes" 
+                      Hover="true" 
+                      Dense="false" 
+                      Elevation="0"
+                      FixedHeader="true"
+                      Height="540px"
+                      RowsPerPage="25">
                 <HeaderContent>
                     <MudTh Style="width: 170px;">Fecha y Hora</MudTh>
                     <MudTh Style="min-width: 200px;">Destinatario</MudTh>
@@ -340,6 +346,11 @@
                         </div>
                     </MudTd>
                 </RowTemplate>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 10, 25, 50, 100 }"
+                                   RowsPerPageString="Filas por página:"
+                                   InfoFormat="{first_item}-{last_item} de {all_items}" />
+                </PagerContent>
             </MudTable>
         }
     </MudCard>
