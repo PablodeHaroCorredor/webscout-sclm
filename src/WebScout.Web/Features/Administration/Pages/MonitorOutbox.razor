@@ -60,19 +60,24 @@
         </div>
     </div>
 
-    <!-- TARJETAS DE MÉTRICAS (KPI STATS) -->
+    <!-- TARJETAS DE MÉTRICAS QUE ACTÚAN DIRECTAMENTE COMO SELECTOR DE FILTRO -->
     <MudGrid Spacing="3" Class="mb-6">
         <!-- 1. Total Registrados -->
         <MudItem xs="12" sm="6" md="3">
-            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
-                 style="@(_filtroEstado == null ? "border-color: #2563EB !important; background-color: #F8FAFC !important;" : "")"
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == null 
+                     ? "border-color: #2563EB !important; box-shadow: 0 0 0 1px #2563EB, 0 4px 6px -1px rgba(37, 99, 235, 0.1); background-color: #F8FAFC !important;" 
+                     : "border-color: #E2E8F0;")"
                  @onclick="@(() => OnSeleccionarFiltro(null))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
-                            Total Correos
-                        </MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; margin-top: 4px; line-height: 1.1;">
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == null ? "background-color: #2563EB;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                                Todos los Correos
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; margin-top: 2px; line-height: 1.1;">
                             @(_resumen?.TotalMensajes ?? 0)
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
@@ -88,15 +93,20 @@
 
         <!-- 2. Pendientes en Cola -->
         <MudItem xs="12" sm="6" md="3">
-            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
-                 style="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? "border-color: #D97706 !important; background-color: #FFFBEB !important;" : "")"
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Pendiente 
+                     ? "border-color: #D97706 !important; box-shadow: 0 0 0 1px #D97706, 0 4px 6px -1px rgba(217, 119, 6, 0.1); background-color: #FFFBEB !important;" 
+                     : "border-color: #E2E8F0;")"
                  @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Pendiente))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
-                            Pendientes en Cola
-                        </MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #D97706; margin-top: 4px; line-height: 1.1;">
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? "background-color: #D97706;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                                Pendientes en Cola
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #D97706; margin-top: 2px; line-height: 1.1;">
                             @(_resumen?.Pendientes ?? 0)
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
@@ -112,15 +122,20 @@
 
         <!-- 3. Enviados con Éxito -->
         <MudItem xs="12" sm="6" md="3">
-            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
-                 style="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? "border-color: #059669 !important; background-color: #ECFDF5 !important;" : "")"
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Enviado 
+                     ? "border-color: #059669 !important; box-shadow: 0 0 0 1px #059669, 0 4px 6px -1px rgba(5, 150, 105, 0.1); background-color: #ECFDF5 !important;" 
+                     : "border-color: #E2E8F0;")"
                  @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Enviado))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
-                            Enviados con Éxito
-                        </MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #059669; margin-top: 4px; line-height: 1.1;">
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? "background-color: #059669;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                                Enviados con Éxito
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #059669; margin-top: 2px; line-height: 1.1;">
                             @(_resumen?.Enviados ?? 0)
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
@@ -136,15 +151,20 @@
 
         <!-- 4. Reintentos / Fallidos -->
         <MudItem xs="12" sm="6" md="3">
-            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card"
-                 style="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? "border-color: #DC2626 !important; background-color: #FEF2F2 !important;" : "")"
+            <div class="rounded-2xl border bg-white pa-5 h-100 cursor-pointer stat-card position-relative"
+                 style="@(_filtroEstado == EstadoMensajeOutbox.Fallido 
+                     ? "border-color: #DC2626 !important; box-shadow: 0 0 0 1px #DC2626, 0 4px 6px -1px rgba(220, 38, 38, 0.1); background-color: #FEF2F2 !important;" 
+                     : "border-color: #E2E8F0;")"
                  @onclick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Fallido))">
                 <div class="d-flex justify-space-between align-center">
                     <div>
-                        <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
-                            Incidencias / Fallidos
-                        </MudText>
-                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #DC2626; margin-top: 4px; line-height: 1.1;">
+                        <div class="d-flex align-center gap-1.5 mb-1">
+                            <span class="active-dot" style="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? "background-color: #DC2626;" : "background-color: transparent;")"></span>
+                            <MudText Typo="Typo.caption" Style="color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem;">
+                                Incidencias / Fallidos
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.h4" Style="font-weight: 800; color: #DC2626; margin-top: 2px; line-height: 1.1;">
                             @((_resumen?.EnReintento ?? 0) + (_resumen?.Fallidos ?? 0))
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1 d-block" Style="font-size: 0.75rem;">
@@ -159,46 +179,28 @@
         </MudItem>
     </MudGrid>
 
-    <!-- BARRA DE PESTAÑAS / FILTROS RÁPIDOS Y BÚSQUEDA -->
-    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white pa-4 mb-4">
-        <div class="d-flex flex-wrap justify-space-between align-center gap-3">
-            <!-- Pestañas de estado estilo Segmented Control -->
-            <div class="d-flex flex-wrap align-center gap-2">
-                <MudButton Variant="@(_filtroEstado == null ? Variant.Filled : Variant.Text)" 
-                           Color="@(_filtroEstado == null ? Color.Primary : Color.Default)" 
-                           Size="Size.Small" 
-                           Class="rounded-pill px-3"
-                           OnClick="@(() => OnSeleccionarFiltro(null))">
-                    Todos (@(_resumen?.TotalMensajes ?? 0))
-                </MudButton>
-
-                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? Variant.Filled : Variant.Text)" 
-                           Color="@(_filtroEstado == EstadoMensajeOutbox.Pendiente ? Color.Warning : Color.Default)" 
-                           Size="Size.Small" 
-                           Class="rounded-pill px-3"
-                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Pendiente))">
-                    Pendientes (@(_resumen?.Pendientes ?? 0))
-                </MudButton>
-
-                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? Variant.Filled : Variant.Text)" 
-                           Color="@(_filtroEstado == EstadoMensajeOutbox.Enviado ? Color.Success : Color.Default)" 
-                           Size="Size.Small" 
-                           Class="rounded-pill px-3"
-                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Enviado))">
-                    Enviados (@(_resumen?.Enviados ?? 0))
-                </MudButton>
-
-                <MudButton Variant="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? Variant.Filled : Variant.Text)" 
-                           Color="@(_filtroEstado == EstadoMensajeOutbox.Fallido ? Color.Error : Color.Default)" 
-                           Size="Size.Small" 
-                           Class="rounded-pill px-3"
-                           OnClick="@(() => OnSeleccionarFiltro(EstadoMensajeOutbox.Fallido))">
-                    Fallidos (@((_resumen?.EnReintento ?? 0) + (_resumen?.Fallidos ?? 0)))
-                </MudButton>
+    <!-- TABLA DE MENSAJES CON BARRA DE BÚSQUEDA INTEGRADA EN SU CABECERA -->
+    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden">
+        <!-- Barra de herramientas limpia integrada -->
+        <div class="d-flex flex-wrap justify-space-between align-center gap-3 px-5 py-3 border-b" style="border-bottom: 1px solid #E2E8F0; background-color: #FAFAFA;">
+            <div class="d-flex align-center gap-2">
+                <MudText Typo="Typo.subtitle1" Style="font-weight: 700; color: #0F172A;">
+                    @ObtenerTituloVistaFiltro()
+                </MudText>
+                @if (_filtroEstado != null || !string.IsNullOrWhiteSpace(_busqueda))
+                {
+                    <MudChip T="string" 
+                             Size="Size.Small" 
+                             Color="Color.Default" 
+                             Variant="Variant.Text" 
+                             OnClose="RestablecerFiltrosAsync">
+                        Ver todos
+                    </MudChip>
+                }
             </div>
 
-            <!-- Búsqueda rápida -->
-            <div style="min-width: 280px; flex-grow: 1; max-width: 450px;">
+            <!-- Búsqueda rápida integrada -->
+            <div style="min-width: 260px; max-width: 420px; flex-grow: 1;">
                 <MudTextField T="string" 
                               Placeholder="Buscar por asunto, destinatario o correo..." 
                               @bind-Value="_busqueda" 
@@ -212,10 +214,7 @@
                               OnDebounceIntervalElapsed="CargarDatosAsync" />
             </div>
         </div>
-    </MudCard>
 
-    <!-- TABLA DE MENSAJES -->
-    <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white overflow-hidden">
         @if (_cargando)
         {
             <div class="d-flex flex-column align-center justify-center py-12 gap-3">
@@ -233,7 +232,7 @@
                     No se encontraron mensajes
                 </MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary" Style="max-width: 400px;">
-                    No hay correos en la cola con el estado seleccionado o el término de búsqueda actual.
+                    No hay correos en la cola con el filtro seleccionado o el término de búsqueda actual.
                 </MudText>
             </div>
         }
@@ -348,11 +347,18 @@
 
 <style>
     .stat-card {
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     }
     .stat-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    }
+    .active-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        transition: background-color 0.2s ease;
     }
     .cursor-pointer {
         cursor: pointer;
@@ -396,6 +402,21 @@
         _filtroEstado = estado;
         await CargarDatosAsync();
     }
+
+    private async Task RestablecerFiltrosAsync()
+    {
+        _filtroEstado = null;
+        _busqueda = null;
+        await CargarDatosAsync();
+    }
+
+    private string ObtenerTituloVistaFiltro() => _filtroEstado switch
+    {
+        EstadoMensajeOutbox.Pendiente => $"Correos Pendientes en Cola ({_mensajes.Count})",
+        EstadoMensajeOutbox.Enviado => $"Correos Enviados con Éxito ({_mensajes.Count})",
+        EstadoMensajeOutbox.Fallido => $"Correos con Incidencias o Fallidos ({_mensajes.Count})",
+        _ => $"Todos los Correos ({_mensajes.Count})"
+    };
 
     private async Task DespacharLoteAsync()
     {
