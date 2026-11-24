@@ -35,7 +35,7 @@ public class ConfiguracionGrupo : IEntidadOrganizacion
 
     // Área 4: Operación y respaldo (PA19 / RF65)
     public DateTime? FechaUltimoBackupUtc { get; set; }
-    public string? EstadoUltimoBackup { get; set; } = "Verificado (Simulación DR periódica)";
+    public string? EstadoUltimoBackup { get; set; }
     public int ObjetivoRpoHoras { get; set; } = 1;
     public int ObjetivoRtoHoras { get; set; } = 4;
 

@@ -3,7 +3,7 @@
 @using WebScout.Web.Features.Audit.Domain
 @using WebScout.Web.Features.Audit.Services
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@attribute [Authorize(Roles = RolesScout.AreaSupervision)]
 @inject IServicioAuditoria ServicioAuditoria
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
@@ -100,7 +100,7 @@
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd DataLabel="Fecha">
-                            @context.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                            @context.FechaCreacionUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm:ss")
                         </MudTd>
                         <MudTd DataLabel="Actor">
                             <MudText Typo="Typo.body2" Style="font-weight: 700;">

@@ -5,11 +5,16 @@
 @using WebScout.Web.Features.Administration.Services
 @using WebScout.Web.Infrastructure.Persistence
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@using WebScout.Web.Infrastructure.Outbox.Domain
+@using Microsoft.Extensions.Diagnostics.HealthChecks
+@attribute [Authorize(Roles = RolesScout.AreaSupervision)]
 @inject IServicioConfiguracionGrupo ServicioConfiguracion
 @inject WebScoutDbContext DbContext
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
+@inject HealthCheckService HealthChecks
+@inject IDialogService DialogService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Diagnóstico y Copias de Seguridad · @(Tenant.GroupName)</PageTitle>
 
@@ -21,13 +26,13 @@
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
                     @(Tenant.GroupName)
                 </MudChip>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Operación y Continuidad (RF65 / PA19 / RNF06)</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Operación y continuidad</MudText>
             </div>
             <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
                 Diagnóstico y Copias de Seguridad
             </MudText>
             <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                Telemetría en tiempo real de infraestructura, estado de la base de datos y verificación de planes de recuperación (DR).
+                Comprobaciones en vivo de la base de datos, el almacén de justificantes y el envío de correos, y registro de ensayos de recuperación.
             </MudText>
         </div>
 
@@ -62,45 +67,41 @@
             </MudCard>
         </MudItem>
 
-        <!-- 2. ALMACÉN DOCUMENTAL PRIVADO -->
+        <!-- 2. ALMACÉN DE JUSTIFICANTES (comprobación real de escritura) -->
         <MudItem xs="12" md="4">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white h-100 pa-5">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl h-100 pa-5" Style="background-color: #FFFFFF;">
                 <div class="d-flex justify-space-between align-start mb-3">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Almacén Documental Seguro</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ficheros Privados y Justificantes</MudText>
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Almacén de Justificantes</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ficheros privados de pago</MudText>
                     </div>
-                    <MudAvatar Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
-                        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                    <MudAvatar Color="@ColorEstado(_almacenEstado)" Variant="Variant.Filled" Size="Size.Small">
+                        <MudIcon Icon="@IconoEstado(_almacenEstado)" Size="Size.Small" />
                     </MudAvatar>
                 </div>
                 <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A;" Class="mb-2">
-                    Operativo
+                    @(_almacenEstado switch { HealthStatus.Healthy => "Operativo", HealthStatus.Degraded => "Degradado", _ => _comprobado ? "No disponible" : "Sin comprobar" })
                 </MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
-                    Desacoplado de <code>wwwroot</code> · Inmutabilidad SHA-256 · Cabeceras <code>no-store / noindex</code> activas.
-                </MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@_almacenDetalle</MudText>
             </MudCard>
         </MudItem>
 
-        <!-- 3. DESPACHADOR DE NOTIFICACIONES OUTBOX -->
+        <!-- 3. ENVÍO DE CORREOS (estado calculado a partir de la cola real) -->
         <MudItem xs="12" md="4">
-            <MudCard Elevation="0" Outlined="true" Class="rounded-2xl border bg-white h-100 pa-5">
+            <MudCard Elevation="0" Outlined="true" Class="rounded-xl h-100 pa-5" Style="background-color: #FFFFFF;">
                 <div class="d-flex justify-space-between align-start mb-3">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Worker Outbox Transaccional</MudText>
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Servicio de Correo en Segundo Plano</MudText>
+                        <MudText Typo="Typo.subtitle2" Style="font-weight: 700;">Envío de Correos</MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Cola de notificaciones del grupo</MudText>
                     </div>
-                    <MudAvatar Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
-                        <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
+                    <MudAvatar Color="@ColorEstado(_correoEstado)" Variant="Variant.Filled" Size="Size.Small">
+                        <MudIcon Icon="@IconoEstado(_correoEstado)" Size="Size.Small" />
                     </MudAvatar>
                 </div>
                 <MudText Typo="Typo.h5" Style="font-weight: 800; color: #0F172A;" Class="mb-2">
-                    En Ejecución
+                    @_correoTitulo
                 </MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
-                    Reintentos exponenciales · Deduplicación determinista · Sin exposición de PII médica en cuerpo.
-                </MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">@_correoDetalle</MudText>
             </MudCard>
         </MudItem>
     </MudGrid>
@@ -110,19 +111,19 @@
         <div class="d-flex flex-wrap justify-space-between align-center gap-4 mb-4">
             <div>
                 <MudText Typo="Typo.h6" Style="font-weight: 700; color: #0F172A;">
-                    Plan de Recuperación ante Desastres (DR) y Copias de Seguridad (PA19)
+                    Plan de Recuperación y Copias de Seguridad
                 </MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">
                     Garantía de continuidad operativa del grupo scout y preservación de expedientes para justificación de subvenciones.
                 </MudText>
             </div>
 
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Primary" 
-                       StartIcon="@Icons.Material.Filled.CloudDone"
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.FactCheck"
                        Disabled="_simulando"
-                       OnClick="SimularVerificacionBackupAsync">
-                Ejecutar Simulación de Respaldo PA19
+                       OnClick="RegistrarEnsayoRecuperacionAsync">
+                Registrar ensayo de restauración
             </MudButton>
         </div>
 
@@ -130,7 +131,7 @@
 
         <MudGrid Spacing="3">
             <MudItem xs="12" sm="6" md="3">
-                <div class="p-3 rounded-lg border bg-light">
+                <div class="pa-3 rounded-lg" style="border: 1px solid #E2E8F0; background-color: #F8FAFC;">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">RPO Objetivo (Punto de Recuperación)</MudText>
                     <MudText Typo="Typo.h6" Style="font-weight: 700; color: #0F172A;">
                         &lt; @(_config?.ObjetivoRpoHoras ?? 1) hora
@@ -140,7 +141,7 @@
             </MudItem>
 
             <MudItem xs="12" sm="6" md="3">
-                <div class="p-3 rounded-lg border bg-light">
+                <div class="pa-3 rounded-lg" style="border: 1px solid #E2E8F0; background-color: #F8FAFC;">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">RTO Objetivo (Tiempo de Recuperación)</MudText>
                     <MudText Typo="Typo.h6" Style="font-weight: 700; color: #0F172A;">
                         &lt; @(_config?.ObjetivoRtoHoras ?? 4) horas
@@ -150,17 +151,30 @@
             </MudItem>
 
             <MudItem xs="12" sm="12" md="6">
-                <div class="p-3 rounded-lg border bg-light">
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Última Verificación de Respaldo (PA19)</MudText>
-                    <div class="d-flex align-center gap-2 mt-1">
-                        <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small" />
-                        <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
-                            @(_config?.EstadoUltimoBackup ?? "Sin verificaciones registradas")
+                <div class="pa-3 rounded-lg" style="border: 1px solid #E2E8F0; background-color: #F8FAFC;">
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Último ensayo de restauración registrado</MudText>
+                    @if (_config?.FechaUltimoBackupUtc is DateTime fechaEnsayo)
+                    {
+                        <div class="d-flex align-center gap-2 mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.Verified" Color="Color.Success" Size="Size.Small" />
+                            <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                                @fechaEnsayo.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">@_config.EstadoUltimoBackup</MudText>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-center gap-2 mt-1">
+                            <MudIcon Icon="@Icons.Material.Filled.ReportGmailerrorred" Color="Color.Warning" Size="Size.Small" />
+                            <MudText Typo="Typo.body2" Style="font-weight: 700; color: #0F172A;">
+                                Sin ensayos registrados
+                            </MudText>
+                        </div>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">
+                            Realiza una restauración de prueba de la copia y regístrala aquí.
                         </MudText>
-                    </div>
-                    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-1">
-                        Fecha y hora UTC: @(_config?.FechaUltimoBackupUtc.HasValue == true ? _config.FechaUltimoBackupUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") : "Pendiente de primer ensayo")
-                    </MudText>
+                    }
                 </div>
             </MudItem>
         </MudGrid>
@@ -171,7 +185,18 @@
     private bool _dbOk = false;
     private long _latenciaMs = 0;
     private bool _simulando = false;
+    private bool _comprobado = false;
     private ConfiguracionGrupo? _config;
+
+    private HealthStatus? _almacenEstado;
+    private string _almacenDetalle = "Pendiente de comprobación.";
+
+    private HealthStatus? _correoEstado;
+    private string _correoTitulo = "Sin comprobar";
+    private string _correoDetalle = "Pendiente de comprobación.";
+
+    /// <summary>Un mensaje pendiente más antiguo que esto indica que el despachador no está procesando la cola.</summary>
+    private static readonly TimeSpan UmbralColaDetenida = TimeSpan.FromMinutes(10);
 
     protected override async Task OnInitializedAsync()
     {
@@ -189,27 +214,116 @@
 
             _config = await ServicioConfiguracion.ObtenerConfiguracionAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             sw.Stop();
             _latenciaMs = sw.ElapsedMilliseconds;
             _dbOk = false;
-            Snackbar.Add($"Fallo de conectividad con la base de datos: {ex.Message}", Severity.Error);
+            Snackbar.Add("No se pudo conectar con la base de datos.", Severity.Error);
+        }
+
+        await ComprobarAlmacenAsync();
+        await ComprobarCorreoAsync();
+        _comprobado = true;
+    }
+
+    private async Task ComprobarAlmacenAsync()
+    {
+        var informe = await HealthChecks.CheckHealthAsync(c => c.Tags.Contains("diagnostico"));
+        if (informe.Entries.TryGetValue("almacen-justificantes", out var entrada))
+        {
+            _almacenEstado = entrada.Status;
+            _almacenDetalle = entrada.Description ?? string.Empty;
+        }
+        else
+        {
+            _almacenEstado = HealthStatus.Unhealthy;
+            _almacenDetalle = "No hay comprobación registrada para el almacén de justificantes.";
         }
     }
 
-    private async Task SimularVerificacionBackupAsync()
+    private async Task ComprobarCorreoAsync()
     {
+        if (!_dbOk)
+        {
+            _correoEstado = HealthStatus.Unhealthy;
+            _correoTitulo = "Sin datos";
+            _correoDetalle = "No se puede consultar la cola sin conexión a la base de datos.";
+            return;
+        }
+
+        var limite = DateTime.UtcNow - UmbralColaDetenida;
+        var fallidos = await DbContext.MensajesOutbox.CountAsync(m => m.Estado == EstadoMensajeOutbox.Fallido);
+        var atascados = await DbContext.MensajesOutbox.CountAsync(m =>
+            (m.Estado == EstadoMensajeOutbox.Pendiente || m.Estado == EstadoMensajeOutbox.EnProceso) && m.FechaCreacionUtc < limite &&
+            (m.ProximoReintentoUtc == null || m.ProximoReintentoUtc < limite));
+        var ultimoEnvio = await DbContext.MensajesOutbox
+            .Where(m => m.Estado == EstadoMensajeOutbox.Enviado)
+            .MaxAsync(m => (DateTime?)m.FechaProcesadoUtc);
+
+        var textoUltimo = ultimoEnvio.HasValue
+            ? $"Último envío correcto: {ultimoEnvio.Value.AHoraEspana():dd/MM/yyyy HH:mm}."
+            : "Todavía no se ha enviado ningún correo.";
+
+        if (atascados > 0)
+        {
+            _correoEstado = HealthStatus.Unhealthy;
+            _correoTitulo = "Cola detenida";
+            _correoDetalle = $"{atascados} correo(s) llevan más de {UmbralColaDetenida.TotalMinutes:0} minutos sin enviarse. {textoUltimo}";
+        }
+        else if (fallidos > 0)
+        {
+            _correoEstado = HealthStatus.Degraded;
+            _correoTitulo = "Con incidencias";
+            _correoDetalle = $"{fallidos} correo(s) fallidos pendientes de revisar en el Monitor Outbox. {textoUltimo}";
+        }
+        else
+        {
+            _correoEstado = HealthStatus.Healthy;
+            _correoTitulo = "Al día";
+            _correoDetalle = $"Sin correos fallidos ni retenidos. {textoUltimo}";
+        }
+    }
+
+    private static Color ColorEstado(HealthStatus? estado) => estado switch
+    {
+        HealthStatus.Healthy => Color.Success,
+        HealthStatus.Degraded => Color.Warning,
+        HealthStatus.Unhealthy => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string IconoEstado(HealthStatus? estado) => estado switch
+    {
+        HealthStatus.Healthy => Icons.Material.Filled.Check,
+        HealthStatus.Degraded => Icons.Material.Filled.PriorityHigh,
+        HealthStatus.Unhealthy => Icons.Material.Filled.Close,
+        _ => Icons.Material.Filled.HourglassEmpty
+    };
+
+    private async Task RegistrarEnsayoRecuperacionAsync()
+    {
+        // La aplicación no hace copias: solo deja constancia de un ensayo de restauración realizado fuera de ella.
+        bool? confirmar = await DialogService.ShowMessageBoxAsync(
+            "Registrar ensayo de restauración",
+            "Registra solo un ensayo que ya hayas hecho: restaurar la última copia de la base de datos y de los justificantes en un entorno de prueba y comprobar que los datos están completos. Esta acción no realiza ninguna copia.",
+            yesText: "Registrar ensayo",
+            cancelText: "Volver");
+
+        if (confirmar != true) return;
+
         _simulando = true;
         try
         {
-            var detalle = $"Ensayo PA19 superado: Snapshot PostgreSQL 17 íntegro y volumen documental verificado ({DateTime.UtcNow:dd/MM/yyyy HH:mm:ss} UTC)";
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var usuario = authState.User.Identity?.Name ?? "usuario desconocido";
+            var detalle = $"Ensayo de restauración registrado manualmente por {usuario}.";
             _config = await ServicioConfiguracion.RegistrarSimulacionBackupAsync(detalle);
-            Snackbar.Add("¡Simulación de copia de seguridad PA19 registrada y verificada con éxito!", Severity.Success);
+            Snackbar.Add("Ensayo de restauración registrado.", Severity.Success);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            Snackbar.Add("No se pudo registrar el ensayo. Inténtalo de nuevo.", Severity.Error);
         }
         finally
         {

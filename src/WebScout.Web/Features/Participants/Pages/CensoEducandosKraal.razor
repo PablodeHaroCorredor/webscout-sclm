@@ -1,5 +1,5 @@
 @page "/kraal/educandos"
-@attribute [Authorize(Roles = "Scouter,Coordinacion,Administracion,SuperAdmin")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
@@ -86,10 +86,10 @@
                 <div class="d-flex align-center justify-space-between">
                     <div>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-weight: 700; text-transform: uppercase;">
-                            Alertas de Alergias / Intolerancias
+                            Educandos con Alergias
                         </MudText>
                         <MudText Typo="Typo.h4" Style="font-weight: 800; color: #DC2626;">
-                            @_educandos.Count(e => e.FichaMedica != null && (!string.IsNullOrWhiteSpace(e.FichaMedica.AlergiasAlimentarias) || !string.IsNullOrWhiteSpace(e.FichaMedica.RegimenAlimenticio)))
+                            @_educandos.Count(e => e.FichaMedica != null && e.FichaMedica.ObtenerAlertasSanitarias().Any(a => a.EsAlergia))
                         </MudText>
                     </div>
                     <MudAvatar Color="Color.Error" Variant="Variant.Filled" Size="Size.Medium">
@@ -107,7 +107,7 @@
                             Medicación en Salidas
                         </MudText>
                         <MudText Typo="Typo.h4" Style="font-weight: 800; color: #D97706;">
-                            @_educandos.Count(e => e.FichaMedica != null && !string.IsNullOrWhiteSpace(e.FichaMedica.MedicacionActiva))
+                            @_educandos.Count(e => e.FichaMedica != null && AlertasSanitarias.EsRelevante(e.FichaMedica.MedicacionActiva))
                         </MudText>
                     </div>
                     <MudAvatar Color="Color.Warning" Variant="Variant.Filled" Size="Size.Medium">
@@ -250,46 +250,7 @@
 
                     <!-- Columna Alertas Médicas -->
                     <MudTd DataLabel="Alertas">
-                        @if (context.FichaMedica == null)
-                        {
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Sin ficha médica</MudChip>
-                        }
-                        else
-                        {
-                            var tieneAlergias = !string.IsNullOrWhiteSpace(context.FichaMedica.AlergiasAlimentarias);
-                            var tieneDieta = !string.IsNullOrWhiteSpace(context.FichaMedica.RegimenAlimenticio);
-                            var tieneMed = !string.IsNullOrWhiteSpace(context.FichaMedica.MedicacionActiva);
-
-                            @if (!tieneAlergias && !tieneDieta && !tieneMed)
-                            {
-                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">
-                                    Sin alertas médicas
-                                </MudChip>
-                            }
-                            else
-                            {
-                                <div class="d-flex flex-wrap gap-1">
-                                    @if (tieneAlergias)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
-                                            @context.FichaMedica.AlergiasAlimentarias
-                                        </MudChip>
-                                    }
-                                    @if (tieneDieta)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled">
-                                            @context.FichaMedica.RegimenAlimenticio
-                                        </MudChip>
-                                    }
-                                    @if (tieneMed)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
-                                            Medicación activa
-                                        </MudChip>
-                                    }
-                                </div>
-                            }
-                        }
+                        <ScoutAlertasSanitarias SinFicha="@(context.FichaMedica == null)" Alertas="@context.FichaMedica?.ObtenerAlertasSanitarias()" />
                     </MudTd>
 
                     <!-- Columna Contacto Emergencia -->
@@ -413,46 +374,7 @@
                                 <div class="mb-1">
                                     <span style="font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: #64748B;">Salud y Dietas:</span>
                                 </div>
-                                @if (educando.FichaMedica == null)
-                                {
-                                    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined">Sin ficha médica</MudChip>
-                                }
-                                else
-                                {
-                                    var tieneAlergias = !string.IsNullOrWhiteSpace(educando.FichaMedica.AlergiasAlimentarias);
-                                    var tieneDieta = !string.IsNullOrWhiteSpace(educando.FichaMedica.RegimenAlimenticio);
-                                    var tieneMed = !string.IsNullOrWhiteSpace(educando.FichaMedica.MedicacionActiva);
-
-                                    @if (!tieneAlergias && !tieneDieta && !tieneMed)
-                                    {
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">
-                                            Sin alertas médicas
-                                        </MudChip>
-                                    }
-                                    else
-                                    {
-                                        <div class="d-flex flex-wrap gap-1 mt-1">
-                                            @if (tieneAlergias)
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" Style="font-size: 0.75rem;">
-                                                    @educando.FichaMedica.AlergiasAlimentarias
-                                                </MudChip>
-                                            }
-                                            @if (tieneDieta)
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Filled" Style="font-size: 0.75rem;">
-                                                    @educando.FichaMedica.RegimenAlimenticio
-                                                </MudChip>
-                                            }
-                                            @if (tieneMed)
-                                            {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled" Style="font-size: 0.75rem;">
-                                                    Medicación activa
-                                                </MudChip>
-                                            }
-                                        </div>
-                                    }
-                                }
+                                <ScoutAlertasSanitarias SinFicha="@(educando.FichaMedica == null)" Alertas="@educando.FichaMedica?.ObtenerAlertasSanitarias()" Class="mt-1" />
                             </div>
 
                             <!-- Contacto de Emergencia con Botón Llamar de un Toque (WCAG 2.5.5) -->
@@ -578,7 +500,7 @@
                 items = items.Where(e =>
                     e.NombreCompleto.ToLowerInvariant().Contains(q) ||
                     (e.TutorLegal?.NombreCompleto.ToLowerInvariant().Contains(q) == true) ||
-                    (e.FichaMedica?.AlergiasAlimentarias?.ToLowerInvariant().Contains(q) == true));
+                    (e.FichaMedica?.ObtenerAlertasSanitarias().Any(a => a.Detalle.ToLowerInvariant().Contains(q)) == true));
             }
 
             return items;

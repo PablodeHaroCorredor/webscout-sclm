@@ -3,7 +3,7 @@
 @using WebScout.Web.Features.Administration.Domain
 @using WebScout.Web.Features.Administration.Services
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@attribute [Authorize(Roles = RolesScout.AreaAjustesGrupo)]
 @inject IServicioConfiguracionGrupo ServicioConfiguracion
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
@@ -26,6 +26,14 @@
             Configuración segmentada por áreas institucionales, económicas y de secretaría con guardado parcial atómico.
         </MudText>
     </div>
+
+    @if (_errorCarga)
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">
+            No se pudieron cargar los ajustes del grupo. Para no sobrescribir los datos guardados, el formulario queda en solo lectura.
+            Recarga la página para volver a intentarlo.
+        </MudAlert>
+    }
 
     @if (_cargando)
     {
@@ -51,21 +59,21 @@
                     <MudCardContent>
                         <MudGrid Spacing="3">
                             <MudItem xs="12" sm="6">
-                                <MudTextField Label="CIF / NIF de la Asociación" 
+                                <MudTextField Label="CIF / NIF de la Asociación" Validation="@(new Func<string?, string?>(ValidadorAjustesGrupo.ValidarCif))"  
                                               @bind-Value="_cif" 
                                               Variant="Variant.Outlined" 
                                               Margin="Margin.Dense" 
                                               HelperText="Ej. G02123456" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudTextField Label="Email Oficial de Contacto" 
+                                <MudTextField Label="Email Oficial de Contacto" InputType="InputType.Email" Validation="@(new Func<string?, string?>(ValidadorAjustesGrupo.ValidarEmail))"  
                                               @bind-Value="_emailOficial" 
                                               Variant="Variant.Outlined" 
                                               Margin="Margin.Dense" 
                                               HelperText="Buzón institucional de jefatura" />
                             </MudItem>
                             <MudItem xs="12" sm="6">
-                                <MudTextField Label="Teléfono de Contacto" 
+                                <MudTextField Label="Teléfono de Contacto" InputType="InputType.Telephone" Validation="@(new Func<string?, string?>(ValidadorAjustesGrupo.ValidarTelefono))"  
                                               @bind-Value="_telefonoContacto" 
                                               Variant="Variant.Outlined" 
                                               Margin="Margin.Dense" 
@@ -113,7 +121,7 @@
                         <MudButton Variant="Variant.Filled" 
                                    Color="Color.Primary" 
                                    StartIcon="@Icons.Material.Filled.Save"
-                                   Disabled="_guardando"
+                                   Disabled="@(_guardando || _errorCarga)"
                                    OnClick="GuardarInstitucionalAsync">
                             Guardar Área Institucional
                         </MudButton>
@@ -135,7 +143,7 @@
                     <MudCardContent>
                         <MudGrid Spacing="3">
                             <MudItem xs="12" sm="8">
-                                <MudTextField Label="IBAN Cuenta Bancaria del Grupo" 
+                                <MudTextField Label="IBAN Cuenta Bancaria del Grupo" Validation="@(new Func<string?, string?>(ValidadorAjustesGrupo.ValidarIban))"  
                                               @bind-Value="_iban" 
                                               Variant="Variant.Outlined" 
                                               Margin="Margin.Dense" 
@@ -161,7 +169,7 @@
                         <MudButton Variant="Variant.Filled" 
                                    Color="Color.Primary" 
                                    StartIcon="@Icons.Material.Filled.Save"
-                                   Disabled="_guardando"
+                                   Disabled="@(_guardando || _errorCarga)"
                                    OnClick="GuardarEconomicoAsync">
                             Guardar Área Económica
                         </MudButton>
@@ -200,7 +208,7 @@
                         <MudButton Variant="Variant.Filled" 
                                    Color="Color.Primary" 
                                    StartIcon="@Icons.Material.Filled.Save"
-                                   Disabled="_guardando"
+                                   Disabled="@(_guardando || _errorCarga)"
                                    OnClick="GuardarAdmisionesAsync">
                             Guardar Área de Admisiones
                         </MudButton>
@@ -214,6 +222,7 @@
 @code {
     private bool _cargando = true;
     private bool _guardando = false;
+    private bool _errorCarga;
     private ConfiguracionGrupo? _config;
 
     // Área Institucional
@@ -261,9 +270,10 @@
             _admisionesAbiertas = _config.AdmisionesAbiertas;
             _mensajeAdmisiones = _config.MensajeBienvenidaAdmisiones;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Snackbar.Add(ex.Message, Severity.Error);
+            _errorCarga = true;
+            Snackbar.Add("No se pudieron cargar los ajustes del grupo.", Severity.Error);
         }
         finally
         {

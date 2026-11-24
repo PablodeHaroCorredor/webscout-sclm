@@ -1,5 +1,5 @@
 @page "/kraal/inscripciones"
-@attribute [Authorize(Roles = "Scouter,Coordinacion,Administracion,SuperAdmin")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
@@ -299,7 +299,7 @@
                                            Color="Color.Primary" 
                                            Size="Size.Small" 
                                            Target="_blank"
-                                           Href="@($"/api/justificantes/{context.Id}/archivo")"
+                                           Href="@($"/api/justificantes/{context.Id}")"
                                            StartIcon="@Icons.Material.Filled.FileDownload">
                                     Ver Justificante
                                 </MudButton>
@@ -317,7 +317,7 @@
                     <!-- Columna Estado -->
                     <MudTd DataLabel="Estado">
                         <ScoutStatusBadge Estado="context.Estado" />
-                        @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
+                        @if (context.Estado == EstadoInscripcion.RequiereSubsanacion && !string.IsNullOrWhiteSpace(context.NotasKraal))
                         {
                             <span class="d-block mt-1 text-truncate" style="max-width: 220px; font-size: 0.75rem; color: #DC2626; font-style: italic;" title="@context.NotasKraal">
                                 «@context.NotasKraal»
@@ -334,6 +334,8 @@
                                     <MudIconButton Icon="@Icons.Material.Filled.CheckCircle" 
                                                    Color="Color.Success" 
                                                    Size="Size.Small" 
+                                                   aria-label="@($"Confirmar plaza de {context.Educando?.NombreCompleto}")"
+                                                   Disabled="@_procesandoId.HasValue"
                                                    OnClick="@(() => ConfirmarPlazaAsync(context))" />
                                 </MudTooltip>
 
@@ -455,7 +457,7 @@
                                 }
                             </div>
 
-                            @if (!string.IsNullOrWhiteSpace(inscripcion.NotasKraal))
+                            @if (inscripcion.Estado == EstadoInscripcion.RequiereSubsanacion && !string.IsNullOrWhiteSpace(inscripcion.NotasKraal))
                             {
                                 <div class="mb-3 pa-2 rounded-lg" style="background-color: #FEF2F2; border: 1px solid #FECACA; font-size: 0.8rem; color: #991B1B;">
                                     <strong>Nota Kraal:</strong> «@inscripcion.NotasKraal»
@@ -471,7 +473,7 @@
                                                    Color="Color.Primary" 
                                                    Size="Size.Small" 
                                                    Target="_blank"
-                                                   Href="@($"/api/justificantes/{inscripcion.Id}/archivo")"
+                                                   Href="@($"/api/justificantes/{inscripcion.Id}")"
                                                    StartIcon="@Icons.Material.Filled.FileDownload"
                                                    Style="min-height: 44px; font-weight: 600; border-radius: 8px;">
                                             Justificante
@@ -501,6 +503,7 @@
                                                    Size="Size.Small"
                                                    StartIcon="@Icons.Material.Filled.CheckCircle"
                                                    Style="min-height: 44px; font-weight: 700; border-radius: 8px;"
+                                                   Disabled="@_procesandoId.HasValue"
                                                    OnClick="@(() => ConfirmarPlazaAsync(inscripcion))">
                                             Confirmar
                                         </MudButton>
@@ -536,6 +539,7 @@
 
 @code {
     private bool _cargando = true;
+    private Guid? _procesandoId;
     private List<InscripcionActividad> _inscripciones = new();
     private List<ActividadScout> _actividades = new();
     private ModoVisualizacion _modoVista = ModoVisualizacion.Auto;
@@ -664,20 +668,41 @@
 
     private async Task ConfirmarPlazaAsync(InscripcionActividad inscripcion)
     {
+        if (_procesandoId.HasValue) return;
+
+        // Confirmar valida el pago y envía un correo a la familia: se pide confirmación explícita.
+        bool? confirmar = await DialogService.ShowMessageBoxAsync(
+            "Confirmar plaza",
+            $"Se validará el justificante de {inscripcion.Educando?.NombreCompleto} para «{inscripcion.Actividad?.Titulo}» y se enviará la confirmación por correo a la familia.",
+            yesText: "Confirmar plaza",
+            cancelText: "Volver");
+
+        if (confirmar != true) return;
+
+        _procesandoId = inscripcion.Id;
         try
         {
+            // Sin nota: las notas del Kraal se reservan para motivos de subsanación.
             await ServicioInscripciones.RevisarInscripcionAsync(
                 inscripcion.Id,
                 EstadoInscripcion.Confirmada,
-                "Plaza confirmada y justificante validado por el Kraal.",
+                null,
                 _usuarioActualId);
 
             Snackbar.Add($"Plaza confirmada para {inscripcion.Educando?.NombreCompleto}", Severity.Success);
             await CargarDatosAsync();
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            Snackbar.Add($"Error al confirmar plaza: {ex.Message}", Severity.Error);
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("No se pudo confirmar la plaza. Inténtalo de nuevo.", Severity.Error);
+        }
+        finally
+        {
+            _procesandoId = null;
         }
     }
 

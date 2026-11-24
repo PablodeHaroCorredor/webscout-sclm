@@ -222,11 +222,12 @@
                 CreadoPorUsuarioId = ActividadExistente.CreadoPorUsuarioId
             };
 
-            _fechaInicio = Modelo.FechaInicio.ToLocalTime().Date;
-            _horaInicio = Modelo.FechaInicio.ToLocalTime().TimeOfDay;
-            _fechaFin = Modelo.FechaFin.ToLocalTime().Date;
-            _horaFin = Modelo.FechaFin.ToLocalTime().TimeOfDay;
-            _fechaLimiteInscripcion = Modelo.FechaLimiteInscripcion?.ToLocalTime().Date;
+            _fechaInicio = Modelo.FechaInicio.AHoraEspana().Date;
+            _horaInicio = Modelo.FechaInicio.AHoraEspana().TimeOfDay;
+            _fechaFin = Modelo.FechaFin.AHoraEspana().Date;
+            _horaFin = Modelo.FechaFin.AHoraEspana().TimeOfDay;
+            // La fecha límite es solo una fecha (se compara por día en UTC): se carga sin conversión horaria.
+            _fechaLimiteInscripcion = Modelo.FechaLimiteInscripcion?.Date;
         }
         else
         {
@@ -271,11 +272,11 @@
 
         var inicioDate = _fechaInicio ?? DateTime.UtcNow.Date;
         var inicioTime = _horaInicio ?? TimeSpan.Zero;
-        Modelo.FechaInicio = DateTime.SpecifyKind(inicioDate.Add(inicioTime), DateTimeKind.Utc);
+        Modelo.FechaInicio = HoraEspana.AUtc(inicioDate.Add(inicioTime));
 
         var finDate = _fechaFin ?? inicioDate;
         var finTime = _horaFin ?? TimeSpan.FromHours(2);
-        Modelo.FechaFin = DateTime.SpecifyKind(finDate.Add(finTime), DateTimeKind.Utc);
+        Modelo.FechaFin = HoraEspana.AUtc(finDate.Add(finTime));
 
         if (Modelo.FechaFin < Modelo.FechaInicio)
         {

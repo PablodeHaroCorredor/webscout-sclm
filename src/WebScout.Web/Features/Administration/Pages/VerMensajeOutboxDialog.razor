@@ -44,13 +44,13 @@
                     <MudItem xs="12" sm="6">
                         <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Fecha Creación:</MudText>
                         <MudText Typo="Typo.caption">
-                            @Mensaje.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                            @Mensaje.FechaCreacionUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm:ss")
                         </MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">Fecha Entrega / Último Intento:</MudText>
                         <MudText Typo="Typo.caption">
-                            @(Mensaje.FechaProcesadoUtc.HasValue ? Mensaje.FechaProcesadoUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss") : "Pendiente")
+                            @(Mensaje.FechaProcesadoUtc.HasValue ? Mensaje.FechaProcesadoUtc.Value.AHoraEspana().ToString("dd/MM/yyyy HH:mm:ss") : "Pendiente")
                         </MudText>
                     </MudItem>
                 </MudGrid>

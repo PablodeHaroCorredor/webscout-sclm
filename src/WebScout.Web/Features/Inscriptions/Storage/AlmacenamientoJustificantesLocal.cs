@@ -159,6 +159,23 @@ public class AlmacenamientoJustificantesLocal : IAlmacenamientoJustificantes
         return Task.FromResult<(Stream Stream, string ContentType, string NombreDescarga)?>((fs, contentType, nombreDescarga));
     }
 
+    public async Task<(bool Disponible, string Detalle)> ComprobarDisponibilidadAsync()
+    {
+        try
+        {
+            Directory.CreateDirectory(_directorioBase);
+            var sonda = Path.Combine(_directorioBase, $".sonda-{Guid.NewGuid():N}.tmp");
+            await File.WriteAllTextAsync(sonda, "ok");
+            File.Delete(sonda);
+            return (true, "Almacén local en disco del servidor: accesible y con permiso de escritura.");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(ex, "El almacén local de justificantes no admite escritura en {Directorio}", _directorioBase);
+            return (false, "El almacén local de justificantes no admite escritura. Revisar permisos del servidor.");
+        }
+    }
+
     public Task EliminarJustificanteAsync(string rutaRelativa)
     {
         if (string.IsNullOrWhiteSpace(rutaRelativa))

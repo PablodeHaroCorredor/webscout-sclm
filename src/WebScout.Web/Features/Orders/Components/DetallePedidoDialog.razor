@@ -16,7 +16,7 @@
                 <div>
                     <MudText Typo="Typo.caption" Class="mud-text-secondary">Fecha de Solicitud</MudText>
                     <MudText Typo="Typo.body2" Style="font-weight: 600;">
-                        @Pedido.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        @Pedido.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                     </MudText>
                 </div>
                 <div>
@@ -116,7 +116,7 @@
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">
                             @(Pedido.TieneComprobante 
-                                ? $"Adjuntado: {Pedido.ComprobantePagoNombreOriginal} ({Pedido.ComprobantePagoFechaUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")})" 
+                                ? $"Adjuntado: {Pedido.ComprobantePagoNombreOriginal} ({Pedido.ComprobantePagoFechaUtc?.AHoraEspana().ToString("dd/MM/yyyy HH:mm")})" 
                                 : "Sin justificante adjunto (Entrega en mano permitida según acuerdo PA07)")
                         </MudText>
                     </div>

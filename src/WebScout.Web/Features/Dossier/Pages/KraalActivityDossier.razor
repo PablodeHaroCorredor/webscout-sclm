@@ -3,7 +3,7 @@
 @using System.Globalization
 @using WebScout.Web.Features.Dossier.Domain
 @using WebScout.Web.Features.Dossier.Services
-@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion}")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @inject IServicioDossierAsistencia ServicioDossier
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
@@ -39,7 +39,7 @@
                     Dossier Operativo: @_dossier.Actividad.Titulo
                 </MudText>
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                    @_dossier.Actividad.Lugar | @_dossier.Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @_dossier.Actividad.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    @_dossier.Actividad.Lugar | @_dossier.Actividad.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm") - @_dossier.Actividad.FechaFin.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                 </MudText>
             </div>
             <div class="d-flex align-center gap-2">
@@ -103,13 +103,13 @@
                     <p style="margin: 2px 0; color: #475569;">Grupo Scout: @(Tenant.IsResolved ? Tenant.GroupName : "SCLM")</p>
                 </div>
                 <div style="text-align: right;">
-                    <p style="margin: 0; font-weight: bold;">Fecha Impresión: @DateTime.UtcNow.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                    <p style="margin: 0; font-weight: bold;">Fecha Impresión: @DateTime.UtcNow.AHoraEspana().ToString("dd/MM/yyyy HH:mm")</p>
                     <p style="margin: 2px 0; color: #475569;">Total Plazas: @_dossier.TotalInscritos</p>
                 </div>
             </div>
             <div style="margin-top: 10px; background: #F1F5F9; padding: 10px; border-radius: 4px;">
                 <p style="margin: 0; font-weight: bold; font-size: 1.1rem;">@_dossier.Actividad.Titulo</p>
-                <p style="margin: 2px 0;"><strong>Lugar:</strong> @_dossier.Actividad.Lugar | <strong>Fechas:</strong> @_dossier.Actividad.FechaInicio.ToLocalTime():dd/MM/yyyy HH:mm - @_dossier.Actividad.FechaFin.ToLocalTime():dd/MM/yyyy HH:mm</p>
+                <p style="margin: 2px 0;"><strong>Lugar:</strong> @_dossier.Actividad.Lugar | <strong>Fechas:</strong> @(_dossier.Actividad.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm")) - @(_dossier.Actividad.FechaFin.AHoraEspana().ToString("dd/MM/yyyy HH:mm"))</p>
                 @if (!string.IsNullOrWhiteSpace(_dossier.Actividad.PuntoEncuentroSalida))
                 {
                     <p style="margin: 2px 0;"><strong>Punto Salida:</strong> @_dossier.Actividad.PuntoEncuentroSalida | <strong>Punto Regreso:</strong> @_dossier.Actividad.PuntoEncuentroRegreso</p>
@@ -182,8 +182,10 @@
                                                Color="Color.Success" 
                                                Size="Size.Small" 
                                                StartIcon="@Icons.Material.Filled.CheckCircle"
+                                               Style="min-height: 44px;" aria-pressed="true"
+                                               aria-label="@($"Salida registrada para {context.Educando.NombreCompleto}. Pulsar para desmarcar")"
                                                OnClick="@(() => CambiarCheckInSalidaAsync(context, false))">
-                                        Presente (@(context.FechaCheckInSalidaUtc?.ToLocalTime().ToString("HH:mm") ?? "OK"))
+                                        Presente (@(context.FechaCheckInSalidaUtc?.AHoraEspana().ToString("HH:mm") ?? "OK"))
                                     </MudButton>
                                 }
                                 else
@@ -192,8 +194,10 @@
                                                Color="Color.Default" 
                                                Size="Size.Small" 
                                                StartIcon="@Icons.Material.Filled.RadioButtonUnchecked"
+                                               Style="min-height: 44px;" aria-pressed="false"
+                                               aria-label="@($"Marcar salida de {context.Educando.NombreCompleto}")"
                                                OnClick="@(() => CambiarCheckInSalidaAsync(context, true))">
-                                        Ausente
+                                        Marcar salida
                                     </MudButton>
                                 }
                             </MudTd>
@@ -204,8 +208,10 @@
                                                Color="Color.Info" 
                                                Size="Size.Small" 
                                                StartIcon="@Icons.Material.Filled.AssignmentTurnedIn"
+                                               Style="min-height: 44px;" aria-pressed="true"
+                                               aria-label="@($"Regreso registrado para {context.Educando.NombreCompleto}. Pulsar para desmarcar")"
                                                OnClick="@(() => CambiarCheckInRegresoAsync(context, false))">
-                                        Entregado (@(context.FechaCheckInRegresoUtc?.ToLocalTime().ToString("HH:mm") ?? "OK"))
+                                        Entregado (@(context.FechaCheckInRegresoUtc?.AHoraEspana().ToString("HH:mm") ?? "OK"))
                                     </MudButton>
                                 }
                                 else
@@ -214,8 +220,10 @@
                                                Color="Color.Default" 
                                                Size="Size.Small" 
                                                StartIcon="@Icons.Material.Filled.RadioButtonUnchecked"
+                                               Style="min-height: 44px;" aria-pressed="false"
+                                               aria-label="@($"Marcar regreso y entrega de {context.Educando.NombreCompleto}")"
                                                OnClick="@(() => CambiarCheckInRegresoAsync(context, true))">
-                                        En marcha
+                                        Marcar entregado
                                     </MudButton>
                                 }
                             </MudTd>
@@ -255,9 +263,16 @@
                                         <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@context.Rama.ObtenerNombre()</MudChip>
                                     </MudTd>
                                     <MudTd DataLabel="Alergias">
-                                        <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
-                                            @context.AlergiasAlimentarias
-                                        </MudChip>
+                                        @if (!string.IsNullOrWhiteSpace(context.AlergiasAlimentarias))
+                                        {
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Filled">
+                                                @context.AlergiasAlimentarias
+                                            </MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Sin alergias alimentarias</MudText>
+                                        }
                                     </MudTd>
                                     <MudTd DataLabel="Régimen">@(context.RegimenAlimenticio ?? "Estándar")</MudTd>
                                     <MudTd DataLabel="Observaciones">@(context.ObservacionesIntendencia ?? "-")</MudTd>
@@ -274,11 +289,11 @@
                         <MudTable Items="@_dossier.RegistrosSanitarios" Dense="true" Hover="true" Elevation="0" Outlined="true">
                             <HeaderContent>
                                 <MudTh>Educando y Edad</MudTh>
-                                <MudTh>CIP / Seg. Social</MudTh>
-                                <MudTh>Aseguradora</MudTh>
-                                <MudTh>Nadar / Vacunas</MudTh>
+                                <MudTh>Alergias</MudTh>
                                 <MudTh>Enfermedades Crónicas</MudTh>
                                 <MudTh>Medicación Activa</MudTh>
+                                <MudTh>Natación / Vacunas</MudTh>
+                                <MudTh>CIP / Aseguradora</MudTh>
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd DataLabel="Educando">
@@ -288,38 +303,61 @@
                                         <MudText Typo="Typo.caption" Class="mud-text-secondary">@context.Edad años</MudText>
                                     </div>
                                 </MudTd>
-                                <MudTd DataLabel="CIP">@context.NumeroSeguridadSocial</MudTd>
-                                <MudTd DataLabel="Aseguradora">@context.EntidadAseguradora</MudTd>
-                                <MudTd DataLabel="Nadar/Vacunas">
-                                    <div class="d-flex gap-1">
-                                        <MudChip T="string" Size="Size.Small" Color="@(context.SabeNadar ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
-                                            @(context.SabeNadar ? "Nada" : "No Nada")
-                                        </MudChip>
-                                        <MudChip T="string" Size="Size.Small" Color="@(context.VacunacionAlDia ? Color.Success : Color.Error)" Variant="Variant.Outlined">
-                                            @(context.VacunacionAlDia ? "Vacunas OK" : "Sin Vacunas")
-                                        </MudChip>
-                                    </div>
-                                </MudTd>
-                                <MudTd DataLabel="Crónicas">
-                                    @if (!string.IsNullOrWhiteSpace(context.EnfermedadesCronicas))
-                                    {
-                                        <MudText Typo="Typo.body2" Color="Color.Error" Style="font-weight: 600;">@context.EnfermedadesCronicas</MudText>
-                                    }
-                                    else
-                                    {
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
-                                    }
-                                </MudTd>
-                                <MudTd DataLabel="Medicación">
-                                    @if (!string.IsNullOrWhiteSpace(context.MedicacionActiva))
-                                    {
-                                        <MudText Typo="Typo.body2" Color="Color.Warning" Style="font-weight: 600;">@context.MedicacionActiva</MudText>
-                                    }
-                                    else
-                                    {
-                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
-                                    }
-                                </MudTd>
+                                @if (!context.TieneFicha)
+                                {
+                                    <MudTd DataLabel="Ficha médica" colspan="5">
+                                        <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined">
+                                            Sin ficha médica registrada. Solicitarla a la familia antes de la salida.
+                                        </MudAlert>
+                                    </MudTd>
+                                }
+                                else
+                                {
+                                    <MudTd DataLabel="Alergias">
+                                        @if (context.Alergias.Any())
+                                        {
+                                            <ScoutAlertasSanitarias Alertas="@context.Alergias.ToList()" LongitudMaxima="80" />
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Crónicas">
+                                        @if (!string.IsNullOrWhiteSpace(context.EnfermedadesCronicas))
+                                        {
+                                            <MudText Typo="Typo.body2" Color="Color.Error" Style="font-weight: 600;">@context.EnfermedadesCronicas</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Medicación">
+                                        @if (!string.IsNullOrWhiteSpace(context.MedicacionActiva))
+                                        {
+                                            <MudText Typo="Typo.body2" Style="font-weight: 600; color: #92400E;">@context.MedicacionActiva</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Typo="Typo.caption" Class="mud-text-secondary">Ninguna</MudText>
+                                        }
+                                    </MudTd>
+                                    <MudTd DataLabel="Natación/Vacunas">
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <MudChip T="string" Size="Size.Small" Color="@(context.SabeNadar == true ? Color.Success : Color.Warning)" Variant="Variant.Outlined">
+                                                @(context.SabeNadar == true ? "Sabe nadar" : "No sabe nadar")
+                                            </MudChip>
+                                            <MudChip T="string" Size="Size.Small" Color="@(context.VacunacionAlDia == true ? Color.Success : Color.Error)" Variant="Variant.Outlined">
+                                                @(context.VacunacionAlDia == true ? "Vacunas al día" : "Vacunas incompletas")
+                                            </MudChip>
+                                        </div>
+                                    </MudTd>
+                                    <MudTd DataLabel="CIP / Aseguradora">
+                                        <MudText Typo="Typo.body2">@(context.NumeroSeguridadSocial ?? "—")</MudText>
+                                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@(context.EntidadAseguradora ?? "Aseguradora no indicada")</MudText>
+                                    </MudTd>
+                                }
                             </RowTemplate>
                         </MudTable>
                     </div>
@@ -515,12 +553,12 @@
                     <thead>
                         <tr style="background: #F1F5F9; border-bottom: 1px solid #CBD5E1;">
                             <th style="padding: 5px; text-align: left;">Educando</th>
-                            <th style="padding: 5px; text-align: left;">CIP / Seg. Social</th>
-                            <th style="padding: 5px; text-align: left;">Aseguradora</th>
-                            <th style="padding: 5px; text-align: left;">Nadar</th>
-                            <th style="padding: 5px; text-align: left;">Vacunación</th>
+                            <th style="padding: 5px; text-align: left;">Alergias</th>
                             <th style="padding: 5px; text-align: left;">Enfermedades Crónicas</th>
                             <th style="padding: 5px; text-align: left;">Medicación Activa</th>
+                            <th style="padding: 5px; text-align: left;">Nadar</th>
+                            <th style="padding: 5px; text-align: left;">Vacunación</th>
+                            <th style="padding: 5px; text-align: left;">CIP / Aseguradora</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -528,12 +566,31 @@
                         {
                             <tr style="border-bottom: 1px solid #E2E8F0;">
                                 <td style="padding: 5px; font-weight: bold;">@med.NombreEducando (@med.Rama.ObtenerNombre())</td>
-                                <td style="padding: 5px;">@med.NumeroSeguridadSocial</td>
-                                <td style="padding: 5px;">@med.EntidadAseguradora</td>
-                                <td style="padding: 5px;">@(med.SabeNadar ? "SÍ" : "NO")</td>
-                                <td style="padding: 5px;">@(med.VacunacionAlDia ? "Al día" : "Incompleta")</td>
-                                <td style="padding: 5px; color: #DC2626;">@(med.EnfermedadesCronicas ?? "Ninguna")</td>
-                                <td style="padding: 5px; font-weight: bold;">@(med.MedicacionActiva ?? "Ninguna")</td>
+                                @if (!med.TieneFicha)
+                                {
+                                    <td colspan="6" style="padding: 5px; font-weight: bold; color: #B45309;">SIN FICHA MÉDICA REGISTRADA</td>
+                                }
+                                else
+                                {
+                                    <td style="padding: 5px; font-weight: bold; color: #B91C1C;">
+                                        @if (med.Alergias.Any())
+                                        {
+                                            @foreach (var alergia in med.Alergias)
+                                            {
+                                                <div>@alergia.Etiqueta: @alergia.Detalle</div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span style="font-weight: normal; color: #334155;">Ninguna</span>
+                                        }
+                                    </td>
+                                    <td style="padding: 5px; color: #B91C1C;">@(med.EnfermedadesCronicas ?? "Ninguna")</td>
+                                    <td style="padding: 5px; font-weight: bold;">@(med.MedicacionActiva ?? "Ninguna")</td>
+                                    <td style="padding: 5px;">@(med.SabeNadar == true ? "SÍ" : "NO")</td>
+                                    <td style="padding: 5px;">@(med.VacunacionAlDia == true ? "Al día" : "Incompleta")</td>
+                                    <td style="padding: 5px;">@(med.NumeroSeguridadSocial ?? "—") · @(med.EntidadAseguradora ?? "—")</td>
+                                }
                             </tr>
                         }
                     </tbody>

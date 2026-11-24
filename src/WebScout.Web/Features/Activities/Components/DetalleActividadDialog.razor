@@ -37,7 +37,7 @@
                         <div class="d-flex align-center gap-2 mt-1">
                             <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" Size="Size.Small" />
                             <MudText Typo="Typo.body2">
-                                @Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @Actividad.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                @Actividad.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm") - @Actividad.FechaFin.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         </div>
                     </div>
@@ -77,7 +77,7 @@
                     {
                         <MudDivider />
                         <MudAlert Severity="@(Actividad.AdmiteInscripciones ? Severity.Info : Severity.Warning)" Dense="true">
-                            <strong>Plazo de Inscripción:</strong> Hasta el @Actividad.FechaLimiteInscripcion.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                            <strong>Plazo de Inscripción:</strong> Hasta el @Actividad.FechaLimiteInscripcion.Value.AHoraEspana().ToString("dd/MM/yyyy")
                             @(Actividad.AdmiteInscripciones ? "(Abierto)" : "(Plazo Cerrado)")
                         </MudAlert>
                     }

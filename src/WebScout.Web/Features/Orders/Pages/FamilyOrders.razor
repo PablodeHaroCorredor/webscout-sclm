@@ -248,7 +248,7 @@
                             </MudTd>
                             <MudTd DataLabel="Fecha">
                                 <MudText Typo="Typo.body2">
-                                    @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                                    @context.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy")
                                 </MudText>
                             </MudTd>
                             <MudTd DataLabel="Educando">
@@ -385,7 +385,7 @@
                                                 @pedido.CodigoPedido
                                             </span>
                                             <span style="font-size: 0.75rem; color: #64748B;">
-                                                @pedido.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                                                @pedido.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy")
                                             </span>
                                         </div>
                                         <ScoutStatusBadge Estado="pedido.Estado" />

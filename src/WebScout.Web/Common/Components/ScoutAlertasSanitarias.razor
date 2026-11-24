@@ -1,0 +1,84 @@
+@namespace WebScout.Web.Common.Components
+
+@* Chips de alertas sanitarias con una única regla de interpretación (AlertasSanitarias).
+   Las alergias de cualquier tipo van en rojo y con icono; el texto completo queda en el title. *@
+
+@if (SinFicha)
+{
+    <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.HelpOutline">
+        Sin ficha médica
+    </MudChip>
+}
+else if (Alertas is null || Alertas.Count == 0)
+{
+    <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Icon="@Icons.Material.Filled.Check">
+        Sin alertas médicas
+    </MudChip>
+}
+else
+{
+    <div class="d-flex flex-wrap gap-1 @Class">
+        @foreach (var alerta in Alertas)
+        {
+            <span title="@($"{alerta.Etiqueta}: {alerta.Detalle}")">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Color="@ColorDe(alerta)"
+                         Variant="@(alerta.Tipo == TipoAlertaSanitaria.EnfermedadCronica ? Variant.Outlined : Variant.Filled)"
+                         Icon="@IconoDe(alerta)"
+                         Style="max-width: 100%; font-size: 0.75rem;">
+                    @TextoDe(alerta)
+                </MudChip>
+            </span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<AlertaSanitaria>? Alertas { get; set; }
+    [Parameter] public bool SinFicha { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Longitud máxima del detalle visible en el chip; el texto completo queda en el title.</summary>
+    [Parameter] public int LongitudMaxima { get; set; } = 48;
+
+    private static Color ColorDe(AlertaSanitaria alerta) => alerta.Tipo switch
+    {
+        TipoAlertaSanitaria.AlergiaMedicamentosa or TipoAlertaSanitaria.AlergiaAlimentaria or TipoAlertaSanitaria.AlergiaAmbiental => Color.Error,
+        TipoAlertaSanitaria.EnfermedadCronica => Color.Error,
+        TipoAlertaSanitaria.Medicacion => Color.Info,
+        _ => Color.Warning
+    };
+
+    private static string IconoDe(AlertaSanitaria alerta) => alerta.Tipo switch
+    {
+        TipoAlertaSanitaria.AlergiaMedicamentosa => Icons.Material.Filled.Vaccines,
+        TipoAlertaSanitaria.AlergiaAlimentaria => Icons.Material.Filled.NoMeals,
+        TipoAlertaSanitaria.AlergiaAmbiental => Icons.Material.Filled.Grass,
+        TipoAlertaSanitaria.EnfermedadCronica => Icons.Material.Filled.MonitorHeart,
+        TipoAlertaSanitaria.Medicacion => Icons.Material.Filled.Medication,
+        _ => Icons.Material.Filled.RestaurantMenu
+    };
+
+    private string TextoDe(AlertaSanitaria alerta)
+    {
+        if (alerta.Tipo == TipoAlertaSanitaria.Medicacion)
+        {
+            return "Medicación activa";
+        }
+
+        var prefijo = alerta.Tipo switch
+        {
+            TipoAlertaSanitaria.AlergiaMedicamentosa => "Medicamentos: ",
+            TipoAlertaSanitaria.AlergiaAmbiental => "Ambiental: ",
+            TipoAlertaSanitaria.EnfermedadCronica => "Crónica: ",
+            _ => string.Empty
+        };
+
+        var detalle = alerta.Detalle.Length > LongitudMaxima
+            ? alerta.Detalle[..LongitudMaxima].TrimEnd() + "…"
+            : alerta.Detalle;
+
+        return prefijo + detalle;
+    }
+}

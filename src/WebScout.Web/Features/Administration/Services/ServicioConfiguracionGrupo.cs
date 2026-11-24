@@ -36,11 +36,17 @@ public class ServicioConfiguracionGrupo : IServicioConfiguracionGrupo
             config = new ConfiguracionGrupo
             {
                 OrganizacionId = _tenantContext.CurrentTenantId,
-                EmailOficial = _tenantContext.GroupName,
+                EmailOficial = await ObtenerEmailContactoGrupoAsync(cancellationToken),
                 FechaModificacionUtc = DateTime.UtcNow
             };
 
             _dbContext.Set<ConfiguracionGrupo>().Add(config);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else if (!string.IsNullOrWhiteSpace(config.EmailOficial) && ValidadorAjustesGrupo.ValidarEmail(config.EmailOficial) != null)
+        {
+            // Corrige configuraciones creadas con el nombre del grupo en el campo de email (defecto erróneo anterior).
+            config.EmailOficial = await ObtenerEmailContactoGrupoAsync(cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -51,6 +57,12 @@ public class ServicioConfiguracionGrupo : IServicioConfiguracionGrupo
         AjustesInstitucionalesDto dto,
         CancellationToken cancellationToken = default)
     {
+        LanzarSiHayErrores(
+            ValidadorAjustesGrupo.ValidarCif(dto.Cif),
+            ValidadorAjustesGrupo.ValidarEmail(dto.EmailOficial),
+            ValidadorAjustesGrupo.ValidarTelefono(dto.TelefonoContacto),
+            ValidadorAjustesGrupo.ValidarRonda(dto.FechaInicioRonda, dto.FechaFinRonda));
+
         var config = await ObtenerConfiguracionAsync(cancellationToken);
 
         config.Cif = dto.Cif?.Trim();
@@ -79,6 +91,8 @@ public class ServicioConfiguracionGrupo : IServicioConfiguracionGrupo
         AjustesEconomicosDto dto,
         CancellationToken cancellationToken = default)
     {
+        LanzarSiHayErrores(ValidadorAjustesGrupo.ValidarIban(dto.IbanCuentaBancaria));
+
         var config = await ObtenerConfiguracionAsync(cancellationToken);
 
         config.IbanCuentaBancaria = dto.IbanCuentaBancaria?.Trim();
@@ -143,5 +157,24 @@ public class ServicioConfiguracionGrupo : IServicioConfiguracionGrupo
 
         _logger.LogInformation("Simulación de respaldo PA19 registrada para el tenant {TenantId}", _tenantContext.CurrentTenantId);
         return config;
+    }
+
+    private async Task<string?> ObtenerEmailContactoGrupoAsync(CancellationToken cancellationToken)
+    {
+        var email = await _dbContext.GruposScout
+            .Where(g => g.Id == _tenantContext.CurrentTenantId)
+            .Select(g => g.EmailContacto)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return ValidadorAjustesGrupo.ValidarEmail(email) == null ? email : null;
+    }
+
+    private static void LanzarSiHayErrores(params string?[] errores)
+    {
+        var mensajes = errores.Where(e => e != null).ToList();
+        if (mensajes.Count > 0)
+        {
+            throw new InvalidOperationException(string.Join(" ", mensajes));
+        }
     }
 }

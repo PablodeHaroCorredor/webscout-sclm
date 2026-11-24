@@ -9,6 +9,8 @@ public static class InscriptionServiceExtensions
     {
         services.AddSingleton<IAlmacenamientoJustificantes, AlmacenamientoJustificantesLocal>();
         services.AddScoped<IServicioInscripciones, ServicioInscripciones>();
+        services.AddHealthChecks()
+            .AddCheck<AlmacenamientoJustificantesHealthCheck>(AlmacenamientoJustificantesHealthCheck.Nombre, tags: ["diagnostico"]);
         return services;
     }
 }
