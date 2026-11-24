@@ -3,8 +3,8 @@ using WebScout.Web.Common.Domain;
 namespace WebScout.Web.Features.Orders.Domain;
 
 /// <summary>
-/// Solicitud de material scout registrada por una familia o gestionada por el Kraal (RF49-RF54).
-/// Cumple con las directrices Core 1.29: entrega flexible en mano sin bloqueo bancario obligatorio (PA07),
+/// Solicitud de material scout registrada por una familia o gestionada por el Kraal (RF49-RF53).
+/// Pedido sencillo: entrega flexible en mano sin bloqueo bancario obligatorio (PA07),
 /// cancelación familiar motivada en etapas tempranas (RF52), rectificación administrativa con auditoría (PA08)
 /// y adjunto voluntario de justificante de transferencia (RF51).
 /// </summary>
@@ -58,7 +58,7 @@ public class PedidoMaterial : IEntidadOrganizacion
     public string? RamaEducativa { get; set; }
 
     /// <summary>
-    /// Estado actual en la máquina de 6 estados Core 1.29 (RF50).
+    /// Estado actual en la máquina de 6 estados (RF50).
     /// </summary>
     public EstadoPedidoMaterial Estado { get; set; } = EstadoPedidoMaterial.Solicitado;
 
@@ -118,7 +118,7 @@ public class PedidoMaterial : IEntidadOrganizacion
     public List<LineaPedidoMaterial> Lineas { get; set; } = new();
 
     /// <summary>
-    /// Regla asociativa Core 1.29 (RF52): la familia puede cancelar el pedido por sí misma
+    /// Regla asociativa (RF52): la familia puede cancelar el pedido por sí misma
     /// si está en estado 'Solicitado' o 'Revisado', debiendo indicar un motivo.
     /// Una vez pasa a 'PedidoAlProveedor' o 'Entregado', la cancelación directa queda bloqueada.
     /// </summary>

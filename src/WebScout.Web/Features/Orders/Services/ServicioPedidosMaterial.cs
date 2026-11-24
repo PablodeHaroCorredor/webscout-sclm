@@ -241,7 +241,7 @@ public class ServicioPedidosMaterial : IServicioPedidosMaterial
             throw new UnauthorizedAccessException("No tienes autorización para cancelar este pedido.");
         }
 
-        // Regla Core 1.29 (RF52): Solo cancelable en Solicitado o Revisado
+        // Regla RF52: Solo cancelable en Solicitado o Revisado
         if (!pedido.PermiteCancelacionFamilia)
         {
             throw new InvalidOperationException(
@@ -446,7 +446,7 @@ public class ServicioPedidosMaterial : IServicioPedidosMaterial
         var sb = new StringBuilder();
 
         // Encabezado del informe
-        sb.AppendLine("INFORME DE APROVISIONAMIENTO Y PEDIDOS DE MATERIAL SCOUT (CORE 1.29)");
+        sb.AppendLine("INFORME DE APROVISIONAMIENTO Y PEDIDOS DE MATERIAL SCOUT");
         sb.AppendLine($"Fecha de Generación:;{DateTime.Now:yyyy-MM-dd HH:mm}");
         sb.AppendLine($"Total Pedidos Seleccionados:;{pedidos.Count}");
         sb.AppendLine();
@@ -483,65 +483,6 @@ public class ServicioPedidosMaterial : IServicioPedidosMaterial
         var nombreArchivo = $"Aprovisionamiento_MaterialScout_{DateTime.Now:yyyyMMdd_HHmm}.csv";
 
         return (bytes, nombreArchivo);
-    }
-
-    public async Task ImportarPedidoHistorico128Async(
-        Guid organizacionId,
-        string codigo,
-        string solicitante,
-        string email,
-        string estado128,
-        string producto,
-        string? talla,
-        int cantidad,
-        decimal precioUnitario,
-        string? notas,
-        DateTime fecha,
-        CancellationToken ct = default)
-    {
-        // Regla Core 1.29 (RF54): Mapeo transparente de estados Core 1.28
-        // 'Aceptado' y 'Justificante recibido' se convierten a 'Revisado'
-        var estadoMapeado = estado128.Trim().ToLowerInvariant() switch
-        {
-            "aceptado" => EstadoPedidoMaterial.Revisado,
-            "justificante recibido" => EstadoPedidoMaterial.Revisado,
-            "entregado" => EstadoPedidoMaterial.Entregado,
-            "rechazado" => EstadoPedidoMaterial.Rechazado,
-            "cancelado" => EstadoPedidoMaterial.Cancelado,
-            "solicitado" => EstadoPedidoMaterial.Solicitado,
-            _ => EstadoPedidoMaterial.Revisado
-        };
-
-        var usuario = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
-        var usuarioId = usuario?.Id ?? Guid.NewGuid();
-
-        var pedido = new PedidoMaterial
-        {
-            OrganizacionId = organizacionId,
-            CodigoPedido = codigo,
-            UsuarioId = usuarioId,
-            SolicitanteNombre = solicitante,
-            SolicitanteEmail = email,
-            Estado = estadoMapeado,
-            ObservacionesFamilia = notas,
-            NotasInternasKraal = $"Migrado desde Core 1.28. Estado original: {estado128}",
-            FechaSolicitudUtc = fecha,
-            TotalEstimado = cantidad * precioUnitario,
-            ModificadoPor = "MigradorHistorico128"
-        };
-
-        pedido.Lineas.Add(new LineaPedidoMaterial
-        {
-            OrganizacionId = organizacionId,
-            PedidoMaterialId = pedido.Id,
-            ProductoNombre = producto,
-            Talla = string.IsNullOrWhiteSpace(talla) ? "Talla Única" : talla,
-            Cantidad = cantidad,
-            PrecioUnitario = precioUnitario
-        });
-
-        _dbContext.PedidosMaterial.Add(pedido);
-        await _dbContext.SaveChangesAsync(ct);
     }
 
     private async Task SembrarCatalogoInicialAsync(Guid organizacionId, CancellationToken ct)

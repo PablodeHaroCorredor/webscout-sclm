@@ -57,7 +57,7 @@ builder.Services.AddAdmissionFeatures();
 // Registrar Dominio de Administración, Configuración y Diagnóstico (BL10)
 builder.Services.AddAdministrationFeatures();
 
-// Registrar Dominio de Pedidos y Catálogo de Material Scout Core 1.29 (BL07)
+// Registrar Dominio de Pedidos y Catálogo de Material Scout (BL07)
 builder.Services.AddOrderFeatures();
 
 // Registrar Motor Outbox Transaccional y Transporte SMTP (ADR07 / PA11)

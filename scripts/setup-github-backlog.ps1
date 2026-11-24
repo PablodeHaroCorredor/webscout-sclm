@@ -59,7 +59,7 @@ $labels = @(
     @{ name = "E2: Actividades"; color = "1b5e20"; description = "Entrega 2 - Campamentos, inscripciones y autorizaciones" },
     @{ name = "E3: Gestion"; color = "006b75"; description = "Entrega 3 - Fotos, pedidos sencillos y solicitudes" },
     @{ name = "E4: Web Publica"; color = "fb8500"; description = "Entrega 4 - Portada de grupo, pañoleta y WCAG 2.2 AA" },
-    @{ name = "E5: Piloto"; color = "d73a4a"; description = "Entrega 5 - Migración WordPress y corte operativo" },
+    @{ name = "E5: Piloto"; color = "d73a4a"; description = "Entrega 5 - Piloto y puesta en marcha" },
 
     # Módulos Funcionales
     @{ name = "mod:tenancy"; color = "0052cc"; description = "Resolución de subdominios y aislamiento por OrganizationId" },
@@ -67,9 +67,8 @@ $labels = @(
     @{ name = "mod:actividades"; color = "28a745"; description = "Gestión de salidas, campamentos y fechas límite" },
     @{ name = "mod:documental"; color = "6f42c1"; description = "Almacenamiento privado S3/MinIO y PDFs firmados inmutables" },
     @{ name = "mod:branding-wcag"; color = "f9a825"; description = "Personalización de pañoletas y contraste accesible WCAG 2.2" },
-    @{ name = "mod:pedidos"; color = "d4ac0d"; description = "Pedidos sencillos de pañoletas y camisetas (Core 1.29)" },
+    @{ name = "mod:pedidos"; color = "d4ac0d"; description = "Pedidos sencillos de pañoletas y camisetas" },
     @{ name = "mod:fotos"; color = "e91e63"; description = "Álbumes privados y carga progresiva de fotografías" },
-    @{ name = "mod:migracion"; color = "546e7a"; description = "Importación histórica de datos de WordPress (Lestonnac 330)" },
 
     # Trazabilidad de Calidad
     @{ name = "PA: Aceptacion"; color = "008672"; description = "Trazable a una de las 19 Pruebas de Aceptación PA01-PA19" },
@@ -91,12 +90,12 @@ Write-Host "2. Creando Hitos del Proyecto (Milestones)..." -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 $milestonesData = @(
-    @{ title = "E0: Descubrimiento y Prototipos"; description = "Decisiones críticas de inicio, inventario WordPress y validación técnica (IN01 a IN06)." },
+    @{ title = "E0: Descubrimiento y Prototipos"; description = "Decisiones críticas de inicio y validación técnica (IN01 e IN03 a IN06)." },
     @{ title = "E1: Base y Acceso"; description = "Monolito modular, autenticación multitenant, políticas de seguridad, persistencia y outbox." },
     @{ title = "E2: Actividades y Documentos"; description = "Inscripciones familiares, justificantes compartidos entre hermanos y revisión por sección." },
     @{ title = "E3: Gestión Cotidiana"; description = "Subida progresiva de fotos de campamento, pedidos sencillos y buzón de contacto." },
     @{ title = "E4: Web Pública y Tematización"; description = "Portada de grupo, personalización de colores de pañoleta y cumplimiento estricto WCAG 2.2 AA." },
-    @{ title = "E5: Piloto Lestonnac 330 y Corte"; description = "Importación final de WordPress, verificación PA01-PA19, formación y puesta en marcha." }
+    @{ title = "E5: Piloto Lestonnac 330 y Corte"; description = "Alta de datos reales, verificación de las PA aplicables, formación y puesta en marcha." }
 )
 
 $milestoneMap = @{}
@@ -136,22 +135,6 @@ Definir y consensuar con los responsables de SCLM y Lestonnac 330 el alcance exa
 - [ ] Listar las funciones indispensables para la salida del piloto.
 
 **Referencia documental:** `docs/planificacion/plan-entregas-y-backlog.md` y `docs/planificacion/decisiones-y-riesgos.md`.
-"@
-    },
-    @{
-        title = "IN02: Inventario y análisis de datos históricos de WordPress (Lestonnac 330)"
-        milestone = $milestoneMap["E0: Descubrimiento y Prototipos"]
-        labels = @("E0: Prototipos", "P1: MVP Piloto", "mod:migracion")
-        body = @"
-## 🎯 Objetivo
-Analizar la base de datos actual de WordPress de Lestonnac 330: volumen de usuarios, actividades abiertas, modelos de formularios de inscripción y archivos adjuntos existentes.
-
-### Criterios de Aceptación
-- [ ] Inventario de entradas, páginas y archivos por procedencia.
-- [ ] Identificar actividades abiertas en `signed_pdf` y `legacy_form`.
-- [ ] Comprobar volumen total de fotografías y documentos para estimar almacenamiento.
-
-**Referencia documental:** `docs/migracion/plan-migracion-wordpress.md`.
 "@
     },
     @{
@@ -208,7 +191,7 @@ Demostrar que una caída temporal del servidor SMTP (Mailpit) o de la red no int
         labels = @("E0: Prototipos", "P1: MVP Piloto", "mod:tenancy")
         body = @"
 ## 🎯 Objetivo
-Cerrar las decisiones de proveedor de nube/hosting (DC03, DC05, DC08) y definir el protocolo de copias de seguridad de PostgreSQL y almacenamiento de archivos.
+Cerrar las decisiones de proveedor de nube/hosting (DC03, DC08) y definir el protocolo de copias de seguridad de PostgreSQL y almacenamiento de archivos.
 
 ### Criterios de Aceptación
 - [ ] Dimensionamiento de costes para los 15-30 grupos de SCLM.
@@ -226,7 +209,7 @@ foreach ($task in $e0Tasks) {
 }
 
 Write-Host "`n==========================================" -ForegroundColor Cyan
-Write-Host "4. Creando Épicas del Backlog (BL01 a BL12)..." -ForegroundColor Cyan
+Write-Host "4. Creando Épicas del Backlog (BL01 a BL11)..." -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 $epics = @(
@@ -285,18 +268,17 @@ Gestión de solicitudes de información y lista de espera para nuevos educandos 
 "@
     },
     @{
-        title = "BL04: Formularios dinámicos y compatibilidad histórica"
+        title = "BL04: Formularios dinámicos en actividades"
         milestone = $milestoneMap["E2: Actividades y Documentos"]
         labels = @("E2: Actividades", "P1: MVP Piloto", "mod:actividades")
         body = @"
 ## 📖 Descripción de la Épica
-Soporte para campos personalizados en actividades scouts (dietas, autorizaciones especiales) y preservación de respuestas históricas.
+Soporte para campos personalizados en actividades scouts (dietas, autorizaciones especiales) con respuestas inmutables aunque cambie el formulario.
 
 ### Requisitos Vinculados
 - **RF15 a RF16:** Captura abierta de campos y compatibilidad con formatos heredados.
 
 ### Pruebas de Aceptación
-- [ ] **PA15:** Compatibilidad histórica de inscripciones sin pérdida de etiquetas ni atribuciones.
 "@
     },
     @{
@@ -334,18 +316,18 @@ Galería fotográfica privada para que las familias vean el día a día de sus h
 "@
     },
     @{
-        title = "BL07: Catálogo y pedidos sencillos de material scout (Core 1.29)"
+        title = "BL07: Catálogo y pedidos sencillos de material scout"
         milestone = $milestoneMap["E3: Gestión Cotidiana"]
         labels = @("E3: Gestion", "P1: MVP Piloto", "mod:pedidos")
         body = @"
 ## 📖 Descripción de la Épica
-Petición de pañoletas, uniformes, camisetas y cantimploras del grupo según el modelo simplificado acordado (Core 1.29): sin bloqueo bancario rígido y con trazabilidad de 6 estados.
+Petición de pañoletas, uniformes, camisetas y cantimploras del grupo según el modelo simplificado acordado: sin bloqueo bancario rígido y con trazabilidad de 6 estados.
 
 ### Requisitos Vinculados
 - **RF48 a RF54:** Catálogo, variantes por talla, estados del pedido e historial administrativo.
 
 ### Pruebas de Aceptación
-- [ ] **PA07:** Pedido sencillo: entrega permitida sin recibo; no existen acciones económicas rígidas 1.28.
+- [ ] **PA07:** Pedido sencillo: entrega permitida sin recibo; no existen acciones económicas rígidas.
 - [ ] **PA08:** Rectificación administrativa de pedidos con registro de auditoría.
 "@
     },
@@ -410,23 +392,6 @@ Asistencia integrada en la interfaz que guía paso a paso a padres y educandos n
 
 ### Pruebas de Aceptación
 - [ ] **PA17:** Ayuda accesible sin interrumpir la navegación por teclado.
-"@
-    },
-    @{
-        title = "BL12: Herramienta de migración WordPress (Lestonnac 330) y corte operativo"
-        milestone = $milestoneMap["E5: Piloto Lestonnac 330 y Corte"]
-        labels = @("E5: Piloto", "P0: Bloqueante", "mod:migracion", "PA: Aceptacion")
-        body = @"
-## 📖 Descripción de la Épica
-Consola de migración de datos (`WebScout.Migration`): importación de usuarios, historial de actividades y posts desde WordPress, conciliación de sumas de verificación y corte final a producción.
-
-### Requisitos Vinculados
-- **RF68 a RF71:** Extracción, transformación, carga (ETL), verificación de integridad y ensayo de restauración en desastre.
-
-### Pruebas de Aceptación
-- [ ] **PA15:** Conciliación histórica de datos sin pérdida de autorías ni fechas.
-- [ ] **PA18:** Carga y aislamiento de organización con volumen de referencia medido.
-- [ ] **PA19:** Corte y recuperación completa demostrada antes de apagar el servidor antiguo.
 "@
     }
 )

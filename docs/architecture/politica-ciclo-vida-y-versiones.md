@@ -25,7 +25,7 @@ Sustituir el modelo PDF requiere confirmación y crea una versión inmutable. No
 
 El gestor puede elegir cualquiera de los estados Solicitado, Revisado, Pedido al proveedor, Entregado, Rechazado y Cancelado, incluso para rectificar o reabrir. Cada cambio deja historial y usa control de concurrencia. No se impone una secuencia económica.
 
-El titular cancela solo desde Solicitado o Revisado y con motivo. Puede subir o sustituir justificante salvo en Rechazado o Cancelado. El documento es independiente del estado y la entrega no exige adjunto. No se recuperan acciones de aceptación de importe o verificación de pago de 1.28.
+El titular cancela solo desde Solicitado o Revisado y con motivo. Puede subir o sustituir justificante salvo en Rechazado o Cancelado. El documento es independiente del estado y la entrega no exige adjunto. No existen acciones de aceptación de importe ni de verificación de pago.
 
 ## Referencias compartidas y borrado
 

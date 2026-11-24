@@ -42,7 +42,7 @@ Los originales, miniaturas y versiones anteriores usan el mismo control. La resp
 
 Identity gestiona credenciales y recuperación. La propuesta exige MFA a Administración y Coordinación, cookies seguras y CSRF en mutaciones. Las concesiones sensibles se revalidarán en cada operación mediante datos vigentes o una versión de seguridad; la información de un claim antiguo no mantendrá acceso después de una revocación.
 
-La renovación de credenciales y una invitación son operaciones separadas de la migración de datos. No se copiarán hashes de WordPress como si fueran hashes de Identity. Los servicios y workers recibirán un contexto explícito con permisos de sistema acotados.
+Los servicios y workers recibirán un contexto explícito con permisos de sistema acotados.
 
 ## Pruebas mínimas
 

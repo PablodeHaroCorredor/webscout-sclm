@@ -204,7 +204,6 @@ Para evitar que el código quede condicionado a un único grupo, se propone la s
 | `tools/L330.Migration/` | `tools/WebScout.Migration/` (con perfiles de seed por grupo) |
 | `L330DbContext` | `WebScoutDbContext` |
 
-*Nota:* Los datos históricos y scripts de migración de WordPress de Lestonnac 330 se encapsulan en `WebScout.Migration/Profiles/Lestonnac330/` como el primer perfil de importación.
 
 ---
 

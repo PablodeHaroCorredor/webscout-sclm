@@ -1,7 +1,7 @@
 namespace WebScout.Web.Features.Orders.Domain;
 
 /// <summary>
-/// Máquina de 6 estados del flujo de pedidos de material scout según el acuerdo Core 1.29.
+/// Máquina de 6 estados del flujo de pedidos de material scout del pedido sencillo.
 /// Sustituye la rigidez bancaria comercial por una gestión ágil y asociativa (PA07, PA08).
 /// </summary>
 public enum EstadoPedidoMaterial

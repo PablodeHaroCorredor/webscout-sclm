@@ -33,7 +33,7 @@ Aplicar las supresiones y bloqueos que deban mantenerse tras restaurar; una copi
 
 **Fallo de archivo:** distinguir subida preparada, objeto guardado sin confirmación y vínculo roto. Usar token persistido y manifiesto; verificar hash y permisos. Reparar con operación registrada y no sustituir un original firmado por una imagen reconstruida.
 
-**Despliegue fallido:** cerrar escritura afectada si procede, identificar esquema y candidato, decidir regreso compatible o restauración coordinada. Contabilizar escrituras posteriores al punto de copia antes de volver a WordPress o a una base anterior.
+**Despliegue fallido:** cerrar escritura afectada si procede, identificar esquema y candidato, decidir regreso compatible o restauración coordinada. Contabilizar escrituras posteriores al punto de copia antes de volver a una base anterior.
 
 **Incidente de privacidad:** contener el canal, revocar acceso afectado, conservar evidencias mínimas y comunicar internamente al responsable del tratamiento. Este decide evaluación, notificaciones y plazos aplicables conforme al procedimiento ratificado; el repositorio no sustituye ese proceso.
 

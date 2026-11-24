@@ -45,4 +45,4 @@ ProblemDetails incluirá código estable, descripción útil, errores de campo y
 
 Se garantiza persistencia de la intención y reintento, no entrega exactamente una vez por SMTP. Una caída después de enviar puede repetir el aviso; se usará identificador de mensaje y deduplicación si el proveedor la ofrece. Un correo fallido no cambia el trámite a no recibido ni duplica el expediente.
 
-Los puertos `IPrivateFileStore`, `IPublicAssetStore`, `IBackgroundJobStore`, `IAuthorizationPolicy` e `IClock` permiten sustituir infraestructura y probar errores. No se añade WordPress como dependencia de ejecución al núcleo .NET. La convivencia editorial está delimitada por el [plan de migración](../migracion/plan-migracion-wordpress.md).
+Los puertos `IPrivateFileStore`, `IPublicAssetStore`, `IBackgroundJobStore`, `IAuthorizationPolicy` e `IClock` permiten sustituir infraestructura y probar errores.
