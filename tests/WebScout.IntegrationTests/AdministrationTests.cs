@@ -86,7 +86,7 @@ public class AdministrationTests : IDisposable
         var outbox = new ServicioOutbox(db, _fakeEmail, NullLogger<ServicioOutbox>.Instance);
         var audit = new ServicioAuditoria(db, tenant, new Microsoft.AspNetCore.Http.HttpContextAccessor(), NullLogger<ServicioAuditoria>.Instance);
         var config = new ServicioConfiguracionGrupo(db, tenant, audit, NullLogger<ServicioConfiguracionGrupo>.Instance);
-        var admissions = new ServicioAdmisiones(db, tenant, outbox, NullLogger<ServicioAdmisiones>.Instance);
+        var admissions = new ServicioAdmisiones(db, tenant, outbox, NullLogger<ServicioAdmisiones>.Instance, AlcanceFijo.Global);
 
         return (db, tenant, config, admissions, outbox, audit);
     }

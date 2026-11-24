@@ -23,6 +23,9 @@ public sealed record AlcanceSeccion(bool EsGlobal, RamaScout? Rama, FuncionSecci
     public bool PuedeVer(RamaScout rama) =>
         EsGlobal || (Rama is not null && rama != RamaScout.Ninguna && Rama == rama);
 
+    /// <summary>Gestiona al menos una sección: alcance global o Coordinador de sección.</summary>
+    public bool GestionaAlgunaSeccion => EsGlobal || (Rama is not null && Funcion == FuncionSeccion.Coordinador);
+
     /// <summary>Puede gestionar a los educandos de la rama (reservado al coordinador de esa sección).</summary>
     public bool PuedeGestionar(RamaScout rama) =>
         EsGlobal || (PuedeVer(rama) && Funcion == FuncionSeccion.Coordinador);

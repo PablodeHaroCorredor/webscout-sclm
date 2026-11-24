@@ -1,0 +1,68 @@
+@using MudBlazor
+@using WebScout.Web.Features.Identity.Domain
+@using WebScout.Web.Features.Participants.Domain
+@using WebScout.Web.Features.Participants.Services
+
+<MudDialog ContentClass="scout-dialog-scrollable">
+    <TitleContent>
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" />
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">Editar datos del educando</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3 text-secondary">
+            Corrige los datos personales del educando de @Educando?.RamaActual.ObtenerNombre(). La ficha médica la mantiene la familia y el cambio de rama se tramita aparte.
+        </MudText>
+
+        <MudTextField @bind-Value="_nombre" Label="Nombre" Variant="Variant.Outlined" MaxLength="100" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_apellidos" Label="Apellidos" Variant="Variant.Outlined" MaxLength="150" Required="true" Class="mb-3" />
+        <MudDatePicker @bind-Date="_fechaNacimiento" Label="Fecha de nacimiento" Variant="Variant.Outlined"
+                       MaxDate="DateTime.Today.AddDays(-1)" Required="true" Class="mb-3" />
+        <MudTextField @bind-Value="_dni" Label="DNI/NIE (opcional)" Variant="Variant.Outlined" MaxLength="20" Class="mb-3" />
+        <MudTextField @bind-Value="_sexo" Label="Sexo (opcional)" Variant="Variant.Outlined" MaxLength="20" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancelar" Variant="Variant.Text" Color="Color.Default">Cancelar</MudButton>
+        <MudButton OnClick="Guardar" Variant="Variant.Filled" Color="Color.Primary"
+                   Disabled="@(!EsValido)" StartIcon="@Icons.Material.Filled.Save">
+            Guardar cambios
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public Educando? Educando { get; set; }
+
+    private string _nombre = string.Empty;
+    private string _apellidos = string.Empty;
+    private DateTime? _fechaNacimiento;
+    private string? _dni;
+    private string? _sexo;
+
+    private bool EsValido =>
+        !string.IsNullOrWhiteSpace(_nombre) && !string.IsNullOrWhiteSpace(_apellidos) && _fechaNacimiento.HasValue;
+
+    protected override void OnInitialized()
+    {
+        if (Educando is null) return;
+        _nombre = Educando.Nombre;
+        _apellidos = Educando.Apellidos;
+        _fechaNacimiento = Educando.FechaNacimiento.ToDateTime(TimeOnly.MinValue);
+        _dni = Educando.Dni;
+        _sexo = Educando.Sexo;
+    }
+
+    private void Cancelar() => MudDialog.Cancel();
+
+    private void Guardar()
+    {
+        if (!EsValido) return;
+        MudDialog.Close(DialogResult.Ok(new DatosEducandoEditables(
+            _nombre, _apellidos, DateOnly.FromDateTime(_fechaNacimiento!.Value), _dni, _sexo)));
+    }
+}

@@ -9,6 +9,7 @@ public static class ParticipantServiceExtensions
         services.AddScoped<ServicioEducandos>();
         services.AddScoped<IServicioEducandos>(sp => sp.GetRequiredService<ServicioEducandos>());
         services.AddScoped<IParticipantService>(sp => sp.GetRequiredService<ServicioEducandos>());
+        services.AddScoped<IServicioGestionSeccion, ServicioGestionSeccion>();
         return services;
     }
 }

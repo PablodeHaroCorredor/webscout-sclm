@@ -167,7 +167,7 @@ public class AuditoriaUiGestionF1ServiceTests : IDisposable
         var outbox = new ServicioOutbox(db, new FakeServicioEmail(), NullLogger<ServicioOutbox>.Instance);
         return (db,
             new ServicioConfiguracionGrupo(db, tenant, auditoria, NullLogger<ServicioConfiguracionGrupo>.Instance),
-            new ServicioAdmisiones(db, tenant, outbox, NullLogger<ServicioAdmisiones>.Instance));
+            new ServicioAdmisiones(db, tenant, outbox, NullLogger<ServicioAdmisiones>.Instance, AlcanceFijo.Global));
     }
 
     [Fact]

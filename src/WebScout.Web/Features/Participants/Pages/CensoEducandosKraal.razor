@@ -10,7 +10,10 @@
 @using WebScout.Web.Infrastructure.Tenancy
 @inject IServicioEducandos ServicioEducandos
 @inject ITenantContext Tenant
-@inject WebScout.Web.Features.Identity.Services.IServicioAlcanceSeccion ServicioAlcance
+@using WebScout.Web.Features.Identity.Services
+@inject IServicioAlcanceSeccion ServicioAlcance
+@inject IServicioGestionSeccion ServicioGestion
+@inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
 <PageTitle>Censo de Educandos por Rama · @Tenant.GroupName</PageTitle>
@@ -306,6 +309,21 @@
                                    OnClick="@(() => AbrirFichaSanitariaAsync(context))">
                             Ficha Médica
                         </MudButton>
+                        @if (PuedeGestionar(context))
+                        {
+                            <MudTooltip Text="Editar datos">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Default"
+                                               aria-label="@($"Editar datos de {context.NombreCompleto}")"
+                                               Disabled="_procesando"
+                                               OnClick="@(() => EditarAsync(context))" />
+                            </MudTooltip>
+                            <MudTooltip Text="Dar de baja">
+                                <MudIconButton Icon="@Icons.Material.Filled.PersonOff" Size="Size.Small" Color="Color.Warning"
+                                               aria-label="@($"Dar de baja a {context.NombreCompleto}")"
+                                               Disabled="_procesando"
+                                               OnClick="@(() => DarDeBajaAsync(context))" />
+                            </MudTooltip>
+                        }
                     </MudTd>
                 </RowTemplate>
                 <PagerContent>
@@ -410,6 +428,23 @@
                                            OnClick="@(() => AbrirFichaSanitariaAsync(educando))">
                                     Ver Ficha Médica y Sanitaria
                                 </MudButton>
+                                @if (PuedeGestionar(educando))
+                                {
+                                    <div class="d-flex gap-2 mt-2">
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.Edit" Disabled="_procesando"
+                                                   Style="flex: 1; min-height: 44px; border-radius: 8px;"
+                                                   OnClick="@(() => EditarAsync(educando))">
+                                            Editar
+                                        </MudButton>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.PersonOff" Disabled="_procesando"
+                                                   Style="flex: 1; min-height: 44px; border-radius: 8px;"
+                                                   OnClick="@(() => DarDeBajaAsync(educando))">
+                                            Dar de baja
+                                        </MudButton>
+                                    </div>
+                                }
                             </div>
                         </div>
                     }
@@ -425,10 +460,60 @@
         </div>
     </MudCard>
 
+    @if (_alcance.GestionaAlgunaSeccion)
+    {
+        <!-- Bajas: solo para quien gestiona la sección (Coordinador de sección o alcance global) -->
+        <MudCard Elevation="0" Outlined="true" Class="rounded-xl mb-6" Style="background-color: #FFFFFF; border-color: #E2E8F0;">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center flex-wrap gap-2">
+                    <div>
+                        <MudText Typo="Typo.h6" Style="font-weight: 700;">Educandos dados de baja</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">Consulta y reactiva bajas de @(_alcance.EsGlobal ? "cualquier sección" : _alcance.Rama?.ObtenerNombre()).</MudText>
+                    </div>
+                    <MudSwitch T="bool" Value="_verBajas" ValueChanged="OnVerBajasChanged" Color="Color.Primary" Label="Ver bajas" />
+                </div>
+
+                @if (_verBajas)
+                {
+                    @if (_bajas.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">No hay educandos dados de baja.</MudText>
+                    }
+                    else
+                    {
+                        <MudList T="string" Dense="true" Class="mt-2">
+                            @foreach (var baja in _bajas)
+                            {
+                                <MudListItem T="string">
+                                    <div class="d-flex justify-space-between align-center flex-wrap gap-2">
+                                        <div>
+                                            <span style="font-weight: 600;">@baja.NombreCompleto</span>
+                                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@ObtenerColorRama(baja.RamaActual)">@baja.RamaActual.ObtenerNombre()</MudChip>
+                                        </div>
+                                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                                                   StartIcon="@Icons.Material.Filled.Restore"
+                                                   Disabled="_procesando"
+                                                   OnClick="@(() => ReactivarAsync(baja))">
+                                            Reactivar
+                                        </MudButton>
+                                    </div>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+
 </MudContainer>
 
 @code {
     private bool _cargando = true;
+    private bool _procesando = false;
+    private AlcanceSeccion _alcance = AlcanceSeccion.Ninguno;
+    private bool _verBajas = false;
+    private IReadOnlyList<Educando> _bajas = [];
     private List<Educando> _educandos = new();
     private RamaScout? _ramaSeleccionada;
     private RamaScout _ramaAsignada = RamaScout.Ninguna;
@@ -447,6 +532,7 @@
     {
         // El servidor ya limita el censo a la sección del alcance; aquí solo se refleja en el filtro
         var alcance = await ServicioAlcance.ObtenerAlcanceAsync();
+        _alcance = alcance;
         if (!alcance.EsGlobal && alcance.Rama is { } rama)
         {
             _ramaAsignada = rama;
@@ -512,6 +598,69 @@
 
         var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true };
         await DialogService.ShowAsync<VerFichaSanitariaDialog>("Expediente Sanitario", parameters, options);
+    }
+
+    // El servidor vuelve a comprobar el alcance en cada acción; la interfaz solo oculta los botones.
+    private bool PuedeGestionar(Educando educando) => _alcance.PuedeGestionar(educando.RamaActual);
+
+    private async Task EditarAsync(Educando educando)
+    {
+        var parametros = new DialogParameters<EditarEducandoKraalDialog> { { x => x.Educando, educando } };
+        var dialogo = await DialogService.ShowAsync<EditarEducandoKraalDialog>("Editar educando", parametros,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var resultado = await dialogo.Result;
+        if (resultado is { Canceled: false, Data: DatosEducandoEditables datos })
+        {
+            await EjecutarAsync(() => ServicioGestion.ActualizarDatosAsync(educando.Id, datos), "Datos del educando actualizados.");
+        }
+    }
+
+    private async Task DarDeBajaAsync(Educando educando)
+    {
+        var parametros = new DialogParameters<DarDeBajaEducandoDialog> { { x => x.Educando, educando } };
+        var dialogo = await DialogService.ShowAsync<DarDeBajaEducandoDialog>("Dar de baja", parametros,
+            new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true });
+        var resultado = await dialogo.Result;
+        if (resultado is { Canceled: false, Data: string motivo })
+        {
+            await EjecutarAsync(() => ServicioGestion.DarDeBajaAsync(educando.Id, motivo), $"{educando.NombreCompleto} ha sido dado de baja.");
+        }
+    }
+
+    private Task ReactivarAsync(Educando educando) =>
+        EjecutarAsync(() => ServicioGestion.ReactivarAsync(educando.Id), $"{educando.NombreCompleto} vuelve al censo activo.");
+
+    private async Task OnVerBajasChanged(bool ver)
+    {
+        _verBajas = ver;
+        if (ver)
+        {
+            _bajas = await ServicioGestion.ObtenerBajasAsync();
+        }
+    }
+
+    private async Task EjecutarAsync(Func<Task> accion, string mensajeExito)
+    {
+        _procesando = true;
+        try
+        {
+            await accion();
+            Snackbar.Add(mensajeExito, Severity.Success);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            Snackbar.Add(ex.Message, Severity.Warning);
+        }
+        finally
+        {
+            _procesando = false;
+        }
+
+        await CargarCensoAsync();
+        if (_verBajas)
+        {
+            _bajas = await ServicioGestion.ObtenerBajasAsync();
+        }
     }
 
     private Color ObtenerColorRama(RamaScout rama) => rama switch

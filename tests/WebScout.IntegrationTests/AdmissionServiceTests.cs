@@ -84,7 +84,7 @@ public class AdmissionServiceTests : IDisposable
             dbContext,
             tenant,
             servicioOutbox,
-            NullLogger<ServicioAdmisiones>.Instance);
+            NullLogger<ServicioAdmisiones>.Instance, AlcanceFijo.Global);
 
         return (dbContext, tenant, servicioAdmisiones);
     }

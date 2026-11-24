@@ -5,6 +5,7 @@ using WebScout.Web.Features.Admissions.Domain;
 using WebScout.Web.Features.Admissions.Templates;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Identity.Services;
 using WebScout.Web.Features.Participants.Domain;
 using WebScout.Web.Infrastructure.Outbox.Services;
 using WebScout.Web.Infrastructure.Persistence;
@@ -21,17 +22,20 @@ public class ServicioAdmisiones : IServicioAdmisiones
     private readonly ITenantContext _tenantContext;
     private readonly IServicioOutbox _servicioOutbox;
     private readonly ILogger<ServicioAdmisiones> _logger;
+    private readonly IServicioAlcanceSeccion _alcance;
 
     public ServicioAdmisiones(
         WebScoutDbContext dbContext,
         ITenantContext tenantContext,
         IServicioOutbox servicioOutbox,
-        ILogger<ServicioAdmisiones> logger)
+        ILogger<ServicioAdmisiones> logger,
+        IServicioAlcanceSeccion alcance)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _servicioOutbox = servicioOutbox;
         _logger = logger;
+        _alcance = alcance;
     }
 
     public async Task<SolicitudAdmision> RegistrarSolicitudAdmisionAsync(
@@ -214,6 +218,14 @@ public class ServicioAdmisiones : IServicioAdmisiones
     {
         ValidarTenantActivo();
 
+        // Solicitudes de admisión: datos de menores. Las ve quien puede incorporarlos a la sección sugerida
+        // (alcance global, o el Coordinador de esa sección); un Scouter sin coordinación no las ve.
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (!alcance.EsGlobal && alcance.Funcion != FuncionSeccion.Coordinador)
+        {
+            return [];
+        }
+
         var query = _dbContext.SolicitudesAdmision.AsNoTracking();
 
         if (filtroEstado.HasValue)
@@ -221,9 +233,10 @@ public class ServicioAdmisiones : IServicioAdmisiones
             query = query.Where(s => s.Estado == filtroEstado.Value);
         }
 
-        if (filtroRama.HasValue)
+        var ramaConsulta = alcance.RamaDeConsulta(filtroRama);
+        if (ramaConsulta.HasValue)
         {
-            query = query.Where(s => s.RamaSugerida == filtroRama.Value);
+            query = query.Where(s => s.RamaSugerida == ramaConsulta.Value);
         }
 
         return await query
@@ -261,7 +274,8 @@ public class ServicioAdmisiones : IServicioAdmisiones
         var solicitud = await _dbContext.SolicitudesAdmision
             .FirstOrDefaultAsync(s => s.Id == solicitudId, cancellationToken);
 
-        if (solicitud == null)
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (solicitud == null || !alcance.PuedeGestionar(solicitud.RamaSugerida))
         {
             throw new InvalidOperationException("La solicitud de admisión no existe o no pertenece a este grupo scout.");
         }
@@ -309,7 +323,10 @@ public class ServicioAdmisiones : IServicioAdmisiones
         var solicitud = await _dbContext.SolicitudesAdmision
             .FirstOrDefaultAsync(s => s.Id == solicitudId, cancellationToken);
 
-        if (solicitud == null)
+        // Un Coordinador de sección solo incorpora solicitudes de su sección y a su sección;
+        // el alcance global puede asignar cualquier rama.
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (solicitud == null || !alcance.PuedeGestionar(solicitud.RamaSugerida) || !alcance.PuedeGestionar(ramaAsignada))
         {
             throw new KeyNotFoundException($"No se encontró la solicitud de admisión con ID {solicitudId}.");
         }
