@@ -50,7 +50,7 @@ WebScout.slnx
 │       │   ├── Branding/         # Pañoleta, tokens CSS y contraste WCAG 2.2 AA
 │       │   ├── Activities/       # Publicación y gestión de campamentos/salidas
 │       │   ├── Inscriptions/     # Fichas, consentimientos y justificantes de pago
-│       │   ├── Orders/           # Pedidos sencillos de material (Core 1.29)
+│       │   ├── Orders/           # Pedidos sencillos de material
 │       │   └── Gallery/          # Álbumes y subida progresiva de fotos (MinIO/S3)
 │       ├── Infrastructure/       # ⚙️ Pilares transversales
 │       │   ├── Persistence/      # WebScoutDbContext, Global Query Filters y Migraciones
@@ -59,7 +59,7 @@ WebScout.slnx
 │       │   └── Outbox/           # Despacho asíncrono y resiliente de notificaciones
 │       └── Common/               # Modelos base, Value Objects (Panoleta) y WCAG
 ├── tools/
-│   └── WebScout.Migration/       # Seeds de nuevos grupos y migrador histórico L330
+│   └── WebScout.Migration/       # Seeds de nuevos grupos scout
 ├── tests/
 │   ├── WebScout.ArchitectureTests/ # Verificación de límites de slices y OrganizationId
 │   ├── WebScout.IntegrationTests/ # Pruebas contra PostgreSQL real (PA01 - PA19)

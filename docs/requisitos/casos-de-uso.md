@@ -132,7 +132,7 @@ Los casos de uso formalizan los recorridos que Producto, Kraal de Scouters y Des
 
 **Actores:** Familia y Responsable de Pedidos.  
 **Resultado:** Solicitud de material de grupo (pañoleta, polos, insignias) con seguimiento de entrega.  
-**Trazabilidad:** RF48 a RF54; PA07 y PA08.
+**Trazabilidad:** RF48 a RF53; PA07 y PA08.
 
 1. La familia consulta los artículos disponibles (pañoleta oficial, camiseta de rama, polar de grupo) y sus tallas.
 2. Registra una solicitud indicando educando destinatario, producto y unidades.

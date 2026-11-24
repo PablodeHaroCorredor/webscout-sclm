@@ -31,8 +31,8 @@ public record ResumenAprovisionamientoItemDto(
     decimal TotalEstimado);
 
 /// <summary>
-/// Servicio de gestión de catálogo de uniformidad y pedidos de material scout (Core 1.29).
-/// Cumple los requisitos RF48-RF54, PA07 (entrega sin bloqueo) y PA08 (rectificación administrativa con auditoría).
+/// Servicio de gestión de catálogo de uniformidad y pedidos de material scout.
+/// Cumple los requisitos RF48-RF53, PA07 (entrega sin bloqueo) y PA08 (rectificación administrativa con auditoría).
 /// </summary>
 public interface IServicioPedidosMaterial
 {
@@ -52,17 +52,4 @@ public interface IServicioPedidosMaterial
     Task CambiarEstadoPedidoAsync(Guid pedidoId, EstadoPedidoMaterial nuevoEstado, string? motivo, string usuario, CancellationToken ct = default);
 
     Task<(byte[] CsvBytes, string NombreArchivo)> GenerarCsvAprovisionamientoAsync(Guid organizacionId, List<Guid>? pedidosIds = null, CancellationToken ct = default);
-    Task ImportarPedidoHistorico128Async(
-        Guid organizacionId,
-        string codigo,
-        string solicitante,
-        string email,
-        string estado128,
-        string producto,
-        string? talla,
-        int cantidad,
-        decimal precioUnitario,
-        string? notas,
-        DateTime fecha,
-        CancellationToken ct = default);
 }

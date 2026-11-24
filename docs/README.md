@@ -9,7 +9,7 @@ Este índice organiza la documentación de arranque por responsabilidad. Todos l
 1. [Definición del MVP y alcance operativo](producto/definicion-mvp-piloto.md), [visión del producto](producto/vision-alcance-y-mvp.md) y [decisiones](planificacion/decisiones-y-riesgos.md).
 2. [Catálogo RF/RNF](requisitos/catalogo-requisitos.md), [casos de uso](requisitos/casos-de-uso.md) y [privacidad](requisitos/privacidad-y-conservacion.md).
 3. [Arquitectura](architecture/arquitectura-modular.md), [seguridad](architecture/politica-seguridad-y-permisos.md), [datos](architecture/modelo-datos.md) y [ADR](architecture/decisiones-arquitectura.md).
-4. [Desarrollo](desarrollo/onboarding-desarrolladores.md), [pruebas](testing/estrategia-y-trazabilidad.md), [migración](migracion/plan-migracion-wordpress.md) y [operación](deployment/operacion-y-recuperacion.md).
+4. [Desarrollo](desarrollo/onboarding-desarrolladores.md), [pruebas](testing/estrategia-y-trazabilidad.md) y [operación](deployment/operacion-y-recuperacion.md).
 
 ## Documentos por responsabilidad
 
@@ -82,12 +82,6 @@ Este índice organiza la documentación de arranque por responsabilidad. Todos l
 | --- | --- | --- |
 | [Incorporación al desarrollo](desarrollo/onboarding-desarrolladores.md) | Preparación del entorno y primera contribución al futuro repositorio. | Responsable técnico |
 | [Convenciones de desarrollo y flujo de cambios](desarrollo/convenciones-y-flujo.md) | Reglas de código, revisión, configuración y documentación del repositorio. | Responsable técnico |
-
-### Migración
-
-| Documento | Propósito | Responsable propuesto |
-| --- | --- | --- |
-| [Plan de migración desde WordPress](migracion/plan-migracion-wordpress.md) | Inventario, correspondencias, ensayos y corte con conciliación. | Responsable de migración y Secretaría |
 
 ### Despliegue y operación
 

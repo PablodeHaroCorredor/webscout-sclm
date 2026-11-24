@@ -158,21 +158,17 @@ Fuente en la base: C05 297, 465, 600; C08 94–109. Véase el [inventario de fue
 
 ### RF15 Consulta de altas anteriores
 
-Prioridad: **P1**. Naturaleza: Compatibilidad.
-
-Se conservarán las altas generales históricas, sus campos, consentimientos, evidencias de aceptación y PDF. Se consultarán separadas de las autorizaciones de actividad.
-
-**Aceptación:** Una ficha antigua mantiene datos y etiquetas aunque la plantilla actual cambie. No aparece un formulario de reinscripción general a todas las familias.
+Prioridad: **Retirado** (DC11, 24/11/2026). El proyecto no migra datos ni convive con la plataforma anterior.
 
 Fuente en la base: C05 90–130, 299–311; C07 15–17; D10 Alta al grupo. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
 ### RF16 Plantillas de formulario y compatibilidad
 
-Prioridad: **P1**. Naturaleza: Compatibilidad.
+Prioridad: **P1**. Naturaleza: Funcionalidad.
 
-Se importarán y mantendrán las plantillas anteriores, con creación, edición, orden y duplicación de campos. Las actividades abiertas en modo legacy_form conservarán la captura mediante adaptador; las nuevas autorizaciones priorizarán PDF.
+Las actividades podrán incluir un formulario propio, con creación, edición, orden y duplicación de campos. Las autorizaciones priorizarán PDF.
 
-**Aceptación:** Se admiten los 11 tipos existentes, hasta 40 campos y 30 opciones por campo de selección. Modificar la plantilla no altera etiquetas, opciones ni respuestas anteriores.
+**Aceptación:** Se admiten los tipos de campo definidos en BL04 (#51), hasta 40 campos y 30 opciones por campo de selección. Modificar la plantilla no altera etiquetas, opciones ni respuestas anteriores.
 
 Fuente en la base: C15 95–117, 189–265, 318–397; D10 Compatibilidad. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
@@ -566,13 +562,9 @@ Los gestores verán filtros, ficha, historial e indicador de justificante. La ex
 
 Fuente en la base: C08 134–146; C09; D01. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
-### RF54 Compatibilidad con pedidos 1 28
+### RF54 Compatibilidad con pedidos anteriores
 
-Prioridad: **P0**. Naturaleza: Compatibilidad.
-
-Aceptado y Justificante recibido se mostrarán como Revisado. Se conservarán datos originales, archivos y flujo anterior en un archivo privado, sin exponer instrucciones bancarias en el nuevo flujo.
-
-**Aceptación:** Una importación y posterior edición no pierde el original 1.28 ni transforma sus datos en un pago verificado. Los estados Entregado y Rechazado se conservan.
+Prioridad: **Retirado** (DC11, 24/11/2026). El proyecto no migra datos ni convive con la plataforma anterior.
 
 Fuente en la base: C08 22–27, 87–94; D01; D15. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
@@ -642,7 +634,7 @@ Fuente en la base: C20 18–80; C14; C08 94. Véase el [inventario de fuentes](.
 
 ## Web pública configuración y ayuda
 
-La equivalencia pública completa requiere cubrir funciones aportadas conjuntamente por plugin y tema. Puede implantarse después del núcleo privado manteniendo la web WordPress durante la transición.
+La web pública se construye en la nueva plataforma y puede implantarse después del núcleo privado.
 
 ### RF61 Páginas y navegación públicas
 
@@ -714,37 +706,25 @@ Los pasos prácticos podrán detectar una selección, un filtro o una entrada en
 
 Fuente en la base: C21 488–559; D08; D09. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
-## Migración y portabilidad
+## Portabilidad
 
-La migración trasladará datos y reglas verificables. Un ZIP de código no contiene por sí mismo las cuentas, solicitudes, archivos subidos ni configuración real de la instalación.
+La plataforma arranca con datos nuevos (DC11, 24/11/2026): no se importan datos de la plataforma anterior. Se mantiene la capacidad de exportar y restaurar los datos propios.
 
 ### RF68 Importación repetible
 
-Prioridad: **P0**. Naturaleza: Propuesta necesaria.
-
-Se importarán usuarios, permisos, secciones, contenidos, respuestas, modelos, archivos, referencias compartidas, pedidos, consentimientos y ajustes con mapa de identificadores originales.
-
-**Aceptación:** Reejecutar el mismo lote no duplica entidades. Cada objeto importado conserva procedencia, versión del importador y resultado verificable.
+Prioridad: **Retirado** (DC11, 24/11/2026). El proyecto no migra datos ni convive con la plataforma anterior.
 
 Fuente en la base: C02; C05; C08; C10; C14; C18; C19. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
 ### RF69 Conciliación e históricos desconocidos
 
-Prioridad: **P0**. Naturaleza: Propuesta necesaria.
-
-Se contrastarán recuentos, relaciones y huellas con el origen. Los campos ausentes se marcarán como desconocidos sin inventar firma, versión del modelo o pago.
-
-**Aceptación:** Un documento sin fecha o modelo conocido sigue así después de migrar. Toda diferencia bloqueante se resuelve antes de habilitar la función afectada.
+Prioridad: **Retirado** (DC11, 24/11/2026). El proyecto no migra datos ni convive con la plataforma anterior.
 
 Fuente en la base: C06 62–65; C08 22–27, 87–94; D01; D02. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
 ### RF70 Transición de credenciales y enlaces
 
-Prioridad: **P0**. Naturaleza: Propuesta necesaria.
-
-Las credenciales se renovarán mediante invitación o recuperación segura, conservando la correspondencia de usuarios. Se mantendrán rutas públicas con redirecciones y una tabla de enlaces históricos privados.
-
-**Aceptación:** Los hashes de WordPress no se copian como si fueran hashes de Identity. Un enlace privado antiguo exige autenticación y vuelve a comprobar propiedad y permiso.
+Prioridad: **Retirado** (DC11, 24/11/2026). El proyecto no migra datos ni convive con la plataforma anterior.
 
 Fuente en la base: C01; C04 39–50; W04. Véase el [inventario de fuentes](../referencias/fuentes.md).
 
@@ -752,9 +732,9 @@ Fuente en la base: C01; C04 39–50; W04. Véase el [inventario de fuentes](../r
 
 Prioridad: **P0**. Naturaleza: Propuesta necesaria.
 
-La organización podrá exportar datos y archivos con manifiesto de relaciones, versiones y huellas. El corte tendrá copia coordinada, congelación de escrituras y procedimiento de reversión.
+La organización podrá exportar datos y archivos con manifiesto de relaciones, versiones y huellas. Las copias de seguridad serán coherentes y tendrán un procedimiento de restauración ensayado.
 
-**Aceptación:** Una restauración ensayada recupera base de datos, objetos y claves de cifrado del mismo punto. No se permite reabrir dos sistemas editables sin reconciliar sus cambios.
+**Aceptación:** Una restauración ensayada recupera base de datos, objetos y claves de cifrado del mismo punto.
 
 Fuente en la base: D14 Principios; D02 Recuperación; D10 Recuperación. Véase el [inventario de fuentes](../referencias/fuentes.md).
 

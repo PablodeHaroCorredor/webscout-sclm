@@ -307,7 +307,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.HasIndex(c => c.OrganizacionId).IsUnique();
         });
 
-        // 13. Configuración de Material Scout y Pedidos Core 1.29 (RF48-RF54 / BL07)
+        // 13. Configuración de Material Scout y Pedidos (RF48-RF53 / BL07)
         modelBuilder.Entity<ProductoMaterial>(b =>
         {
             b.ToTable("ProductosMaterial");

@@ -353,40 +353,6 @@ public class OrderMaterialServiceTests : IDisposable
         Assert.Contains("=== 2. DETALLE DE SOLICITUDES INDIVIDUALES ===", contenidoCsv);
     }
 
-    [Theory]
-    [InlineData("Aceptado", EstadoPedidoMaterial.Revisado)]
-    [InlineData("Justificante recibido", EstadoPedidoMaterial.Revisado)]
-    [InlineData("Entregado", EstadoPedidoMaterial.Entregado)]
-    [InlineData("Rechazado", EstadoPedidoMaterial.Rechazado)]
-    public async Task ImportarPedidoHistorico128_MapeaEstadosSegunCore129(string estadoHistorico128, EstadoPedidoMaterial estadoEsperado)
-    {
-        // Arrange & Act (RF54: Compatibilidad e importación con pedidos históricos 1.28)
-        var (db, _, service, _) = CreateServices();
-        var codigo = $"PED-HIST-{Guid.NewGuid():N}";
-
-        await service.ImportarPedidoHistorico128Async(
-            OrgLestonnac,
-            codigo,
-            "Carlos Navarro",
-            "carlos.navarro@example.com",
-            estadoHistorico128,
-            "Polo Scout Oficial",
-            "L",
-            1,
-            14.50m,
-            "Pedido importado desde sistema antiguo 1.28",
-            DateTime.UtcNow.AddMonths(-6));
-
-        var importado = await db.PedidosMaterial
-            .Include(p => p.Lineas)
-            .FirstOrDefaultAsync(p => p.CodigoPedido == codigo);
-
-        // Assert
-        Assert.NotNull(importado);
-        Assert.Equal(estadoEsperado, importado.Estado);
-        Assert.Contains("Core 1.28", importado.NotasInternasKraal);
-    }
-
     [Fact]
     public async Task AislamientoMultitenant_PedidosEntreGruposEstanCompletamenteAislados()
     {

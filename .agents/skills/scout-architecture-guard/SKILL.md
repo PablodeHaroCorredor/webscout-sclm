@@ -17,7 +17,7 @@ Esta skill establece y verifica los límites de arquitectura del proyecto **WebS
    - **Prohibido el acoplamiento cruzado rígido entre slices:** Un slice de `Activities` no invoca directamente clases internas de `Orders`. La comunicación se efectúa a través de eventos o modelos compartidos en `Common/`.
    - `src/WebScout.Web/Infrastructure/`: Persistencia relacional (`WebScoutDbContext`), resolución de subdominio (`TenantResolutionMiddleware`), almacenamiento privado S3/MinIO y cola Outbox.
    - `src/WebScout.Web/Common/`: Entidades compartidas, Value Objects (`PanoletaConfig`), políticas de autorización y fórmulas WCAG.
-   - `tools/WebScout.Migration`: Herramientas de seed de tenants y scripts de migración aislados.
+   - `tools/WebScout.Migration`: Herramientas de seed de grupos scout (tenants).
 
 2. **Aislamiento Multitenant Estricto (`OrganizacionId`)**:
    - Toda entidad de negocio perteneciente a un grupo debe implementar la interfaz `IEntidadOrganizacion` (con propiedad `Guid OrganizacionId`).

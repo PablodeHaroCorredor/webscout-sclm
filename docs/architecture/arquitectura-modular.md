@@ -19,7 +19,7 @@ src/
       Branding/                   # Pañoleta, tokens CSS y contraste WCAG 2.2 AA
       Activities/                 # Publicación y gestión de campamentos/actividades
       Inscriptions/               # Inscripciones, consentimientos y justificantes de pago
-      Orders/                     # Pedidos de material scout (Core 1.29)
+      Orders/                     # Pedidos sencillos de material scout
       Gallery/                    # Subida progresiva y galería privada de fotos
       Administration/             # Gestión de miembros, secciones y soporte federativo
     Infrastructure/               # ⚙️ Pilares transversales
@@ -32,7 +32,7 @@ src/
       Security/                   # Políticas de autorización por recurso y permisos
       Wcag/                       # Algoritmo de luminancia y contraste WCAG 2.2 AA
 tools/
-  WebScout.Migration/             # Herramienta de seeds de grupos y migrador WordPress L330
+  WebScout.Migration/             # Herramienta de seeds de grupos scout
 tests/
   WebScout.ArchitectureTests/     # Verificación de aislamiento de slices y multitenancy
   WebScout.IntegrationTests/      # Tests de integración contra PostgreSQL real (PA01-PA19)

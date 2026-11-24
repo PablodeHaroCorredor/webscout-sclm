@@ -23,7 +23,7 @@ public class LineaPedidoMaterial : IEntidadOrganizacion
     public PedidoMaterial? Pedido { get; set; }
 
     /// <summary>
-    /// Producto del catálogo al que hace referencia (puede ser nulo en pedidos históricos migrados del Core 1.28).
+    /// Producto del catálogo al que hace referencia (puede ser nulo: la línea conserva nombre y precio aunque el producto deje de existir).
     /// </summary>
     public Guid? ProductoMaterialId { get; set; }
     public ProductoMaterial? Producto { get; set; }
@@ -39,7 +39,7 @@ public class LineaPedidoMaterial : IEntidadOrganizacion
     public string? Talla { get; set; }
 
     /// <summary>
-    /// Cantidad solicitada (limitada entre 1 y 10 unidades por el Core 1.29).
+    /// Cantidad solicitada (limitada entre 1 y 10 unidades).
     /// </summary>
     public int Cantidad { get; set; } = 1;
 

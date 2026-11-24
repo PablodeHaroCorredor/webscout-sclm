@@ -2,7 +2,7 @@
 
 Versión 0.1 · Propuesta de arranque · 6 de noviembre de 2026.
 
-EF Core Migrations será el propietario del esquema del piloto. Una base, un contexto propietario L330DbContext y una línea de migraciones evitan que dos mecanismos intenten modificar las mismas tablas. Las importaciones WordPress mueven datos mediante contratos y no alteran el esquema por su cuenta.
+EF Core Migrations será el propietario del esquema del piloto. Una base, un contexto propietario L330DbContext y una línea de migraciones evitan que dos mecanismos intenten modificar las mismas tablas.
 
 ## Creación de la primera línea
 

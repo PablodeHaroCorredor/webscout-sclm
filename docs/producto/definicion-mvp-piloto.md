@@ -9,7 +9,7 @@ Versión 1.0 · 8 de noviembre de 2026.
 
 El presente documento define con rigor el **alcance, arquitectura funcional y límites operativos del Producto Mínimo Viable (MVP)** de la plataforma Web Scout para su puesta en marcha piloto con el **Grupo Scout Lestonnac 330**.
 
-### Superación del Modelo Legado (WordPress + Caldera Forms)
+### Superación del modelo anterior
 En la solución técnica anterior de Lestonnac 330, las actividades se gestionaban mediante formularios web planos y desarticulados:
 - Cada actividad obligaba a los tutores a reintroducir datos personales, teléfonos y alergias de sus hijos una y otra vez («participante declarado» efímero).
 - Las fichas médicas se gestionaban como PDFs sueltos subidos a cada evento, provocando desactualización clínica, duplicidad y riesgo de omisión de alergias críticas.

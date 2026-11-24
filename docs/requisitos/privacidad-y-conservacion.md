@@ -24,7 +24,7 @@ Estos criterios siguen la [protección de datos por defecto de la AEPD](https://
 | Auditoría y logs | Seguridad y trazabilidad | Administración u operación limitada | Evento y plazo por categoría | Purgar o anonimizar según política |
 | Copias de seguridad | Recuperación | Operación restringida | Punto de copia y calendario de caducidad | Expirar copias y aplicar supresiones al restaurar |
 
-Los valores configurables del plugin, como 730 días de documentos o auditoría, son antecedentes técnicos y no se trasladan como una obligación jurídica universal. No se adopta tampoco el plazo de documentos laborales del ERP para la web scout.
+Un plazo técnico por defecto, como 730 días de documentos o auditoría, no se adopta como obligación jurídica universal. No se adopta tampoco el plazo de documentos laborales del ERP para la web scout.
 
 ## Bloqueo supresión y derechos
 

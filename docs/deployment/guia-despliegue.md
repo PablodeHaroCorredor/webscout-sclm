@@ -24,7 +24,7 @@ Construir desde commit identificado, con SDK y paquetes fijados. Conservar resul
 6. Ejecutar humo de actividades, pedidos y fotos del alcance; comprobar que correo usa proveedor correcto.
 7. Habilitar tráfico/escritura y observar errores, latencia y trabajos. Registrar aceptación o retorno.
 
-La reversión de código solo procede si es compatible con el esquema actual. Un Down destructivo no es un plan de recuperación. Si se restaura una copia, se contabilizan operaciones posteriores y se aplica la política de conciliación, especialmente durante el corte desde WordPress.
+La reversión de código solo procede si es compatible con el esquema actual. Un Down destructivo no es un plan de recuperación. Si se restaura una copia, se contabilizan operaciones posteriores y se aplica la política de conciliación.
 
 ## Condiciones técnicas de la instalación
 

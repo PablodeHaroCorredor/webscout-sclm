@@ -20,7 +20,7 @@ Esta skill proporciona la guía de ejecución y verificación de la suite de pru
 | **PA04** | Dos Hermanos y Corrección | RF26–RF33 | En una actividad con dos hermanos, un único justificante bancario puede vincularse a ambos, pero la corrección o anulación de la inscripción de uno no invalida al otro. |
 | **PA05** | Modelo Sustituido y Plazo | RF24–RF29 | Se rechaza el envío de inscripciones fuera de plazo o con modelos de formulario antiguos sin crear registros huérfanos. |
 | **PA06** | Huellas y Archivos Históricos | RF26, RF29, RF31, RF38 | Los documentos guardados conservan su hash SHA-256 inmutable; nuevas versiones añaden un registro histórico sin sobrescribir el original. |
-| **PA07** | Pedido Sencillo | RF48–RF54 | Flujo de pedidos simplificado (Core 1.29): entrega de material sin forzar bloqueo financiero rígido; registro de estados trazable. |
+| **PA07** | Pedido Sencillo | RF48–RF53 | Flujo de pedidos simplificado: entrega de material sin forzar bloqueo financiero rígido; registro de estados trazable. |
 | **PA08** | Rectificación Administrativa | RF50, RF52, RF60 | Un administrador puede rectificar estados de pedidos con historial de auditoría inmutable. |
 | **PA09** | Concurrencia y Fallo de Red | RF38, RF40, RF44, RNF07 | La subida doble por fallo de conexión no genera inscripciones duplicadas ni corrompe el estado. |
 | **PA10** | Carga Masiva de Fotos (100 fotos) | RF41–RF47 | Carga progresiva en álbum de campamento: pausa, reintento ante microcortes y almacenamiento privado en S3/MinIO. |
@@ -28,11 +28,10 @@ Esta skill proporciona la guía de ejecución y verificación de la suite de pru
 | **PA12** | Comentarios y Autorización | RF19–RF23 | Moderación de comentarios por recurso; prevención de filtraciones de datos privados. |
 | **PA13** | Consentimiento y Versiones Legales | RF55–RF58 | Consentimiento explícito sin casillas premarcadas; almacenamiento de la versión exacta de la política aceptada. |
 | **PA14** | Supresión y Conservación | RF31, RF38, RF59, RF60 | Respeto a periodos de retención legal (ej. justificación de subvenciones); bloqueo de borrado para documentos vinculados a expedientes vigentes. |
-| **PA15** | Compatibilidad Histórica | RF15, RF16, RF54, RF68–RF70 | Verificación de datos migrados de WordPress (caso Lestonnac 330) sin pérdida de historial ni autorías. |
 | **PA16** | Configuración Visual y Reset | RF61–RF64 | Modificar colores y pañoleta de un grupo no afecta a otros grupos; opción de restaurar a la paleta oficial de SCLM. |
 | **PA17** | Accesibilidad y Navegación Teclado | RF66–RF67, RNF02 | Navegación 100% operable por teclado, foco visible, etiquetas ARIA y contraste WCAG 2.2 AA. |
 | **PA18** | Aislamiento Multitenant Total | RF05, RF34, RF53, RNF03, RNF08 | Peticiones a `lestonnac.scoutsclm.org` jamás devuelven entidades de `sanvicente.scoutsclm.org` en ninguna circunstancia. |
-| **PA19** | Corte, Respaldo y Restauración | RF68–RF71, RNF06 | Copia de seguridad integral de PostgreSQL y MinIO con prueba de restauración exitosa y validación de sumas de verificación. |
+| **PA19** | Respaldo y Restauración | RF71, RNF06 | Copia de seguridad integral de PostgreSQL y MinIO con prueba de restauración exitosa y validación de sumas de verificación. |
 
 ## Ejecución de Pruebas Automatizadas
 

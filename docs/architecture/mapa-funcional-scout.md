@@ -10,12 +10,12 @@ Los módulos se organizan por responsabilidad de negocio y conservan el vocabula
 | Comunicaciones | Avisos, conversación y noticias públicas | RF17 a RF23 | Comunicación, audiencia, comentario y borrador público |
 | Actividades y documentos | Modelos, participantes, entregas y revisión | RF24 a RF34 | Actividad, respuesta, versión y justificante compartido |
 | Biblioteca | Carpetas, álbumes y fotos | RF39 y RF41 a RF47 | Álbum y confirmación de cada foto |
-| Catálogo y pedidos | Productos, solicitudes y seguimiento | RF48 a RF54 | Producto, talla, instantánea e historial del pedido |
-| Ingreso y compatibilidad | Solicitudes, altas y formularios anteriores | RF10 a RF16 | Solicitud y datos históricos con etiquetas |
+| Catálogo y pedidos | Productos, solicitudes y seguimiento | RF48 a RF53 | Producto, talla, instantánea e historial del pedido |
+| Ingreso y formularios | Solicitudes, contacto y formularios de actividad | RF10 a RF14 y RF16 | Solicitud, plantilla versionada y respuestas |
 | Sitio y configuración | Páginas, menú, identidad y ajustes | RF61 a RF65 | Página, revisión, navegación y configuración |
 | Privacidad y operación | Textos, evidencias, retención y auditoría | RF35 a RF40 y RF55 a RF60 | Archivos transversales, consentimiento, evento y trabajo |
 | Ayuda | Guías contextualizadas y progreso | RF66 y RF67 | Estado individual y versión de guía |
-| Migración | Procedencia, conciliación y exportación completa | RF68 a RF71 | Lote, correspondencia y evidencia de importación |
+| Portabilidad | Exportación completa y restauración | RF71 | Manifiesto de datos, archivos y huellas |
 
 ## Recorridos compartidos
 
