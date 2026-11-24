@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebScout.Web.Common.Domain;
@@ -45,7 +44,7 @@ public class FakeServicioEmail : IServicioEmail
 
 public class OutboxNotificationTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
     private readonly FakeAlmacenamientoJustificantes _fakeStorage;
     private readonly FakeServicioEmail _fakeEmail;
@@ -54,12 +53,9 @@ public class OutboxNotificationTests : IDisposable
 
     public OutboxNotificationTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        _options = _baseDatos.Opciones;
 
         _fakeStorage = new FakeAlmacenamientoJustificantes();
         _fakeEmail = new FakeServicioEmail();
@@ -68,7 +64,6 @@ public class OutboxNotificationTests : IDisposable
         initialTenant.SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
 
         using var context = new WebScoutDbContext(_options, initialTenant);
-        context.Database.EnsureCreated();
 
         // Seed de Grupo Scout
         context.GruposScout.Add(new GrupoScout
@@ -137,7 +132,7 @@ public class OutboxNotificationTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
+        _baseDatos.Dispose();
     }
 
     private (WebScoutDbContext dbContext, ITenantContext tenantContext) CreateContext()

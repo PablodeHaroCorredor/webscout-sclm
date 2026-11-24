@@ -46,8 +46,11 @@ dotnet test WebScout.slnx
 # 3. Ejecutar exclusivamente los tests de arquitectura (reglas de aislamiento)
 dotnet test tests/WebScout.ArchitectureTests
 
-# 4. Ejecutar tests de integración contra la base de datos real
-dotnet test tests/WebScout.IntegrationTests --filter "Category=Integration"
+# 4. Ejecutar tests de integración contra PostgreSQL real (migraciones Npgsql, una base clonada por test).
+#    Sin variable de entorno, el fixture levanta postgres:17-alpine con Testcontainers (requiere Docker).
+#    Para reutilizar el PostgreSQL de docker-compose.dev.yml (puerto 5433):
+#    $env:ConnectionStrings__DefaultConnection = "Host=localhost;Port=5433;Database=webscout_dev;Username=scout_admin;Password=<password local>"
+dotnet test tests/WebScout.IntegrationTests
 
 # 5. Ejecutar tests de aceptación de multitenancy (PA01, PA18)
 dotnet test tests/WebScout.IntegrationTests --filter "FullyQualifiedName~TenantIsolation"

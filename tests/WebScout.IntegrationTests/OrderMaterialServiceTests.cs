@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebScout.Web.Common.Domain;
@@ -16,7 +15,7 @@ namespace WebScout.IntegrationTests;
 
 public class OrderMaterialServiceTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
 
     private static readonly Guid OrgLestonnac = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -24,18 +23,14 @@ public class OrderMaterialServiceTests : IDisposable
 
     public OrderMaterialServiceTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        _options = _baseDatos.Opciones;
 
         var initialTenant = new TenantContext();
         initialTenant.SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
 
         using var context = new WebScoutDbContext(_options, initialTenant);
-        context.Database.EnsureCreated();
 
         // Seed Tenants
         context.GruposScout.Add(new GrupoScout
@@ -426,6 +421,6 @@ public class OrderMaterialServiceTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
+        _baseDatos.Dispose();
     }
 }

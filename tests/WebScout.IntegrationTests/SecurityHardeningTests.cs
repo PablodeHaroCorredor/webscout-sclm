@@ -2,10 +2,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 using WebScout.Web.Features.Audit.Domain;
 using WebScout.Web.Features.Audit.Services;
 using WebScout.Web.Features.Identity.Domain;
@@ -20,7 +20,7 @@ namespace WebScout.IntegrationTests;
 
 public class SecurityHardeningTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
     private readonly string _testTempDir;
 
@@ -29,16 +29,9 @@ public class SecurityHardeningTests : IDisposable
 
     public SecurityHardeningTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        var initContext = new TenantContext();
-        using var db = new WebScoutDbContext(_options, initContext);
-        db.Database.EnsureCreated();
+        _options = _baseDatos.Opciones;
 
         _testTempDir = Path.Combine(Path.GetTempPath(), "WebScout_SecurityTests_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_testTempDir);
@@ -124,9 +117,11 @@ public class SecurityHardeningTests : IDisposable
         }
 
         // 2. Verificar que al leer a bajo nivel desde la base de datos, las columnas están cifradas con "enc:v1:"
-        using (var cmd = _connection.CreateCommand())
+        await using (var conexion = new NpgsqlConnection(_baseDatos.CadenaConexion))
         {
-            cmd.CommandText = "SELECT NumeroSeguridadSocial, AlergiasAlimentarias, EnfermedadesCronicas FROM FichasMedicas LIMIT 1";
+            await conexion.OpenAsync();
+            await using var cmd = conexion.CreateCommand();
+            cmd.CommandText = "SELECT \"NumeroSeguridadSocial\", \"AlergiasAlimentarias\", \"EnfermedadesCronicas\" FROM \"FichasMedicas\" LIMIT 1";
 
             using var reader = await cmd.ExecuteReaderAsync();
             Assert.True(await reader.ReadAsync());
@@ -301,7 +296,7 @@ public class SecurityHardeningTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
+        _baseDatos.Dispose();
         if (Directory.Exists(_testTempDir))
         {
             try { Directory.Delete(_testTempDir, true); } catch { }

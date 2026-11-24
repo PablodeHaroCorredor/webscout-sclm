@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebScout.Web.Common.Domain;
@@ -50,7 +49,7 @@ public class FakeAlmacenamientoJustificantes : IAlmacenamientoJustificantes
 
 public class InscriptionServiceTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
     private readonly FakeAlmacenamientoJustificantes _fakeStorage;
 
@@ -59,18 +58,11 @@ public class InscriptionServiceTests : IDisposable
 
     public InscriptionServiceTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        _options = _baseDatos.Opciones;
 
         _fakeStorage = new FakeAlmacenamientoJustificantes();
-
-        var initContext = new TenantContext();
-        using var db = new WebScoutDbContext(_options, initContext);
-        db.Database.EnsureCreated();
     }
 
     private static UsuarioScout CrearUsuario(Guid id, Guid organizacionId, string nombre, string email)
@@ -760,6 +752,6 @@ public class InscriptionServiceTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
+        _baseDatos.Dispose();
     }
 }

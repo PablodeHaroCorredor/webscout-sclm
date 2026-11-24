@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
@@ -10,7 +9,7 @@ namespace WebScout.IntegrationTests;
 
 public class TenantDataIsolationTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
 
     private static readonly Guid OrgLestonnac = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -18,16 +17,9 @@ public class TenantDataIsolationTests : IDisposable
 
     public TenantDataIsolationTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
-
-        var initContext = new TenantContext();
-        using var db = new WebScoutDbContext(_options, initContext);
-        db.Database.EnsureCreated();
+        _options = _baseDatos.Opciones;
     }
 
     [Fact]
@@ -178,6 +170,6 @@ public class TenantDataIsolationTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Dispose();
+        _baseDatos.Dispose();
     }
 }

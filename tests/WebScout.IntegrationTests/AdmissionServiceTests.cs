@@ -1,4 +1,3 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using WebScout.Web.Common.Domain;
@@ -14,7 +13,7 @@ namespace WebScout.IntegrationTests;
 
 public class AdmissionServiceTests : IDisposable
 {
-    private readonly SqliteConnection _connection;
+    private readonly BaseDatosPostgresPruebas _baseDatos;
     private readonly DbContextOptions<WebScoutDbContext> _options;
     private readonly FakeServicioEmail _fakeEmail;
 
@@ -23,12 +22,9 @@ public class AdmissionServiceTests : IDisposable
 
     public AdmissionServiceTests()
     {
-        _connection = new SqliteConnection("DataSource=:memory:");
-        _connection.Open();
+        _baseDatos = BaseDatosPostgresPruebas.Crear();
 
-        _options = new DbContextOptionsBuilder<WebScoutDbContext>()
-            .UseSqlite(_connection)
-            .Options;
+        _options = _baseDatos.Opciones;
 
         _fakeEmail = new FakeServicioEmail();
 
@@ -36,7 +32,6 @@ public class AdmissionServiceTests : IDisposable
         initialTenant.SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330);
 
         using var context = new WebScoutDbContext(_options, initialTenant);
-        context.Database.EnsureCreated();
 
         // Seed Tenant 1: Lestonnac
         context.GruposScout.Add(new GrupoScout
@@ -96,8 +91,7 @@ public class AdmissionServiceTests : IDisposable
 
     public void Dispose()
     {
-        _connection.Close();
-        _connection.Dispose();
+        _baseDatos.Dispose();
     }
 
     [Theory]
