@@ -37,7 +37,18 @@ Este documento establece las instrucciones operativas obligatorias para cualquie
 
 ---
 
-## 4. Skills Disponibles
+## 4. Ramas de Trabajo
+
+1. **Rama de origen:** Por defecto, toda rama de trabajo (funcionalidades, correcciones, refactorizaciones, documentación, tareas de configuración, etc.) se crea desde `develop`, salvo que se indique expresamente otra rama de origen.
+2. **Nomenclatura:** El nombre de la rama sigue la estructura `tipo-de-desarrollo/nombre-descriptivo-de-la-tarea-XX`, donde `XX` es el número del issue que resuelve.
+   - Ejemplo: `feature/nuevo-login-9`.
+   - Tipos habituales: `feature/`, `fix/`, `refactor/`, `docs/`, `chore/`.
+   - El nombre descriptivo va en minúsculas, con palabras separadas por guiones.
+3. **Issue previo:** Si la tarea aún no tiene issue, se crea antes de abrir la rama para poder referenciar su número.
+
+---
+
+## 5. Skills Disponibles
 
 Consultar y utilizar las skills en `.agents/skills/`:
 - `scout-architecture-guard`: Reglas de arquitectura limpia y multitenancy.
