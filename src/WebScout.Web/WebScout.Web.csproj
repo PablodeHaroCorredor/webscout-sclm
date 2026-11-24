@@ -19,4 +19,23 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
+  <!--
+    Hoja de estilos de la web pública (Tailwind CSS v4, versión fijada en package.json).
+    Se genera en cada compilación si las dependencias de Node están instaladas (npm ci en esta carpeta).
+    Sin ellas la compilación sigue y avisa: la gestión no depende de este CSS.
+  -->
+  <PropertyGroup>
+    <CssPublicoEntrada>Styles/publico.css</CssPublicoEntrada>
+    <CssPublicoSalida>wwwroot/css/publico.css</CssPublicoSalida>
+  </PropertyGroup>
+
+  <Target Name="CompilarCssPublico" BeforeTargets="BeforeBuild">
+    <Exec Condition="Exists('node_modules/.bin')" Command="npm run css --silent" />
+    <Warning Condition="!Exists('node_modules/.bin')" Text="No se ha generado $(CssPublicoSalida): ejecute 'npm ci' en src/WebScout.Web para compilar la hoja de estilos de la web pública." />
+    <!-- El archivo se crea después de evaluar el proyecto: se añade aquí para que entre en los static web assets -->
+    <ItemGroup Condition="Exists('$(CssPublicoSalida)')">
+      <Content Include="$(CssPublicoSalida)" Exclude="@(Content)" />
+    </ItemGroup>
+  </Target>
+
 </Project>

@@ -1,0 +1,20 @@
+@*
+    Icono SVG para la web pública. Reutiliza los trazados de Material Icons que ya expone MudBlazor
+    (Icons.Material.*, cadenas <path/> constantes del propio paquete), sin cargar su CSS ni su JavaScript.
+    Decorativo por defecto (aria-hidden); con Etiqueta pasa a tener nombre accesible.
+*@
+<svg viewBox="0 0 24 24" fill="currentColor" class="@Clase"
+     aria-hidden="@(string.IsNullOrEmpty(Etiqueta) ? "true" : null)"
+     role="@(string.IsNullOrEmpty(Etiqueta) ? null : "img")"
+     aria-label="@Etiqueta" focusable="false">
+    @((MarkupString)Trazado)
+</svg>
+
+@code {
+    /// <summary>Constante de MudBlazor.Icons (p. ej. Icons.Material.Filled.Forest).</summary>
+    [Parameter, EditorRequired] public string Trazado { get; set; } = string.Empty;
+
+    [Parameter] public string Clase { get; set; } = "size-5";
+
+    [Parameter] public string? Etiqueta { get; set; }
+}

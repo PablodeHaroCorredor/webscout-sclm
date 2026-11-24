@@ -1,0 +1,13 @@
+{
+  "name": "webscout-web-publica",
+  "private": true,
+  "description": "Herramientas de compilación de la hoja de estilos de la web pública (Tailwind CSS).",
+  "scripts": {
+    "css": "tailwindcss -i Styles/publico.css -o wwwroot/css/publico.css --minify",
+    "css:watch": "tailwindcss -i Styles/publico.css -o wwwroot/css/publico.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.11",
+    "tailwindcss": "4.1.11"
+  }
+}

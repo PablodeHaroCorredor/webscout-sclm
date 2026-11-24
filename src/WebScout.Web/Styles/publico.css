@@ -1,0 +1,37 @@
+/*
+ * WebScout SCLM · Hoja de estilos de la web pública (Tailwind CSS v4).
+ * Fuente: este archivo. Salida: wwwroot/css/publico.css (generada al compilar, no se versiona).
+ * Solo la usa PublicLayout; la gestión sigue con MudBlazor.
+ */
+@import "tailwindcss" source(none);
+
+/* Solo se analizan los archivos de la web pública, para no generar clases de las páginas de gestión */
+@source "../Components/Layout/PublicLayout.razor";
+@source "../Components/Pages/Home.razor";
+@source "../Components/Publico";
+
+/* Colores del grupo: los define PublicLayout en :root a partir de PaletteConfig (validada en servidor).
+   "inline" hace que las utilidades lean la variable en tiempo de ejecución: un CSS para todos los grupos. */
+@theme inline {
+  --color-primario: var(--scout-primary);
+  --color-sobre-primario: var(--scout-primary-text);
+  --color-secundario: var(--scout-secondary);
+  --color-sobre-secundario: var(--scout-secondary-text);
+  --color-acento: var(--scout-accent);
+}
+
+/* Tipografía del sistema: sin peticiones a servidores de fuentes de terceros (RGPD) */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Valores de reserva si la página se sirve sin el bloque de tema del grupo */
+@layer base {
+  :root {
+    --scout-primary: #1b5e20;
+    --scout-primary-text: #ffffff;
+    --scout-secondary: #fbc02d;
+    --scout-secondary-text: #1a1a1a;
+    --scout-accent: #d32f2f;
+  }
+}

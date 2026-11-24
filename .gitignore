@@ -42,6 +42,10 @@ appsettings.*.local.json
 appsettings.Development.local.json
 secrets.json
 
+## Web pública: dependencias de Node y CSS generado por Tailwind
+node_modules/
+src/WebScout.Web/wwwroot/css/publico.css
+
 ## Docker & Local Dev Mounts
 docker-data/
 postgres-data/
