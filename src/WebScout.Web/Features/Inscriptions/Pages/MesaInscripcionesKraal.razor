@@ -14,6 +14,7 @@
 @inject IServicioActividades ServicioActividades
 @inject ITenantContext Tenant
 @inject AuthenticationStateProvider AuthStateProvider
+@inject WebScout.Web.Features.Identity.Services.IServicioAlcanceSeccion ServicioAlcance
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -572,20 +573,13 @@
                 _usuarioActualId = uid;
             }
 
-            var ramaClaim = user.FindFirst("RamaAsignada")?.Value;
-            if (Enum.TryParse<RamaScout>(ramaClaim, out var ramaParsed))
+            // El servidor ya limita la mesa a la sección del alcance; aquí solo se refleja en el filtro
+            var alcance = await ServicioAlcance.ObtenerAlcanceAsync();
+            if (!alcance.EsGlobal && alcance.Rama is { } rama)
             {
-                _ramaAsignada = ramaParsed;
-            }
-
-            // Si es Scouter con rama asignada, aplicar estrictamente PA02
-            if (user.IsInRole(RolesScout.Scouter) && !user.IsInRole(RolesScout.Coordinacion) && !user.IsInRole(RolesScout.Administracion) && !user.IsInRole(RolesScout.SuperAdmin))
-            {
-                if (_ramaAsignada != RamaScout.Ninguna)
-                {
-                    _ramaFiltro = _ramaAsignada;
-                    _bloquearFiltroRama = true;
-                }
+                _ramaAsignada = rama;
+                _ramaFiltro = rama;
+                _bloquearFiltroRama = true;
             }
         }
     }

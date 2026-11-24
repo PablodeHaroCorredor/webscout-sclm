@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Identity.Services;
 using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Features.Inscriptions.Storage;
 using WebScout.Web.Infrastructure.Outbox.Services;
@@ -23,18 +24,21 @@ public class ServicioInscripciones : IServicioInscripciones
     private readonly IAlmacenamientoJustificantes _almacenamientoJustificantes;
     private readonly IServicioOutbox? _servicioOutbox;
     private readonly ILogger<ServicioInscripciones> _logger;
+    private readonly IServicioAlcanceSeccion _alcance;
 
     public ServicioInscripciones(
         WebScoutDbContext dbContext,
         ITenantContext tenantContext,
         IAlmacenamientoJustificantes almacenamientoJustificantes,
         ILogger<ServicioInscripciones> logger,
+        IServicioAlcanceSeccion alcance,
         IServicioOutbox? servicioOutbox = null)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _almacenamientoJustificantes = almacenamientoJustificantes;
         _logger = logger;
+        _alcance = alcance;
         _servicioOutbox = servicioOutbox;
     }
 
@@ -191,27 +195,51 @@ public class ServicioInscripciones : IServicioInscripciones
             .ToListAsync();
     }
 
+    /// <summary>Inscripciones de una actividad limitadas a las secciones del alcance del usuario actual.</summary>
     public async Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesActividadAsync(Guid actividadId)
     {
         ValidarTenantActivo();
 
-        return await _dbContext.Inscripciones
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (!alcance.TieneAccesoKraal)
+        {
+            return [];
+        }
+
+        var query = _dbContext.Inscripciones
             .AsNoTracking()
             .Include(i => i.Educando)
                 .ThenInclude(e => e.FichaMedica)
             .Include(i => i.TutorLegal)
             .Include(i => i.RevisadoPorUsuario)
-            .Where(i => i.ActividadId == actividadId)
+            .Where(i => i.ActividadId == actividadId);
+
+        if (!alcance.EsGlobal)
+        {
+            query = query.Where(i => i.Educando.RamaActual == alcance.Rama);
+        }
+
+        return await query
             .OrderBy(i => i.FechaInscripcionUtc)
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Mesa de revisión. El filtro de rama solo lo decide quien tiene alcance global:
+    /// un Scouter o Coordinador de sección ve siempre y únicamente su sección, pida lo que pida.
+    /// </summary>
     public async Task<IReadOnlyList<InscripcionActividad>> ObtenerInscripcionesMesaKraalAsync(
         RamaScout? ramaFiltro = null,
         Guid? actividadIdFiltro = null,
         EstadoInscripcion? estadoFiltro = null)
     {
         ValidarTenantActivo();
+
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (!alcance.TieneAccesoKraal)
+        {
+            return [];
+        }
 
         var query = _dbContext.Inscripciones
             .AsNoTracking()
@@ -222,9 +250,10 @@ public class ServicioInscripciones : IServicioInscripciones
             .Include(i => i.RevisadoPorUsuario)
             .AsQueryable();
 
-        if (ramaFiltro.HasValue && ramaFiltro.Value != RamaScout.Ninguna)
+        var ramaConsulta = alcance.RamaDeConsulta(ramaFiltro);
+        if (ramaConsulta.HasValue)
         {
-            query = query.Where(i => i.Educando.RamaActual == ramaFiltro.Value);
+            query = query.Where(i => i.Educando.RamaActual == ramaConsulta.Value);
         }
 
         if (actividadIdFiltro.HasValue && actividadIdFiltro.Value != Guid.Empty)
@@ -312,9 +341,13 @@ public class ServicioInscripciones : IServicioInscripciones
         ValidarTenantActivo();
 
         var inscripcion = await _dbContext.Inscripciones
+            .Include(i => i.Educando)
             .FirstOrDefaultAsync(i => i.Id == inscripcionId);
 
-        if (inscripcion == null)
+        // Sin alcance sobre la sección del educando se responde igual que si no existiera,
+        // para no confirmar la existencia de inscripciones de otras secciones.
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (inscripcion == null || !alcance.PuedeVer(inscripcion.Educando.RamaActual))
         {
             throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
         }

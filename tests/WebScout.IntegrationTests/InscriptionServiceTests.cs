@@ -118,7 +118,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
         // Act
         var inscripcion = await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId, "Primera actividad gratuita");
@@ -170,7 +170,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
         // Act
         var inscripcion = await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId);
@@ -221,7 +221,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -268,7 +268,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
         // First enrollment succeeds
         await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId);
@@ -317,7 +317,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
         var inscripcion = await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId);
 
         Assert.Equal(EstadoInscripcion.PendienteJustificante, inscripcion.Estado);
@@ -376,7 +376,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
         var inscripcion = await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId);
 
         // Act: Scouter valida el pago
@@ -428,7 +428,7 @@ public class InscriptionServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+        var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
         var inscripcion = await servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId);
 
         // Act
@@ -482,14 +482,14 @@ public class InscriptionServiceTests : IDisposable
             });
             await dbLestonnac.SaveChangesAsync();
 
-            var servicioLestonnac = new ServicioInscripciones(dbLestonnac, tenantLestonnac, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicioLestonnac = new ServicioInscripciones(dbLestonnac, tenantLestonnac, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
             await servicioLestonnac.InscribirEducandoAsync(actividadLestonnacId, educandoLestonnacId, tutorLestonnacId);
         }
 
         // Act: Consultar desde San Vicente 412
         using (var dbSanVicente = new WebScoutDbContext(_options, tenantSanVicente))
         {
-            var servicioSanVicente = new ServicioInscripciones(dbSanVicente, tenantSanVicente, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicioSanVicente = new ServicioInscripciones(dbSanVicente, tenantSanVicente, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
             var inscripcionesActividad = await servicioSanVicente.ObtenerInscripcionesActividadAsync(actividadLestonnacId);
             var inscripcionesFamilia = await servicioSanVicente.ObtenerInscripcionesFamiliaAsync(tutorLestonnacId);
 
@@ -558,7 +558,7 @@ public class InscriptionServiceTests : IDisposable
             db.Actividades.Add(act);
             await db.SaveChangesAsync();
 
-            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
             await servicio.InscribirEducandoAsync(actividadId, lobatoId, tutorId);
             await servicio.InscribirEducandoAsync(actividadId, scoutId, tutorId);
         }
@@ -566,7 +566,7 @@ public class InscriptionServiceTests : IDisposable
         // Act & Assert: Scouter de Manada solo obtiene la inscripción de Hugo (PA02)
         using (var db = new WebScoutDbContext(_options, tenant))
         {
-            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
             var inscripcionesManada = await servicio.ObtenerInscripcionesMesaKraalAsync(ramaFiltro: RamaScout.Manada);
             var inscripcionesTropa = await servicio.ObtenerInscripcionesMesaKraalAsync(ramaFiltro: RamaScout.Tropa);
             var inscripcionesCoordinacion = await servicio.ObtenerInscripcionesMesaKraalAsync(ramaFiltro: null);
@@ -643,7 +643,7 @@ public class InscriptionServiceTests : IDisposable
             db.Actividades.Add(act);
             await db.SaveChangesAsync();
 
-            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
             var ins1 = await servicio.InscribirEducandoAsync(actividadId, hermano1Id, tutorId);
             var ins2 = await servicio.InscribirEducandoAsync(actividadId, hermano2Id, tutorId);
             inscripcion1Id = ins1.Id;
@@ -664,7 +664,7 @@ public class InscriptionServiceTests : IDisposable
         // Act: El scouter valida a Sara (Hermano 2) pero solicita subsanación a Pablo (Hermano 1)
         using (var db = new WebScoutDbContext(_options, tenant))
         {
-            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
             // Confirmar a Sara
             await servicio.RevisarInscripcionAsync(inscripcion2Id, EstadoInscripcion.Confirmada, "Plaza confirmada.", scouterId);
@@ -738,7 +738,7 @@ public class InscriptionServiceTests : IDisposable
         // Act & Assert (PA05): Se rechaza con InvalidOperationException y no se guarda ninguna inscripción
         using (var db = new WebScoutDbContext(_options, tenant))
         {
-            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance);
+            var servicio = new ServicioInscripciones(db, tenant, _fakeStorage, NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global);
 
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 servicio.InscribirEducandoAsync(actividadId, educandoId, tutorId));

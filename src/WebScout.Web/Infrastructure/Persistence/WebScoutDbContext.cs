@@ -57,6 +57,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
     public DbSet<ProductoMaterial> ProductosMaterial => Set<ProductoMaterial>();
     public DbSet<PedidoMaterial> PedidosMaterial => Set<PedidoMaterial>();
     public DbSet<LineaPedidoMaterial> LineasPedidoMaterial => Set<LineaPedidoMaterial>();
+    public DbSet<AsignacionSeccion> AsignacionesSeccion => Set<AsignacionSeccion>();
 
     // Aliases retrocompatibles para consultas existentes
     public DbSet<GrupoScout> Tenants => GruposScout;
@@ -89,6 +90,26 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
             b.Property(u => u.NombreCompleto).HasMaxLength(150).IsRequired();
             b.Property(u => u.Dni).HasMaxLength(20);
             b.HasIndex(u => new { u.OrganizacionId, u.NormalizedEmail });
+        });
+
+        // 3b. Asignaciones de sección del Kraal (alcance por rama, revocable)
+        modelBuilder.Entity<AsignacionSeccion>(b =>
+        {
+            b.ToTable("AsignacionesSeccion");
+            b.HasKey(a => a.Id);
+            b.Ignore(a => a.Vigente);
+
+            b.HasOne(a => a.Usuario)
+                .WithMany()
+                .HasForeignKey(a => a.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Una sola asignación vigente por persona y grupo: un coordinador lo es de una única sección
+            b.HasIndex(a => new { a.OrganizacionId, a.UsuarioId })
+                .IsUnique()
+                .HasFilter("\"RevocadaUtc\" IS NULL");
+
+            b.HasIndex(a => new { a.OrganizacionId, a.Rama });
         });
 
         // 4. Configuración de Actividades

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Dossier.Domain;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Identity.Services;
 using WebScout.Web.Features.Inscriptions.Domain;
 using WebScout.Web.Infrastructure.Persistence;
 using WebScout.Web.Infrastructure.Tenancy;
@@ -18,36 +19,51 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
     private readonly WebScoutDbContext _dbContext;
     private readonly ITenantContext _tenantContext;
     private readonly ILogger<ServicioDossierAsistencia> _logger;
+    private readonly IServicioAlcanceSeccion _alcance;
 
     public ServicioDossierAsistencia(
         WebScoutDbContext dbContext,
         ITenantContext tenantContext,
-        ILogger<ServicioDossierAsistencia> logger)
+        ILogger<ServicioDossierAsistencia> logger,
+        IServicioAlcanceSeccion alcance)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _logger = logger;
+        _alcance = alcance;
     }
 
+    /// <summary>
+    /// Dossier de la actividad (sanitario, intendencia, emergencias) limitado a las secciones del alcance
+    /// del usuario actual. También lo usa la exportación CSV, que hereda el mismo límite.
+    /// </summary>
     public async Task<DossierOperativoActividad> ObtenerDossierActividadAsync(Guid actividadId)
     {
         ValidarTenantActivo();
 
+        var alcance = await _alcance.ObtenerAlcanceAsync();
         var actividad = await _dbContext.Actividades
             .FirstOrDefaultAsync(a => a.Id == actividadId);
 
-        if (actividad == null)
+        if (actividad == null || !alcance.TieneAccesoKraal)
         {
             throw new InvalidOperationException("La actividad no existe o no pertenece a su grupo scout.");
         }
 
-        var inscripciones = await _dbContext.Inscripciones
+        var consulta = _dbContext.Inscripciones
             .AsNoTracking()
             .Include(i => i.Educando)
                 .ThenInclude(e => e.FichaMedica)
             .Include(i => i.TutorLegal)
             .Include(i => i.RevisadoPorUsuario)
-            .Where(i => i.ActividadId == actividadId && i.Estado != EstadoInscripcion.Cancelada)
+            .Where(i => i.ActividadId == actividadId && i.Estado != EstadoInscripcion.Cancelada);
+
+        if (!alcance.EsGlobal)
+        {
+            consulta = consulta.Where(i => i.Educando.RamaActual == alcance.Rama);
+        }
+
+        var inscripciones = await consulta
             .OrderBy(i => i.Educando.RamaActual)
             .ThenBy(i => i.Educando.Apellidos)
             .ToListAsync();
@@ -122,13 +138,7 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
     {
         ValidarTenantActivo();
 
-        var inscripcion = await _dbContext.Inscripciones
-            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
-
-        if (inscripcion == null)
-        {
-            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
-        }
+        var inscripcion = await CargarInscripcionConAlcanceAsync(inscripcionId);
 
         inscripcion.PresenteEnSalida = presente;
         inscripcion.FechaCheckInSalidaUtc = presente ? DateTime.UtcNow : null;
@@ -144,13 +154,7 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
     {
         ValidarTenantActivo();
 
-        var inscripcion = await _dbContext.Inscripciones
-            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
-
-        if (inscripcion == null)
-        {
-            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
-        }
+        var inscripcion = await CargarInscripcionConAlcanceAsync(inscripcionId);
 
         inscripcion.PresenteEnRegreso = presente;
         inscripcion.FechaCheckInRegresoUtc = presente ? DateTime.UtcNow : null;
@@ -166,13 +170,7 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
     {
         ValidarTenantActivo();
 
-        var inscripcion = await _dbContext.Inscripciones
-            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
-
-        if (inscripcion == null)
-        {
-            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
-        }
+        var inscripcion = await CargarInscripcionConAlcanceAsync(inscripcionId);
 
         inscripcion.ObservacionesAsistencia = observacion;
         await _dbContext.SaveChangesAsync();
@@ -233,6 +231,25 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
             limpio = limpio.Replace("\"", "\"\"");
         }
         return $"\"{limpio}\"";
+    }
+
+    /// <summary>
+    /// Carga una inscripción para registrar asistencia solo si su educando está en el alcance del usuario;
+    /// si no, responde igual que si no existiera.
+    /// </summary>
+    private async Task<InscripcionActividad> CargarInscripcionConAlcanceAsync(Guid inscripcionId)
+    {
+        var inscripcion = await _dbContext.Inscripciones
+            .Include(i => i.Educando)
+            .FirstOrDefaultAsync(i => i.Id == inscripcionId);
+
+        var alcance = await _alcance.ObtenerAlcanceAsync();
+        if (inscripcion == null || !alcance.PuedeVer(inscripcion.Educando.RamaActual))
+        {
+            throw new InvalidOperationException("La inscripción no existe o no pertenece a su grupo scout.");
+        }
+
+        return inscripcion;
     }
 
     private void ValidarTenantActivo()

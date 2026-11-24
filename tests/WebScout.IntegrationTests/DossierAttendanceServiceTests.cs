@@ -106,7 +106,7 @@ public class DossierAttendanceServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance);
+        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
 
         // Act
         var dossier = await servicio.ObtenerDossierActividadAsync(actividadId);
@@ -174,7 +174,7 @@ public class DossierAttendanceServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance);
+        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
 
         // Act
         await servicio.RegistrarCheckInSalidaAsync(inscripcionId, true);
@@ -233,7 +233,7 @@ public class DossierAttendanceServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance);
+        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
 
         // Act
         await servicio.RegistrarCheckInRegresoAsync(inscripcionId, true);
@@ -291,7 +291,7 @@ public class DossierAttendanceServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance);
+        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
 
         // Act
         await servicio.ActualizarObservacionAsistenciaAsync(inscripcionId, "Recogida por los abuelos con autorización");
@@ -350,7 +350,7 @@ public class DossierAttendanceServiceTests : IDisposable
         });
         await db.SaveChangesAsync();
 
-        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance);
+        var servicio = new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
 
         // Act
         var csv = await servicio.GenerarCsvAsistenciaAsync(actividadId);
@@ -393,7 +393,7 @@ public class DossierAttendanceServiceTests : IDisposable
         // Act & Assert: Intentar consultar desde San Vicente debe lanzar excepción por no existir en su tenant
         using (var dbSanVicente = new WebScoutDbContext(_options, tenantSanVicente))
         {
-            var servicioSanVicente = new ServicioDossierAsistencia(dbSanVicente, tenantSanVicente, NullLogger<ServicioDossierAsistencia>.Instance);
+            var servicioSanVicente = new ServicioDossierAsistencia(dbSanVicente, tenantSanVicente, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 servicioSanVicente.ObtenerDossierActividadAsync(actividadLestonnacId));
         }
@@ -464,7 +464,7 @@ public class DossierAttendanceServiceTests : IDisposable
 
         using (var db = new WebScoutDbContext(_options, tenantLestonnac))
         {
-            var servicio = new ServicioDossierAsistencia(db, tenantLestonnac, NullLogger<ServicioDossierAsistencia>.Instance);
+            var servicio = new ServicioDossierAsistencia(db, tenantLestonnac, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global);
             var csv = await servicio.GenerarCsvAsistenciaAsync(actividadId);
 
             // Verificar que los campos con fórmula al inicio están prefijados con apóstrofe para neutralizar la ejecución

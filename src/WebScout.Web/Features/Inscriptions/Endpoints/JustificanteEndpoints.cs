@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using WebScout.Web.Features.Audit.Services;
-using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Identity.Services;
 using WebScout.Web.Features.Inscriptions.Services;
 using WebScout.Web.Features.Inscriptions.Storage;
 
@@ -21,6 +21,7 @@ public static class JustificanteEndpoints
             IServicioInscripciones servicioInscripciones,
             IAlmacenamientoJustificantes almacenamiento,
             IServicioAuditoria servicioAuditoria,
+            IServicioAlcanceSeccion servicioAlcance,
             ClaimsPrincipal user) =>
         {
             if (user?.Identity?.IsAuthenticated != true)
@@ -28,21 +29,23 @@ public static class JustificanteEndpoints
                 return Results.Unauthorized();
             }
 
+            const string noDisponible = "El comprobante de pago no existe o no se encuentra disponible.";
+
             var inscripcion = await servicioInscripciones.ObtenerPorIdAsync(id);
             if (inscripcion == null || string.IsNullOrWhiteSpace(inscripcion.RutaArchivoJustificante))
             {
-                return Results.NotFound("El comprobante de pago no existe o no se encuentra disponible.");
+                return Results.NotFound(noDisponible);
             }
 
+            // Acceso: el tutor titular, o quien tenga alcance sobre la sección del educando.
+            // La denegación responde igual que un justificante inexistente.
             var userIdStr = user.FindFirstValue(ClaimTypes.NameIdentifier);
             var esTutor = Guid.TryParse(userIdStr, out var userId) && userId == inscripcion.TutorLegalId;
-            var esKraal = user.IsInRole(RolesScout.Scouter) ||
-                          user.IsInRole(RolesScout.Coordinacion) ||
-                          user.IsInRole(RolesScout.Administracion);
+            var alcance = esTutor ? null : await servicioAlcance.ObtenerAlcanceAsync();
 
-            if (!esTutor && !esKraal)
+            if (!esTutor && alcance?.PuedeVer(inscripcion.Educando.RamaActual) != true)
             {
-                return Results.Forbid();
+                return Results.NotFound(noDisponible);
             }
 
             var archivo = await almacenamiento.ObtenerJustificanteAsync(inscripcion.RutaArchivoJustificante);

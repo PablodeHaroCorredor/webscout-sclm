@@ -109,6 +109,10 @@ public static class DatabaseInitializer
             var lopezUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "familia.lopez@scoutssanvicente.org", "Familia López Ruiz", "23456789C", RolesScout.Familia, RamaScout.Ninguna);
             var davidUser = await SeedDemoUserAsync(userManager, logger, sanVicenteId, "scouter.tropa@scoutssanvicente.org", "David Baloo", "98765432D", RolesScout.Scouter, RamaScout.Tropa);
 
+            // 5b. Asignaciones de sección del Kraal: Elena coordina Manada; David es scouter de Tropa
+            await SeedAsignacionSeccionAsync(db, elenaUser, RamaScout.Manada, FuncionSeccion.Coordinador);
+            await SeedAsignacionSeccionAsync(db, davidUser, RamaScout.Tropa, FuncionSeccion.Scouter);
+
             // 6. Seed de Educandos y Fichas Médicas Anuales
             await SeedParticipantsAndHealthRecordsAsync(db, logger, lestonnacId, sanVicenteId, garciaUser, lopezUser, elenaUser);
 
@@ -122,6 +126,41 @@ public static class DatabaseInitializer
         {
             logger.LogWarning("Advertencia durante la inicialización de base de datos ({Message}).", ex.Message);
         }
+    }
+
+    private static async Task SeedAsignacionSeccionAsync(
+        WebScoutDbContext db,
+        UsuarioScout? usuario,
+        RamaScout rama,
+        FuncionSeccion funcion)
+    {
+        if (usuario == null)
+        {
+            return;
+        }
+
+        var vigente = await db.AsignacionesSeccion.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.UsuarioId == usuario.Id && a.RevocadaUtc == null);
+
+        if (vigente == null)
+        {
+            db.AsignacionesSeccion.Add(new AsignacionSeccion
+            {
+                Id = Guid.NewGuid(),
+                OrganizacionId = usuario.OrganizacionId,
+                UsuarioId = usuario.Id,
+                Rama = rama,
+                Funcion = funcion
+            });
+        }
+        else
+        {
+            // Bases ya existentes: la migración traspasó a todos como Scouter; se ajusta la función demo
+            vigente.Rama = rama;
+            vigente.Funcion = funcion;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task SeedParticipantsAndHealthRecordsAsync(

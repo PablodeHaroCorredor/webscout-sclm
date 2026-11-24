@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using WebScout.Web.Features.Identity.Domain;
+using WebScout.Web.Features.Identity.Services;
 using WebScout.Web.Infrastructure.Persistence;
 
 namespace WebScout.Web.Features.Identity;
@@ -38,6 +39,11 @@ public static class IdentityServiceExtensions
         services.AddAuthentication();
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
+
+        // Alcance por sección del Kraal, evaluado en servidor en cada operación
+        services.AddHttpContextAccessor();
+        services.AddScoped<IUsuarioActual, UsuarioActual>();
+        services.AddScoped<IServicioAlcanceSeccion, ServicioAlcanceSeccion>();
 
         return services;
     }

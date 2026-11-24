@@ -542,6 +542,49 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                     b.ToTable("RegistrosAuditoria", (string)null);
                 });
 
+            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.AsignacionSeccion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AsignadaPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AsignadaUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Funcion")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrganizacionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rama")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("RevocadaPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RevocadaUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("OrganizacionId", "Rama");
+
+                    b.HasIndex("OrganizacionId", "UsuarioId")
+                        .IsUnique()
+                        .HasFilter("\"RevocadaUtc\" IS NULL");
+
+                    b.ToTable("AsignacionesSeccion", (string)null);
+                });
+
             modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.RolScout", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1276,6 +1319,17 @@ namespace WebScout.Web.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CreadoPorUsuario");
+                });
+
+            modelBuilder.Entity("WebScout.Web.Features.Identity.Domain.AsignacionSeccion", b =>
+                {
+                    b.HasOne("WebScout.Web.Features.Identity.Domain.UsuarioScout", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("WebScout.Web.Features.Inscriptions.Domain.InscripcionActividad", b =>

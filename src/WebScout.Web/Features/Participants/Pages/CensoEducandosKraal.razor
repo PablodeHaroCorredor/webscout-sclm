@@ -10,7 +10,7 @@
 @using WebScout.Web.Infrastructure.Tenancy
 @inject IServicioEducandos ServicioEducandos
 @inject ITenantContext Tenant
-@inject AuthenticationStateProvider AuthStateProvider
+@inject WebScout.Web.Features.Identity.Services.IServicioAlcanceSeccion ServicioAlcance
 @inject IDialogService DialogService
 
 <PageTitle>Censo de Educandos por Rama · @Tenant.GroupName</PageTitle>
@@ -445,26 +445,13 @@
 
     private async Task ConfigurarAlcanceUsuarioAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity?.IsAuthenticated == true)
+        // El servidor ya limita el censo a la sección del alcance; aquí solo se refleja en el filtro
+        var alcance = await ServicioAlcance.ObtenerAlcanceAsync();
+        if (!alcance.EsGlobal && alcance.Rama is { } rama)
         {
-            var ramaClaim = user.FindFirst("RamaAsignada")?.Value;
-            if (Enum.TryParse<RamaScout>(ramaClaim, out var ramaParsed))
-            {
-                _ramaAsignada = ramaParsed;
-            }
-
-            // Si es Scouter con rama asignada, preseleccionar y bloquear a su sección
-            if (user.IsInRole(RolesScout.Scouter) && !user.IsInRole(RolesScout.Coordinacion) && !user.IsInRole(RolesScout.Administracion) && !user.IsInRole(RolesScout.SuperAdmin))
-            {
-                if (_ramaAsignada != RamaScout.Ninguna)
-                {
-                    _ramaSeleccionada = _ramaAsignada;
-                    _bloquearFiltroRama = true;
-                }
-            }
+            _ramaAsignada = rama;
+            _ramaSeleccionada = rama;
+            _bloquearFiltroRama = true;
         }
     }
 

@@ -297,7 +297,7 @@ public class AuditoriaUiGestionF1ServiceTests : IDisposable
         }
         await db.SaveChangesAsync();
 
-        var dossier = await new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance)
+        var dossier = await new ServicioDossierAsistencia(db, tenant, NullLogger<ServicioDossierAsistencia>.Instance, AlcanceFijo.Global)
             .ObtenerDossierActividadAsync(actividadId);
 
         var sinFicha = dossier.RegistrosSanitarios.Single(r => r.EducandoId == sinFichaId);

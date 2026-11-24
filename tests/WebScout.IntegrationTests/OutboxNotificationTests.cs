@@ -156,7 +156,7 @@ public class OutboxNotificationTests : IDisposable
             dbContext,
             tenant,
             _fakeStorage,
-            NullLogger<ServicioInscripciones>.Instance,
+            NullLogger<ServicioInscripciones>.Instance, AlcanceFijo.Global,
             servicioOutbox);
 
         var educando = await dbContext.Educandos.FirstAsync();
