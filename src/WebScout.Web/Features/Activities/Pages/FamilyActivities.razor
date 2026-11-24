@@ -94,7 +94,7 @@
                                 <div class="d-flex align-center gap-2">
                                     <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Primary" Size="Size.Small" />
                                     <MudText Typo="Typo.body2">
-                                        @act.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") - @act.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                        @act.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm") - @act.FechaFin.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                     </MudText>
                                 </div>
 
@@ -114,7 +114,7 @@
                                         {
                                             <MudText Typo="Typo.caption" Color="@(diasRestantes <= 3 ? Color.Warning : Color.Default)">
                                                 <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Small" Class="vertical-align-middle me-1" />
-                                                Inscripción hasta el @act.FechaLimiteInscripcion.Value.ToLocalTime().ToString("dd/MM/yyyy")
+                                                Inscripción hasta el @act.FechaLimiteInscripcion.Value.AHoraEspana().ToString("dd/MM/yyyy")
                                                 @(diasRestantes > 0 ? $"({diasRestantes} días restantes)" : "(¡Último día!)")
                                             </MudText>
                                         }

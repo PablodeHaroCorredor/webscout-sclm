@@ -90,7 +90,7 @@
                     @(Tenant.IsResolved ? Tenant.GroupName : "WebScout SCLM")
                 </MudText>
                 <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="font-size: 0.72rem;">
-                    @(Tenant.IsResolved ? "Portal de Grupo Scout" : "Federación Scouts CLM")
+                    @(Tenant.IsResolved && Tenant.TenantSlug != "sclm" ? "Portal de Grupo Scout" : "Federación Scouts CLM")
                 </MudText>
             </div>
         </div>
@@ -190,7 +190,7 @@
                 <!-- Bloque Gestión Kraal y Administración (Visible para Kraal puro o en Modo Kraal) -->
                 @if (!_isDualUser || ContextService.CurrentMode == ScoutContextMode.Kraal)
                 {
-                    <AuthorizeView Roles="Scouter,Coordinacion,Administracion">
+                    <AuthorizeView Roles="@RolesScout.AreaKraal">
                         <Authorized>
                             <MudNavGroup Title="Gestión Kraal" Icon="@Icons.Material.Filled.Diversity3" Expanded="true">
                                 <MudNavLink Href="/kraal/inscripciones" Icon="@Icons.Material.Filled.FactCheck">
@@ -212,12 +212,15 @@
                         </Authorized>
                     </AuthorizeView>
 
-                    <AuthorizeView Roles="Coordinacion,Administracion,SuperAdmin">
+                    <AuthorizeView Roles="@RolesScout.AreaSupervision">
                         <Authorized>
                             <MudNavGroup Title="Administración" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
-                                <MudNavLink Href="/administracion/ajustes" Icon="@Icons.Material.Filled.Tune">
-                                    Ajustes del Grupo
-                                </MudNavLink>
+                                @if (context.User.IsInRole(RolesScout.Coordinacion) || context.User.IsInRole(RolesScout.Administracion))
+                                {
+                                    <MudNavLink Href="/administracion/ajustes" Icon="@Icons.Material.Filled.Tune">
+                                        Ajustes del Grupo
+                                    </MudNavLink>
+                                }
                                 <MudNavLink Href="/administracion/outbox" Icon="@Icons.Material.Filled.MarkEmailRead">
                                     Monitor Outbox
                                 </MudNavLink>
@@ -233,7 +236,7 @@
 
                     <AuthorizeView Roles="SuperAdmin">
                         <Authorized>
-                            <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                            <MudNavGroup Title="Federación SCLM" Icon="@Icons.Material.Filled.AccountTree" Expanded="true">
                                 <MudNavLink Href="/admin/grupos" Icon="@Icons.Material.Filled.Hub">
                                     Grupos y Tenants
                                 </MudNavLink>

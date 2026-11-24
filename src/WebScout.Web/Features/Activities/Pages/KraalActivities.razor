@@ -1,7 +1,7 @@
 @page "/kraal/actividades"
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
-@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion}")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @inject IServicioActividades ServicioActividades
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -116,8 +116,8 @@
                 }
             </MudTd>
             <MudTd DataLabel="Fechas">
-                <MudText Typo="Typo.body2">@context.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">Hasta @context.FechaFin.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</MudText>
+                <MudText Typo="Typo.body2">@context.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm")</MudText>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Hasta @context.FechaFin.AHoraEspana().ToString("dd/MM/yyyy HH:mm")</MudText>
             </MudTd>
             <MudTd DataLabel="Cuota">
                 <MudText Typo="Typo.body2" Style="font-weight: 700;">
@@ -158,13 +158,17 @@
                     }
                     @if (context.Estado != EstadoActividad.Cancelada)
                     {
-                        <MudMenuItem Icon="@Icons.Material.Filled.Cancel" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.Cancelada))">
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Filled.Cancel" IconColor="Color.Error" OnClick="@(() => CambiarEstadoAsync(context, EstadoActividad.Cancelada))">
                             Cancelar Actividad
                         </MudMenuItem>
                     }
                     @if (context.Estado == EstadoActividad.Borrador || context.Estado == EstadoActividad.Cancelada)
                     {
-                        <MudDivider />
+                        @if (context.Estado == EstadoActividad.Cancelada)
+                        {
+                            <MudDivider />
+                        }
                         <MudMenuItem Icon="@Icons.Material.Filled.Delete" IconColor="Color.Error" OnClick="@(() => EliminarActividadAsync(context))">
                             Eliminar Definitivamente
                         </MudMenuItem>
@@ -183,6 +187,7 @@
 @code {
     private IReadOnlyList<ActividadScout> _actividades = [];
     private bool _cargando = true;
+    private bool _cambiandoEstado;
     private EstadoActividad? _estadoFiltro;
     private RamaScout? _ramaFiltro;
     private Guid _usuarioActualId;
@@ -284,15 +289,47 @@
 
     private async Task CambiarEstadoAsync(ActividadScout actividad, EstadoActividad nuevoEstado)
     {
+        if (_cambiandoEstado) return;
+
+        // Toda transición visible para las familias se confirma: un clic desviado en el menú no debe publicar ni cancelar.
+        var (titulo, mensaje, textoSi) = nuevoEstado switch
+        {
+            EstadoActividad.Publicada => ("Publicar convocatoria",
+                $"«{actividad.Titulo}» será visible para las familias de las ramas convocadas y se abrirán las inscripciones.",
+                "Publicar"),
+            EstadoActividad.InscripcionesCerradas => ("Cerrar plazo de inscripción",
+                $"Las familias ya no podrán inscribirse en «{actividad.Titulo}». Las inscripciones existentes se mantienen.",
+                "Cerrar plazo"),
+            EstadoActividad.Borrador => ("Volver a borrador",
+                $"«{actividad.Titulo}» dejará de ser visible para las familias hasta que se vuelva a publicar.",
+                "Volver a borrador"),
+            EstadoActividad.Cancelada => ("Cancelar actividad",
+                $"«{actividad.Titulo}» quedará cancelada para todas las familias. Esta acción no se puede deshacer desde el gestor.",
+                "Sí, cancelar actividad"),
+            _ => ("Cambiar estado", $"¿Cambiar «{actividad.Titulo}» a {nuevoEstado.ObtenerNombre()}?", "Confirmar")
+        };
+
+        bool? confirmar = await DialogService.ShowMessageBoxAsync(titulo, mensaje, yesText: textoSi, cancelText: "Volver");
+        if (confirmar != true) return;
+
+        _cambiandoEstado = true;
         try
         {
             await ServicioActividades.CambiarEstadoActividadAsync(actividad.Id, nuevoEstado);
-            Snackbar.Add($"Estado cambiado a {nuevoEstado}", Severity.Success);
+            Snackbar.Add($"«{actividad.Titulo}»: {nuevoEstado.ObtenerNombre()}", Severity.Success);
             await CargarActividadesAsync();
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("No se pudo cambiar el estado de la actividad. Inténtalo de nuevo.", Severity.Error);
+        }
+        finally
+        {
+            _cambiandoEstado = false;
         }
     }
 

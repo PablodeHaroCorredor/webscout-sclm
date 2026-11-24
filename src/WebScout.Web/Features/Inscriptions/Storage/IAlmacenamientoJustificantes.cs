@@ -23,4 +23,11 @@ public interface IAlmacenamientoJustificantes
     /// Elimina el archivo físico de un justificante.
     /// </summary>
     Task EliminarJustificanteAsync(string rutaRelativa);
+
+    /// <summary>
+    /// Comprueba que el almacén está accesible y admite escritura. Lo usa el panel de diagnóstico,
+    /// que no debe mostrar el almacén como operativo sin haberlo comprobado.
+    /// </summary>
+    Task<(bool Disponible, string Detalle)> ComprobarDisponibilidadAsync() =>
+        Task.FromResult((false, "Este almacén no implementa comprobación de disponibilidad."));
 }

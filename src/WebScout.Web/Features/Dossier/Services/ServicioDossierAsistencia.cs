@@ -64,32 +64,37 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
             var fm = edu.FichaMedica;
             var tutor = ins.TutorLegal;
 
-            // 1. Registro Sanitario
+            // 1. Registro Sanitario: sin ficha no se rellenan valores por defecto para no presentar datos inventados.
+            var alertas = fm?.ObtenerAlertasSanitarias() ?? [];
             dossier.RegistrosSanitarios.Add(new ItemSanitarioDossier
             {
                 EducandoId = edu.Id,
                 NombreEducando = edu.NombreCompleto,
                 Rama = edu.RamaActual,
                 Edad = edu.CalcularEdad(),
-                NumeroSeguridadSocial = fm?.NumeroSeguridadSocial ?? "No registrada",
-                EntidadAseguradora = fm?.EntidadAseguradora ?? "SESCAM",
-                SabeNadar = fm?.SabeNadar ?? false,
-                VacunacionAlDia = fm?.VacunacionAlDia ?? false,
-                EnfermedadesCronicas = fm?.EnfermedadesCronicas,
-                MedicacionActiva = fm?.MedicacionActiva,
-                ObservacionesMedicas = fm?.ObservacionesAdicionales
+                TieneFicha = fm != null,
+                NumeroSeguridadSocial = fm?.NumeroSeguridadSocial,
+                EntidadAseguradora = fm?.EntidadAseguradora,
+                SabeNadar = fm?.SabeNadar,
+                VacunacionAlDia = fm?.VacunacionAlDia,
+                EnfermedadesCronicas = AlertasSanitarias.EsRelevante(fm?.EnfermedadesCronicas) ? fm!.EnfermedadesCronicas : null,
+                MedicacionActiva = AlertasSanitarias.EsRelevante(fm?.MedicacionActiva) ? fm!.MedicacionActiva : null,
+                ObservacionesMedicas = fm?.ObservacionesAdicionales,
+                Alertas = alertas
             });
 
-            // 2. Alertas de Intendencia / Alergias Alimentarias
-            if (fm != null && (!string.IsNullOrWhiteSpace(fm.AlergiasAlimentarias) || !string.IsNullOrWhiteSpace(fm.RegimenAlimenticio)))
+            // 2. Alertas de Intendencia: solo alergias alimentarias o dietas reales (no "Sin alergias conocidas").
+            var alergiaAlimentaria = alertas.FirstOrDefault(a => a.Tipo == TipoAlertaSanitaria.AlergiaAlimentaria);
+            var dieta = alertas.FirstOrDefault(a => a.Tipo == TipoAlertaSanitaria.Dieta);
+            if (alergiaAlimentaria != null || dieta != null)
             {
                 dossier.AlertasIntendencia.Add(new ItemIntendenciaDossier
                 {
                     NombreEducando = edu.NombreCompleto,
                     Rama = edu.RamaActual,
-                    AlergiasAlimentarias = fm.AlergiasAlimentarias,
-                    RegimenAlimenticio = fm.RegimenAlimenticio,
-                    ObservacionesIntendencia = fm.ObservacionesAdicionales
+                    AlergiasAlimentarias = alergiaAlimentaria?.Detalle,
+                    RegimenAlimenticio = dieta?.Detalle,
+                    ObservacionesIntendencia = fm!.ObservacionesAdicionales
                 });
             }
 
@@ -194,9 +199,9 @@ public class ServicioDossierAsistencia : IServicioDossierAsistencia
                 SanitizarCsv(tutor.NombreCompleto),
                 SanitizarCsv(fm?.TelefonoEmergenciaPrincipal ?? tutor.PhoneNumber ?? ""),
                 ins.PresenteEnSalida ? "SI" : "NO",
-                ins.FechaCheckInSalidaUtc?.ToLocalTime().ToString("HH:mm") ?? "",
+                ins.FechaCheckInSalidaUtc?.AHoraEspana().ToString("HH:mm") ?? "",
                 ins.PresenteEnRegreso ? "SI" : "NO",
-                ins.FechaCheckInRegresoUtc?.ToLocalTime().ToString("HH:mm") ?? "",
+                ins.FechaCheckInRegresoUtc?.AHoraEspana().ToString("HH:mm") ?? "",
                 ins.Estado.ToString(),
                 ins.ImporteEuros.ToString("N2"),
                 SanitizarCsv(fm?.AlergiasAlimentarias ?? "Ninguna"),

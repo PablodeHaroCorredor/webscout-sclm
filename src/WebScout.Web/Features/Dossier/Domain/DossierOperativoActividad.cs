@@ -1,3 +1,4 @@
+using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Features.Inscriptions.Domain;
@@ -41,14 +42,22 @@ public class ItemSanitarioDossier
     public required string NombreEducando { get; set; }
     public RamaScout Rama { get; set; }
     public int Edad { get; set; }
+
+    /// <summary>Falso cuando el educando no tiene ficha médica: el resto de campos clínicos quedan vacíos (no se inventan).</summary>
+    public bool TieneFicha { get; set; }
     public string? NumeroSeguridadSocial { get; set; }
     public string? EntidadAseguradora { get; set; }
-    public bool SabeNadar { get; set; }
-    public bool VacunacionAlDia { get; set; }
+    public bool? SabeNadar { get; set; }
+    public bool? VacunacionAlDia { get; set; }
     public string? EnfermedadesCronicas { get; set; }
     public string? MedicacionActiva { get; set; }
     public string? ObservacionesMedicas { get; set; }
-    public bool TieneAlertasMedicas => !string.IsNullOrWhiteSpace(EnfermedadesCronicas) || !string.IsNullOrWhiteSpace(MedicacionActiva);
+
+    /// <summary>Alertas sanitarias relevantes (todas las alergias, crónicas, medicación y dietas) ordenadas por gravedad.</summary>
+    public IReadOnlyList<AlertaSanitaria> Alertas { get; set; } = [];
+
+    public IEnumerable<AlertaSanitaria> Alergias => Alertas.Where(a => a.EsAlergia);
+    public bool TieneAlertasMedicas => Alertas.Count > 0;
 }
 
 /// <summary>

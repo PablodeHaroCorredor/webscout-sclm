@@ -112,7 +112,7 @@
                                 <MudText Typo="Typo.caption">@context.Actividad.Lugar</MudText>
                             </div>
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                @context.Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                @context.Actividad.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         </MudTd>
                         <MudTd DataLabel="Cuota">
@@ -222,7 +222,7 @@
                                 <div class="d-flex justify-space-between align-center mb-1">
                                     <span style="font-size: 0.8rem; color: #64748B;">Fecha y Lugar:</span>
                                     <span style="font-size: 0.82rem; color: #475569;">
-                                        @inscripcion.Actividad.FechaInicio.ToLocalTime().ToString("dd/MM/yyyy") · @inscripcion.Actividad.Lugar
+                                        @inscripcion.Actividad.FechaInicio.AHoraEspana().ToString("dd/MM/yyyy") · @inscripcion.Actividad.Lugar
                                     </span>
                                 </div>
                                 <div class="d-flex justify-space-between align-center">

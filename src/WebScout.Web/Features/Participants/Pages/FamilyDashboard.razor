@@ -262,7 +262,7 @@
                                                     <MudIcon Icon="@Icons.Material.Filled.MedicalServices" Size="Size.Small" Style="font-size: 0.95rem; color: #94A3B8;" />
                                                     Alergias / Dietas:
                                                 </span>
-                                                <span class="text-end" style="font-weight: 700; color: @(string.IsNullOrWhiteSpace(educando.FichaMedica?.AlergiasAlimentarias) || educando.FichaMedica?.AlergiasAlimentarias.ToLower().Contains("ninguna") == true ? "#334155" : "#DC2626"); font-size: 0.82rem; max-width: 60%;">
+                                                <span class="text-end" style="font-weight: 700; color: @(AlertasSanitarias.EsRelevante(educando.FichaMedica?.AlergiasAlimentarias) ? "#DC2626" : "#334155"); font-size: 0.82rem; max-width: 60%;">
                                                     @(string.IsNullOrWhiteSpace(educando.FichaMedica?.AlergiasAlimentarias) ? "Ninguna declarada" : educando.FichaMedica.AlergiasAlimentarias)
                                                 </span>
                                             </div>

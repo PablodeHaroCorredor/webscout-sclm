@@ -104,7 +104,7 @@
                                 Ver Comprobante
                             </MudButton>
                             <MudText Typo="Typo.caption" Class="d-block mud-text-secondary mt-1">
-                                @context.FechaSubidaJustificanteUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                @context.FechaSubidaJustificanteUtc?.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         }
                         else if (context.ImporteEuros == 0)
@@ -120,16 +120,16 @@
                     </MudTd>
                     <MudTd DataLabel="Estado">
                         <ScoutStatusBadge Estado="context.Estado" />
-                        @if (!string.IsNullOrWhiteSpace(context.NotasKraal))
+                        @if (context.Estado == EstadoInscripcion.RequiereSubsanacion && !string.IsNullOrWhiteSpace(context.NotasKraal))
                         {
-                            <MudText Typo="Typo.caption" Class="d-block text-danger mt-1">
-                                Nota: @context.NotasKraal
+                            <MudText Typo="Typo.caption" Class="d-block mud-error-text mt-1">
+                                Motivo: @context.NotasKraal
                             </MudText>
                         }
                     </MudTd>
                     <MudTd DataLabel="Acciones" Class="text-end">
                         <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
-                            @if (context.Estado != EstadoInscripcion.Confirmada)
+                            @if (context.Estado == EstadoInscripcion.EnRevision || context.Estado == EstadoInscripcion.RequiereSubsanacion)
                             {
                                 <MudMenuItem Icon="@Icons.Material.Filled.CheckCircle" 
                                              IconColor="Color.Success"
@@ -137,7 +137,7 @@
                                     Confirmar Plaza
                                 </MudMenuItem>
                             }
-                            @if (context.Estado != EstadoInscripcion.RequiereSubsanacion && context.Estado != EstadoInscripcion.Cancelada)
+                            @if (context.Estado == EstadoInscripcion.EnRevision || context.Estado == EstadoInscripcion.Confirmada)
                             {
                                 <MudMenuItem Icon="@Icons.Material.Filled.Feedback" 
                                              IconColor="Color.Warning"
@@ -193,6 +193,14 @@
 
     private async Task ConfirmarPlazaAsync(InscripcionActividad inscripcion)
     {
+        var confirmar = await DialogService.ShowMessageBoxAsync(
+            "Confirmar plaza",
+            $"Se validará el justificante de {inscripcion.Educando.NombreCompleto} y se enviará la confirmación por correo a la familia.",
+            yesText: "Confirmar plaza",
+            cancelText: "Volver");
+
+        if (confirmar != true) return;
+
         try
         {
             await ServicioInscripciones.RevisarInscripcionAsync(
@@ -212,29 +220,35 @@
 
     private async Task RequerirSubsanacionAsync(InscripcionActividad inscripcion)
     {
-        var respuesta = await DialogService.ShowMessageBoxAsync(
-            "Requerir Subsanación",
-            $"¿Deseas solicitar a la familia de {inscripcion.Educando.Nombre} que subsane el justificante bancario?",
-            yesText: "Sí, Solicitar Subsanación",
-            cancelText: "Volver");
-
-        if (respuesta == true)
+        // El motivo lo escribe el Kraal: se envía tal cual a la familia, nunca un texto genérico.
+        inscripcion.Actividad ??= Actividad;
+        var parameters = new DialogParameters<RequerirSubsanacionDialog>
         {
-            try
-            {
-                await ServicioInscripciones.RevisarInscripcionAsync(
-                    inscripcion.Id,
-                    EstadoInscripcion.RequiereSubsanacion,
-                    notasKraal: "El comprobante adjuntado no es legible o no refleja el importe correcto de la cuota.",
-                    scouterId: ScouterId);
+            { x => x.Inscripcion, inscripcion }
+        };
 
-                Snackbar.Add("Se ha notificado que la inscripción requiere subsanación.", Severity.Warning);
-                await CargarInscripcionesAsync();
-            }
-            catch (Exception ex)
-            {
-                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
-            }
+        var dialog = await DialogService.ShowAsync<RequerirSubsanacionDialog>("Requerir subsanación", parameters);
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled || result.Data is not string motivo)
+        {
+            return;
+        }
+
+        try
+        {
+            await ServicioInscripciones.RevisarInscripcionAsync(
+                inscripcion.Id,
+                EstadoInscripcion.RequiereSubsanacion,
+                notasKraal: motivo,
+                scouterId: ScouterId);
+
+            Snackbar.Add($"Subsanación solicitada a la familia de {inscripcion.Educando.NombreCompleto}.", Severity.Warning);
+            await CargarInscripcionesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
         }
     }
 

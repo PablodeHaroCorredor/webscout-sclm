@@ -115,6 +115,18 @@ public class FichaMedica : IEntidadOrganizacion
     // Propiedad de navegación
     public Educando? Educando { get; set; }
 
+    /// <summary>
+    /// Alertas sanitarias relevantes (alergias de todo tipo, enfermedades crónicas, medicación y dietas),
+    /// ignorando respuestas negativas escritas como texto ("Sin alergias conocidas", "Ninguna", etc.).
+    /// </summary>
+    public IReadOnlyList<AlertaSanitaria> ObtenerAlertasSanitarias() => AlertasSanitarias.Obtener(
+        AlergiasMedicamentosas,
+        AlergiasAlimentarias,
+        AlergiasAmbientales,
+        EnfermedadesCronicas,
+        MedicacionActiva,
+        RegimenAlimenticio);
+
     // Puentes y propiedades retrocompatibles de transición (NotMapped)
     [NotMapped]
     public Guid OrganizationId

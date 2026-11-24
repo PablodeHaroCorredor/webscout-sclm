@@ -7,7 +7,7 @@
 @using WebScout.Web.Features.Orders.Domain
 @using WebScout.Web.Features.Orders.Services
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = $"{RolesScout.Scouter},{RolesScout.Coordinacion},{RolesScout.Administracion},{RolesScout.SuperAdmin}")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @inject IServicioPedidosMaterial ServicioPedidos
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -346,7 +346,7 @@
                     </MudTd>
                     <MudTd DataLabel="Fecha">
                         <MudText Typo="Typo.body2">
-                            @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                            @context.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy")
                         </MudText>
                     </MudTd>
                     <MudTd DataLabel="Solicitante">
@@ -485,7 +485,7 @@
                                         @pedido.CodigoPedido
                                     </span>
                                     <span style="font-size: 0.75rem; color: #64748B;">
-                                        @pedido.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                        @pedido.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                     </span>
                                 </div>
                                 <ScoutStatusBadge Estado="pedido.Estado" />

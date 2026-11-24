@@ -35,3 +35,20 @@ public enum EstadoActividad
     /// </summary>
     Cancelada = 6
 }
+
+/// <summary>
+/// Nombres legibles de los estados de actividad para mensajes de interfaz.
+/// </summary>
+public static class EstadoActividadExtensions
+{
+    public static string ObtenerNombre(this EstadoActividad estado) => estado switch
+    {
+        EstadoActividad.Borrador => "Borrador",
+        EstadoActividad.Publicada => "Publicada",
+        EstadoActividad.InscripcionesCerradas => "Inscripciones cerradas",
+        EstadoActividad.EnCurso => "En curso",
+        EstadoActividad.Finalizada => "Finalizada",
+        EstadoActividad.Cancelada => "Cancelada",
+        _ => estado.ToString()
+    };
+}

@@ -164,7 +164,7 @@ else
                         @if (fm != null)
                         {
                             <MudText Typo="Typo.caption" Class="mud-text-secondary d-block text-end mt-2" Style="font-size: 0.7rem;">
-                                Ficha confirmada: @fm.UltimaActualizacionUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                Ficha confirmada: @fm.UltimaActualizacionUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         }
                     </MudCardContent>

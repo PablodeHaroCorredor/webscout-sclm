@@ -314,6 +314,30 @@ public class ServicioAdmisiones : IServicioAdmisiones
             throw new KeyNotFoundException($"No se encontró la solicitud de admisión con ID {solicitudId}.");
         }
 
+        if (solicitud.Estado is EstadoSolicitudAdmision.Rechazada or EstadoSolicitudAdmision.Archivada)
+        {
+            throw new InvalidOperationException("No se puede incorporar al censo una solicitud rechazada o archivada.");
+        }
+
+        // Evita duplicar al educando si la solicitud ya se incorporó (doble clic, segunda pestaña o solicitud repetida).
+        // La comparación de nombres se hace en memoria (sin distinguir mayúsculas ni tildes) para no depender de la intercalación de la base de datos.
+        var mismosNacimiento = await _dbContext.Educandos
+            .Where(e => e.FechaNacimiento == solicitud.FechaNacimiento)
+            .Select(e => new { e.Nombre, e.Apellidos })
+            .ToListAsync(cancellationToken);
+        var comparador = System.Globalization.CultureInfo.GetCultureInfo("es-ES").CompareInfo;
+        const System.Globalization.CompareOptions opciones =
+            System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreNonSpace;
+        var yaEnCenso = mismosNacimiento.Any(e =>
+            comparador.Compare(e.Nombre.Trim(), solicitud.NombreEducando.Trim(), opciones) == 0 &&
+            comparador.Compare(e.Apellidos.Trim(), solicitud.ApellidosEducando.Trim(), opciones) == 0);
+
+        if (yaEnCenso)
+        {
+            throw new InvalidOperationException(
+                $"{solicitud.NombreCompletoEducando} ya figura en el censo del grupo con la misma fecha de nacimiento. No se ha creado un duplicado.");
+        }
+
         var tutorEmailNormalizado = solicitud.EmailTutor.Trim().ToUpperInvariant();
         var tutor = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.OrganizacionId == _tenantContext.CurrentTenantId

@@ -56,7 +56,7 @@
                         <div>
                             <MudText Typo="Typo.body2" Style="font-weight: 600;">@Inscripcion.NombreArchivoJustificante</MudText>
                             <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Subido el @Inscripcion.FechaSubidaJustificanteUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                Subido el @Inscripcion.FechaSubidaJustificanteUtc?.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                             </MudText>
                         </div>
                     </div>

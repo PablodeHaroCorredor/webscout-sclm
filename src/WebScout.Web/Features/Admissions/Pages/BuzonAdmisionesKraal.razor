@@ -6,7 +6,7 @@
 @using WebScout.Web.Features.Admissions.Services
 @using WebScout.Web.Features.Identity.Domain
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = "SuperAdmin,Coordinacion,Scouter")]
+@attribute [Authorize(Roles = RolesScout.AreaKraal)]
 @inject IServicioAdmisiones ServicioAdmisiones
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
@@ -144,7 +144,7 @@
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd DataLabel="Fecha">
-                                        @context.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                        @context.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                     </MudTd>
                                     <MudTd DataLabel="Educando">
                                         <MudText Typo="Typo.body2" Style="font-weight: 700;">
@@ -189,13 +189,16 @@
                                     </MudTd>
                                     <MudTd DataLabel="Acciones" Style="text-align: right;">
                                         <div class="d-flex align-center justify-end gap-1">
-                                            <MudButton Variant="Variant.Outlined" 
-                                                       Color="Color.Primary" 
-                                                       Size="Size.Small" 
-                                                       StartIcon="@Icons.Material.Filled.PersonAddAlt1"
-                                                       OnClick="@(() => AbrirIncorporacionDialog(context))">
-                                                Incorporar
-                                            </MudButton>
+                                            @if (PuedeIncorporarse(context))
+                                            {
+                                                <MudButton Variant="Variant.Outlined"
+                                                           Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+                                                           OnClick="@(() => AbrirIncorporacionDialog(context))">
+                                                    Incorporar
+                                                </MudButton>
+                                            }
 
                                             <MudMenu Icon="@Icons.Material.Filled.MoreVert" Size="Size.Small" Dense="true">
                                                 <MudMenuItem OnClick="@(() => AbrirGestionDialog(context, EstadoSolicitudAdmision.EnListaEspera))">
@@ -242,7 +245,7 @@
                                                         @solicitud.NombreCompletoEducando
                                                     </span>
                                                     <span style="font-size: 0.78rem; color: #64748B;">
-                                                        @solicitud.FechaSolicitudUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                        @solicitud.FechaSolicitudUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                                     </span>
                                                 </div>
                                             </div>
@@ -295,14 +298,17 @@
                                                        OnClick="@(() => AbrirGestionDialog(solicitud, solicitud.Estado))">
                                                 Gestionar
                                             </MudButton>
-                                            <MudButton Variant="Variant.Filled" 
-                                                       Color="Color.Primary" 
-                                                       Size="Size.Small" 
-                                                       StartIcon="@Icons.Material.Filled.PersonAddAlt1"
-                                                       Style="min-height: 44px; min-width: 44px; font-weight: 700; border-radius: 8px;"
-                                                       OnClick="@(() => AbrirIncorporacionDialog(solicitud))">
-                                                Incorporar
-                                            </MudButton>
+                                            @if (PuedeIncorporarse(solicitud))
+                                            {
+                                                <MudButton Variant="Variant.Filled"
+                                                           Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           StartIcon="@Icons.Material.Filled.PersonAddAlt1"
+                                                           Style="min-height: 44px; min-width: 44px; font-weight: 700; border-radius: 8px;"
+                                                           OnClick="@(() => AbrirIncorporacionDialog(solicitud))">
+                                                    Incorporar
+                                                </MudButton>
+                                            }
                                         </div>
                                     </div>
                                 }
@@ -360,7 +366,7 @@
                                 </HeaderContent>
                                 <RowTemplate>
                                     <MudTd DataLabel="Fecha">
-                                        @context.FechaEnvioUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                        @context.FechaEnvioUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                     </MudTd>
                                     <MudTd DataLabel="Remitente">
                                         <MudText Typo="Typo.body2" Style="font-weight: 700;">@context.NombreRemitente</MudText>
@@ -430,7 +436,7 @@
                                                     @mensaje.NombreRemitente
                                                 </span>
                                                 <span style="font-size: 0.78rem; color: #64748B;">
-                                                    @mensaje.FechaEnvioUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                                    @mensaje.FechaEnvioUtc.AHoraEspana().ToString("dd/MM/yyyy HH:mm")
                                                 </span>
                                             </div>
                                             @if (mensaje.Leido)
@@ -614,6 +620,10 @@
             Snackbar.Add(ex.Message, Severity.Error);
         }
     }
+
+    private static bool PuedeIncorporarse(SolicitudAdmision solicitud) =>
+        // "Admitida" se incluye porque "Admitir en el Grupo" solo cambia el estado; el servicio rechaza duplicados en el censo.
+        solicitud.Estado is EstadoSolicitudAdmision.Pendiente or EstadoSolicitudAdmision.EnListaEspera or EstadoSolicitudAdmision.Admitida;
 
     private async Task AbrirIncorporacionDialog(SolicitudAdmision solicitud)
     {

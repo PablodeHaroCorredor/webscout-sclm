@@ -3,7 +3,7 @@
 @using WebScout.Web.Infrastructure.Outbox.Domain
 @using WebScout.Web.Infrastructure.Outbox.Services
 @using WebScout.Web.Infrastructure.Tenancy
-@attribute [Authorize(Roles = "Coordinacion,Administracion,SuperAdmin")]
+@attribute [Authorize(Roles = RolesScout.AreaSupervision)]
 @inject IServicioOutbox ServicioOutbox
 @inject ITenantContext Tenant
 @inject ISnackbar Snackbar
@@ -19,12 +19,6 @@
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
                     @(Tenant.GroupName)
                 </MudChip>
-                <div class="d-flex align-center gap-1 px-2 py-1 rounded-pill" style="background-color: #ECFDF5; border: 1px solid #A7F3D0;">
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10B981;"></span>
-                    <MudText Typo="Typo.caption" Style="color: #065F46; font-weight: 700; font-size: 0.75rem;">
-                        Despachador Activo
-                    </MudText>
-                </div>
             </div>
             <MudText Typo="Typo.h4" Style="font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
                 Monitor de Cola de Salida (Outbox)
@@ -257,10 +251,10 @@
                 <RowTemplate>
                     <MudTd DataLabel="Fecha">
                         <MudText Typo="Typo.body2" Style="font-weight: 600; color: #0F172A;">
-                            @context.FechaCreacionUtc.ToLocalTime().ToString("dd/MM/yyyy")
+                            @context.FechaCreacionUtc.AHoraEspana().ToString("dd/MM/yyyy")
                         </MudText>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                            @context.FechaCreacionUtc.ToLocalTime().ToString("HH:mm:ss")
+                            @context.FechaCreacionUtc.AHoraEspana().ToString("HH:mm:ss")
                         </MudText>
                     </MudTd>
 
@@ -313,7 +307,7 @@
                             <div class="d-flex align-center gap-1" style="color: #059669;">
                                 <MudIcon Icon="@Icons.Material.Filled.Check" Size="Size.Small" />
                                 <MudText Typo="Typo.caption" Style="font-weight: 600;">
-                                    Entregado @context.FechaProcesadoUtc.Value.ToLocalTime().ToString("dd/MM HH:mm")
+                                    Entregado @context.FechaProcesadoUtc.Value.AHoraEspana().ToString("dd/MM HH:mm")
                                 </MudText>
                             </div>
                         }
@@ -331,16 +325,18 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
                                                Size="Size.Small" 
                                                Color="Color.Default" 
+                                               aria-label="Ver contenido del correo"
                                                OnClick="@(() => VerDetalleMensaje(context))" />
                             </MudTooltip>
 
-                            @if (context.Estado != EstadoMensajeOutbox.Enviado)
+                            @if (context.Estado == EstadoMensajeOutbox.Fallido)
                             {
                                 <MudTooltip Text="Forzar reintento">
                                     <MudIconButton Icon="@Icons.Material.Filled.Replay" 
                                                    Size="Size.Small" 
                                                    Color="Color.Warning" 
-                                                   OnClick="@(() => ReintentarMensajeAsync(context.Id))" />
+                                                   aria-label="@($"Reintentar envío a {context.DestinatarioEmail}")"
+                                                   OnClick="@(() => ReintentarMensajeAsync(context))" />
                                 </MudTooltip>
                             }
                         </div>
@@ -448,11 +444,19 @@
         }
     }
 
-    private async Task ReintentarMensajeAsync(Guid mensajeId)
+    private async Task ReintentarMensajeAsync(MensajeOutbox mensaje)
     {
+        bool? confirmar = await DialogService.ShowMessageBoxAsync(
+            "Reintentar envío",
+            $"Se volverá a enviar «{mensaje.Asunto}» a {mensaje.DestinatarioEmail}.",
+            yesText: "Reintentar envío",
+            cancelText: "Volver");
+
+        if (confirmar != true) return;
+
         try
         {
-            await ServicioOutbox.ReintentarMensajeAsync(mensajeId);
+            await ServicioOutbox.ReintentarMensajeAsync(mensaje.Id);
             Snackbar.Add("Mensaje restablecido en cola para despacho inmediato.", Severity.Info);
             await CargarDatosAsync();
         }
