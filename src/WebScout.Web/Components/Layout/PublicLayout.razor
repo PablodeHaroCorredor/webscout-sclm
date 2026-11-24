@@ -1,0 +1,89 @@
+@inherits LayoutComponentBase
+@using System.Text.RegularExpressions
+@using Microsoft.EntityFrameworkCore
+@using WebScout.Web.Common.Domain
+@using WebScout.Web.Infrastructure.Persistence
+@inject ITenantContext Tenant
+@inject IServiceScopeFactory ScopeFactory
+
+@*
+    Layout de la web pública (renderizado estático + Tailwind).
+    Los colores del grupo se inyectan como variables CSS que Tailwind consume (bg-primario, text-sobre-primario...),
+    de modo que un único CSS compilado sirve a todos los grupos. Solo se aceptan hexadecimales #RRGGBB (ADR11):
+    cualquier otro valor cae a la paleta por defecto y nunca llega al <style>.
+*@
+<HeadContent>
+    <style id="scout-tenant-theme">
+        :root {
+            --scout-primary: @Hex(Paleta.PrimaryHex, Defecto.PrimaryHex);
+            --scout-primary-text: @Hex(Paleta.TextOnPrimaryHex, Defecto.TextOnPrimaryHex);
+            --scout-secondary: @Hex(Paleta.SecondaryHex, Defecto.SecondaryHex);
+            --scout-secondary-text: @Hex(Paleta.TextOnSecondaryHex, Defecto.TextOnSecondaryHex);
+            --scout-accent: @Hex(Paleta.AccentHex, Defecto.AccentHex);
+        }
+    </style>
+</HeadContent>
+
+@* data-enhance-nav="false": los enlaces a la gestión (login, contacto) recargan la página completa,
+   para que la zona interactiva cargue su propio CSS y su circuito *@
+<div class="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased" data-enhance-nav="false">
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg">
+        Saltar al contenido
+    </a>
+
+    <header class="border-b border-slate-200 bg-white">
+        <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6" aria-label="Principal">
+            <a href="/" class="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario">
+                <span class="grid size-10 place-items-center rounded-xl bg-primario text-sm font-extrabold text-sobre-primario">
+                    @(Tenant.GroupNumber > 0 ? Tenant.GroupNumber : "SCLM")
+                </span>
+                <span class="leading-tight">
+                    <span class="block text-sm font-bold">@(EsGrupo ? Tenant.GroupName : "Scouts de Castilla-La Mancha")</span>
+                    <span class="block text-xs text-slate-600">@(EsGrupo ? "Scouts de Castilla-La Mancha" : "Federación regional")</span>
+                </span>
+            </a>
+            <div class="flex items-center gap-2">
+                @if (EsGrupo)
+                {
+                    <a href="/contacto" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:inline-block">Contacto</a>
+                }
+                <a href="/login" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100">
+                    Acceder
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="contenido" class="flex-1">
+        @Body
+    </main>
+</div>
+
+@code {
+    private static readonly Regex HexValido = new("^#[0-9A-Fa-f]{6}$", RegexOptions.Compiled);
+    private static readonly PaletteConfig Defecto = PaletteConfig.DefaultLestonnac;
+
+    private PaletteConfig? _paletaGrupo;
+
+    private bool EsGrupo => Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty;
+    private PaletteConfig Paleta => _paletaGrupo ?? Tenant.Palette ?? Defecto;
+
+    // La paleta se lee de la base de datos (la que edita Coordinación en Ajustes del grupo):
+    // en una petición estática el middleware de tenant no la carga en ITenantContext.
+    // Ámbito propio: la página se renderiza a la vez que el layout y usa el DbContext de la petición.
+    protected override async Task OnInitializedAsync()
+    {
+        if (EsGrupo)
+        {
+            using var ambito = ScopeFactory.CreateScope();
+            var db = ambito.ServiceProvider.GetRequiredService<WebScoutDbContext>();
+            _paletaGrupo = await db.GruposScout.AsNoTracking()
+                .Where(g => g.Id == Tenant.CurrentTenantId)
+                .Select(g => g.Paleta)
+                .FirstOrDefaultAsync();
+        }
+    }
+
+    private static string Hex(string? valor, string porDefecto) =>
+        valor is not null && HexValido.IsMatch(valor) ? valor : porDefecto;
+}

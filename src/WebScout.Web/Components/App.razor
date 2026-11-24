@@ -6,19 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <ResourcePreloader />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
-    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
-    <link rel="stylesheet" href="@Assets["WebScout.Web.styles.css"]" />
+    @if (EsZonaInteractiva)
+    {
+        @* Gestión (Kraal, familias, administración): MudBlazor sobre circuito interactivo *@
+        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+        <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="@Assets["app.css"]" />
+        <link rel="stylesheet" href="@Assets["WebScout.Web.styles.css"]" />
+    }
+    else
+    {
+        @* Web pública: renderizado estático (SSR) con Tailwind, sin MudBlazor ni fuentes externas *@
+        <link rel="stylesheet" href="@Assets["css/publico.css"]" />
+    }
     <ImportMap />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="ModoRender" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
-    <ReconnectModal />
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <Routes @rendermode="ModoRender" />
+    @if (EsZonaInteractiva)
+    {
+        <ReconnectModal />
+        <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    }
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    // Las páginas marcadas con [ExcludeFromInteractiveRouting] (la web pública) se sirven estáticas:
+    // sin circuito SignalR por visitante. Al navegar hacia ellas desde la gestión, el router
+    // interactivo fuerza una recarga completa, así que cada zona carga solo su propio CSS.
+    private bool EsZonaInteractiva => HttpContext.AcceptsInteractiveRouting();
+
+    private IComponentRenderMode? ModoRender => EsZonaInteractiva ? InteractiveServer : null;
+}

@@ -35,6 +35,17 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Configurar Node (CSS de la web pública)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/WebScout.Web/package-lock.json
+
+      - name: Instalar Tailwind CSS (versión fijada)
+        working-directory: src/WebScout.Web
+        run: npm ci --no-fund --no-audit
+
       - name: Restaurar dependencias
         run: dotnet restore WebScout.slnx
 
