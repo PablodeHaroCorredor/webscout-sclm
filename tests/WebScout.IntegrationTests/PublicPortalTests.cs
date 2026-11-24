@@ -8,12 +8,15 @@ namespace WebScout.IntegrationTests;
 
 public class PublicPortalTests
 {
+    private static readonly Guid OrgLestonnac = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid OrgSanVicente = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     [Fact]
     public void TenantContext_ResolucionLestonnac_AsignaPaletaCorrecta()
     {
         var tenantContext = new TenantContext();
         tenantContext.SetTenant(
-            TenantContext.OrgLestonnac,
+            OrgLestonnac,
             "lestonnac",
             "Grupo Scout Lestonnac 330",
             330,
@@ -41,7 +44,7 @@ public class PublicPortalTests
 
         var tenantContext = new TenantContext();
         tenantContext.SetTenant(
-            TenantContext.OrgSanVicente,
+            OrgSanVicente,
             "sanvicente",
             "Grupo Scout San Vicente 412",
             412,
@@ -79,10 +82,10 @@ public class PublicPortalTests
     public void AislamientoPaletasEntreTenants_PA16()
     {
         var tenant1 = new TenantContext();
-        tenant1.SetTenant(TenantContext.OrgLestonnac, "lestonnac", "Lestonnac 330", 330, PaletteConfig.DefaultLestonnac);
+        tenant1.SetTenant(OrgLestonnac, "lestonnac", "Lestonnac 330", 330, PaletteConfig.DefaultLestonnac);
 
         var tenant2 = new TenantContext();
-        tenant2.SetTenant(TenantContext.OrgSanVicente, "sanvicente", "San Vicente 412", 412, new PaletteConfig
+        tenant2.SetTenant(OrgSanVicente, "sanvicente", "San Vicente 412", 412, new PaletteConfig
         {
             PrimaryHex = "#0D47A1",
             SecondaryHex = "#D32F2F",

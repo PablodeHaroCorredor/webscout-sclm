@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Identity.Domain;
 
@@ -8,19 +9,17 @@ namespace WebScout.Web.Infrastructure.Tenancy;
 
 /// <summary>
 /// Implementación con ámbito (scoped) de ITenantContext para la solicitud HTTP actual o circuito Blazor.
-/// Resuelve automáticamente el inquilino a partir de:
-/// 1. Claims del usuario autenticado (OrganizacionId)
-/// 2. Parámetro query ?tenant= o Cookie .WebScout.Tenant
-/// 3. Subdominio del Host
-/// 4. Fallback de desarrollo a Grupo Scout Lestonnac 330
+/// En peticiones HTTP lo fija <see cref="TenantResolutionMiddleware"/>. En el circuito interactivo
+/// (ámbito nuevo, sin middleware) se resuelve de forma perezosa con el mismo extractor de slug
+/// (<see cref="ExtractorSlugTenant"/>) y el mismo <see cref="IResolutorGrupoScout"/> sobre <c>GruposScout</c>.
+/// No hay grupos escritos en código ni grupo de respaldo.
 /// </summary>
 public class TenantContext : ITenantContext
 {
-    public static readonly Guid OrgLestonnac = Guid.Parse("11111111-1111-1111-1111-111111111111");
-    public static readonly Guid OrgSanVicente = Guid.Parse("22222222-2222-2222-2222-222222222222");
-
     private readonly IHttpContextAccessor? _httpContextAccessor;
     private readonly AuthenticationStateProvider? _authStateProvider;
+    private readonly IResolutorGrupoScout? _resolutor;
+    private readonly string _baseDomain = ExtractorSlugTenant.DominioBasePorDefecto;
 
     private Guid _currentTenantId = Guid.Empty;
     private string _tenantSlug = string.Empty;
@@ -29,6 +28,7 @@ public class TenantContext : ITenantContext
     private PaletteConfig? _palette;
     private bool _isResolved;
     private bool _isSuperAdmin;
+    private bool _resolucionIntentada;
 
     public TenantContext()
     {
@@ -36,10 +36,14 @@ public class TenantContext : ITenantContext
 
     public TenantContext(
         IHttpContextAccessor? httpContextAccessor = null,
-        AuthenticationStateProvider? authStateProvider = null)
+        AuthenticationStateProvider? authStateProvider = null,
+        IResolutorGrupoScout? resolutor = null,
+        IConfiguration? configuration = null)
     {
         _httpContextAccessor = httpContextAccessor;
         _authStateProvider = authStateProvider;
+        _resolutor = resolutor;
+        _baseDomain = configuration?.GetValue<string>("Tenancy:BaseDomain") ?? ExtractorSlugTenant.DominioBasePorDefecto;
     }
 
     public Guid CurrentTenantId
@@ -107,64 +111,34 @@ public class TenantContext : ITenantContext
 
     private void EnsureResolved()
     {
-        if (_isResolved) return;
+        if (_isResolved || _resolucionIntentada) return;
 
-        // 1. Resolver por Subdominio en la URL (Host)
         var http = _httpContextAccessor?.HttpContext;
         if (http != null)
         {
-            if (http.Request.Headers.TryGetValue("X-Tenant-Slug", out var headerSlug) && !string.IsNullOrWhiteSpace(headerSlug))
+            // Solo se marca como intentada si había petición que inspeccionar: sin HttpContext se
+            // reintenta en el siguiente acceso. Con petición, un slug desconocido no vuelve a consultarse.
+            _resolucionIntentada = true;
+            var slug = ExtractorSlugTenant.Extraer(http.Request, _baseDomain);
+
+            if (string.IsNullOrWhiteSpace(slug) || PortalFederativo.EsSlugFederativo(slug))
             {
-                AplicarPresetPorSlug(headerSlug.ToString().Trim().ToLowerInvariant());
-                if (_isResolved)
-                {
-                    VerificarSuperAdmin();
-                    return;
-                }
+                // Dominio raíz, www, admin o sclm: portal federativo
+                SetTenant(Guid.Empty, PortalFederativo.Slug, PortalFederativo.Nombre, 0);
             }
-
-            var host = http.Request.Host.Host;
-
-            // Subdominio en localhost: ej. lestonnac.localhost o sanvicente.localhost
-            if (host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+            else
             {
-                var parts = host.Split('.');
-                if (parts.Length > 1 && !parts[0].Equals("www", StringComparison.OrdinalIgnoreCase))
+                // Grupo scout: se resuelve contra GruposScout (solo activos). Un slug desconocido
+                // o inactivo deja el contexto sin resolver (OrganizacionId vacío): nunca se cae a otro grupo.
+                var grupo = _resolutor?.Resolver(slug);
+                if (grupo != null)
                 {
-                    AplicarPresetPorSlug(parts[0].ToLowerInvariant());
-                    if (_isResolved)
-                    {
-                        VerificarSuperAdmin();
-                        return;
-                    }
-                }
-            }
-
-            // Subdominio en dominio de producción: ej. lestonnac.scoutsclm.org
-            if (host.EndsWith("scoutsclm.org", StringComparison.OrdinalIgnoreCase))
-            {
-                var prefix = host.Substring(0, host.Length - "scoutsclm.org".Length).TrimEnd('.');
-                if (!string.IsNullOrWhiteSpace(prefix) && !prefix.Equals("www", StringComparison.OrdinalIgnoreCase))
-                {
-                    var parts = prefix.Split('.');
-                    AplicarPresetPorSlug(parts[^1].ToLowerInvariant());
-                    if (_isResolved)
-                    {
-                        VerificarSuperAdmin();
-                        return;
-                    }
+                    SetTenant(grupo.Id, grupo.Slug, grupo.Nombre, grupo.NumeroGrupo, grupo.Paleta);
                 }
             }
         }
 
-        // 2. Verificar rol SuperAdmin o claims de usuario
         VerificarSuperAdmin();
-
-        // 3. Si se accede a bare domain (localhost o scoutsclm.org sin subdominio), es la federación SCLM
-        if (http != null)
-        {
-            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0);
-        }
     }
 
     private void VerificarSuperAdmin()
@@ -205,30 +179,6 @@ public class TenantContext : ITenantContext
         _isSuperAdmin = isSuperAdmin;
     }
 
-    private void AplicarPresetPorSlug(string slug)
-    {
-        if (slug.Equals("sanvicente", StringComparison.OrdinalIgnoreCase))
-        {
-            SetTenant(OrgSanVicente, "sanvicente", "Grupo Scout San Vicente 412", 412, new PaletteConfig
-            {
-                PrimaryHex = "#0D47A1",
-                SecondaryHex = "#D32F2F",
-                AccentHex = "#F57C00",
-                TextOnPrimaryHex = "#FFFFFF",
-                TextOnSecondaryHex = "#FFFFFF",
-                SurfaceHeaderHex = "#0D47A1"
-            });
-        }
-        else if (slug.Equals("lestonnac", StringComparison.OrdinalIgnoreCase))
-        {
-            SetTenant(OrgLestonnac, "lestonnac", "Grupo Scout Lestonnac 330", 330, PaletteConfig.DefaultLestonnac);
-        }
-        else if (slug.Equals("admin", StringComparison.OrdinalIgnoreCase) || slug.Equals("sclm", StringComparison.OrdinalIgnoreCase))
-        {
-            SetTenant(Guid.Empty, "sclm", "Scouts de Castilla-La Mancha (SCLM)", 0, null);
-        }
-    }
-
     public void SetTenant(Guid tenantId, string slug, string groupName, int groupNumber, PaletteConfig? palette = null)
     {
         _currentTenantId = tenantId;
@@ -247,5 +197,6 @@ public class TenantContext : ITenantContext
         _groupNumber = 0;
         _palette = null;
         _isResolved = false;
+        _resolucionIntentada = false;
     }
 }

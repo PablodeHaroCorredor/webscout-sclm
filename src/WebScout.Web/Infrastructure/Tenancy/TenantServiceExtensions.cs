@@ -16,13 +16,18 @@ public static class TenantServiceExtensions
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 
+        // Resolución de grupos por slug contra GruposScout, con caché corta e invalidación al guardar
+        services.AddSingleton<IResolutorGrupoScout, ResolutorGrupoScout>();
+        services.AddSingleton<InvalidacionCacheGruposInterceptor>();
+
         // Registrar DbContext con PostgreSQL / Npgsql
         var connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? "Host=localhost;Port=5433;Database=webscout_dev;Username=scout_admin;Password=scout_dev_password_change_me";
 
-        services.AddDbContext<WebScoutDbContext>(options =>
+        services.AddDbContext<WebScoutDbContext>((sp, options) =>
         {
             options.UseNpgsql(connectionString);
+            options.AddInterceptors(sp.GetRequiredService<InvalidacionCacheGruposInterceptor>());
         });
 
         return services;
