@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using WebScout.Web.Features.Identity.Domain;
 using WebScout.Web.Infrastructure.Tenancy;
 
@@ -51,7 +53,27 @@ public static class IdentityEndpoints
             return Results.Redirect($"/login?error=invalid_credentials&returnUrl={Uri.EscapeDataString(returnUrl ?? "/")}");
         }).DisableAntiforgery(); // Permite envío desde formulario estándar de Blazor SSR
 
-        // Inicio de sesión rápido para pruebas de desarrollo
+        // El acceso rápido sin contraseña solo existe en Development: en cualquier otro
+        // entorno la ruta no se registra (404) y no puede usarse para suplantar cuentas.
+        var entorno = app.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (entorno.IsDevelopment())
+        {
+            MapAccesoRapidoDesarrollo(group);
+        }
+
+        // Cierre de sesión seguro
+        group.MapGet("/logout", async (
+            SignInManager<UsuarioScout> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Redirect("/");
+        });
+
+        return app;
+    }
+
+    private static void MapAccesoRapidoDesarrollo(RouteGroupBuilder group)
+    {
         group.MapGet("/quick-login", async (
             [FromQuery] string email,
             [FromQuery] string? returnUrl,
@@ -81,26 +103,31 @@ public static class IdentityEndpoints
             var destino = await CalcularRutaDestinoPorRolAsync(userManager, user, returnUrl);
             return Results.Redirect(destino);
         });
+    }
 
-        // Cierre de sesión seguro
-        group.MapGet("/logout", async (
-            SignInManager<UsuarioScout> signInManager) =>
+    /// <summary>
+    /// Solo acepta rutas relativas de la propia aplicación ("/familias"), nunca URLs absolutas
+    /// ni rutas que el navegador interpreta como otro host ("//evil.example", "/\evil.example").
+    /// Evita que un enlace de login manipulado redirija a un sitio externo tras autenticarse.
+    /// </summary>
+    public static bool EsRutaLocalSegura(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || url[0] != '/')
         {
-            await signInManager.SignOutAsync();
-            return Results.Redirect("/");
-        });
+            return false;
+        }
 
-        return app;
+        return url.Length == 1 || (url[1] != '/' && url[1] != '\\');
     }
 
     private static async Task<string> CalcularRutaDestinoPorRolAsync(
-        UserManager<UsuarioScout> userManager, 
-        UsuarioScout user, 
+        UserManager<UsuarioScout> userManager,
+        UsuarioScout user,
         string? returnUrl)
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl) && returnUrl != "/")
+        if (EsRutaLocalSegura(returnUrl) && returnUrl != "/")
         {
-            return returnUrl;
+            return returnUrl!;
         }
 
         if (await userManager.IsInRoleAsync(user, RolesScout.Familia))

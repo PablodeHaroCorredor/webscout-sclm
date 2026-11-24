@@ -1,6 +1,9 @@
 @page "/login"
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Hosting
 @inject ITenantContext Tenant
 @inject NavigationManager Navigation
+@inject IWebHostEnvironment Entorno
 
 <PageTitle>Acceso a Mi Espacio · @(Tenant.IsResolved && Tenant.CurrentTenantId != Guid.Empty ? Tenant.GroupName : "WebScout SCLM")</PageTitle>
 
@@ -130,7 +133,9 @@
                 </MudButton>
             </form>
 
-            <!-- Acceso Rápido de Desarrollo (Colapsable y Profesional) -->
+            <!-- Acceso Rápido: solo en Development (el endpoint /auth/quick-login no existe en otros entornos) -->
+            @if (Entorno.IsDevelopment())
+            {
             <MudExpansionPanels Elevation="0" Outlined="true" Class="mt-5 rounded-lg" Style="border-color: #E2E8F0;">
                 <MudExpansionPanel Text="Accesos Rápidos de Prueba (Entorno Local)" Icon="@Icons.Material.Filled.Speed">
                     <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-3">
@@ -197,6 +202,7 @@
                     }
                 </MudExpansionPanel>
             </MudExpansionPanels>
+            }
         </MudCardContent>
 
         <MudCardActions Class="justify-center pb-2">

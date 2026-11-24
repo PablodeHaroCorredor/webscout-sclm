@@ -1,7 +1,19 @@
+# El token nunca se escribe en este archivo. Orden de búsqueda:
+#   1. Parámetro -Token
+#   2. Variable de entorno GITHUB_TOKEN
+#   3. Sesión de GitHub CLI (gh auth login)
 param (
-    [string]$Token = "TOKEN_ELIMINADO",
+    [string]$Token = $env:GITHUB_TOKEN,
     [string]$Repo = "PablodeHaroCorredor/webscout-sclm"
 )
+
+if ([string]::IsNullOrWhiteSpace($Token) -and (Get-Command gh -ErrorAction SilentlyContinue)) {
+    $Token = (gh auth token 2>$null)
+}
+
+if ([string]::IsNullOrWhiteSpace($Token)) {
+    throw "No hay token de GitHub. Ejecute 'gh auth login', defina GITHUB_TOKEN o pase -Token."
+}
 
 $headers = @{
     "Authorization" = "Bearer $Token"

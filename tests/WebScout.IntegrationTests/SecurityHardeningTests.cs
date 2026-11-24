@@ -56,7 +56,7 @@ public class SecurityHardeningTests : IDisposable
     [Fact]
     public void CifradorDatosSensibles_ShouldPreserveUnencryptedLegacyData()
     {
-        var cifrador = new CifradorDatosSensibles();
+        var cifrador = CifradorDatosSensibles.ParaDesarrollo();
         var textoHistorico = "Sin alergias alimentarias registradas";
 
         var resultado = cifrador.Descifrar(textoHistorico);

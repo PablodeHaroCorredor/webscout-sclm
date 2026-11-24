@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WebScout.Web.Common.Domain;
 using WebScout.Web.Features.Activities.Domain;
@@ -19,12 +20,33 @@ public static class DatabaseInitializer
         var db = scope.ServiceProvider.GetRequiredService<WebScoutDbContext>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<RolScout>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<UsuarioScout>>();
+        var entorno = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
         try
         {
             logger.LogInformation("Verificando conexión con PostgreSQL...");
             await db.Database.MigrateAsync();
             logger.LogInformation("Migraciones de PostgreSQL aplicadas correctamente.");
+
+            // Roles de Identity: estructurales, necesarios en todos los entornos
+            foreach (var nombreRol in RolesScout.Todos)
+            {
+                if (!await roleManager.RoleExistsAsync(nombreRol))
+                {
+                    await roleManager.CreateAsync(new RolScout(nombreRol));
+                    logger.LogInformation("Rol creado: {RoleName}", nombreRol);
+                }
+            }
+
+            // Los grupos, cuentas (contraseña conocida y SuperAdmin incluidos), educandos y actividades de
+            // demostración solo se siembran en Development. En otros entornos serían cuentas con credenciales
+            // públicas y datos ficticios mezclados con los reales.
+            if (!entorno.IsDevelopment())
+            {
+                logger.LogInformation(
+                    "Entorno {Entorno}: se omite el seed de datos de demostración.", entorno.EnvironmentName);
+                return;
+            }
 
             // 1. Seed inicial de los dos grupos scout de referencia (Lestonnac 330 y San Vicente 412)
             var lestonnacId = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -69,16 +91,6 @@ public static class DatabaseInitializer
                 db.GruposScout.AddRange(lestonnac, sanVicente);
                 await db.SaveChangesAsync();
                 logger.LogInformation("Seed de grupos scout completado con éxito.");
-            }
-
-            // 2. Seed de Roles de Identity
-            foreach (var nombreRol in RolesScout.Todos)
-            {
-                if (!await roleManager.RoleExistsAsync(nombreRol))
-                {
-                    await roleManager.CreateAsync(new RolScout(nombreRol));
-                    logger.LogInformation("Rol creado: {RoleName}", nombreRol);
-                }
             }
 
             // 3. Seed de SuperAdmin Federativo (SCLM / Desarrolladores)

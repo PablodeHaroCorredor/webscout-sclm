@@ -26,11 +26,22 @@ namespace WebScout.Web.Infrastructure.Persistence;
 public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
 {
     private readonly ITenantContext _tenantContext;
+    private readonly IServicioCifrado _cifrador;
 
-    public WebScoutDbContext(DbContextOptions<WebScoutDbContext> options, ITenantContext tenantContext)
+    /// <param name="cifrador">
+    /// En la aplicación lo inyecta DI con la clave de configuración (ver <see cref="CifradorDatosSensibles.DesdeConfiguracion"/>).
+    /// Si se omite (pruebas con datos sintéticos) se usa la clave pública de desarrollo.
+    /// EF Core construye el modelo una sola vez por proceso, así que los conversores quedan ligados al cifrador
+    /// del primer contexto creado: debe ser el mismo singleton en toda la aplicación.
+    /// </param>
+    public WebScoutDbContext(
+        DbContextOptions<WebScoutDbContext> options,
+        ITenantContext tenantContext,
+        IServicioCifrado? cifrador = null)
         : base(options)
     {
         _tenantContext = tenantContext;
+        _cifrador = cifrador ?? CifradorDatosSensibles.ParaDesarrollo();
     }
 
     public DbSet<GrupoScout> GruposScout => Set<GrupoScout>();
@@ -143,7 +154,7 @@ public class WebScoutDbContext : IdentityDbContext<UsuarioScout, RolScout, Guid>
         });
 
         // 6. Configuración de Ficha Médica Anual (Cifrado RGPD Art. 9/32)
-        var cifrador = new CifradorDatosSensibles();
+        var cifrador = _cifrador;
         var conversorCifradoNullable = new ValueConverter<string?, string?>(
             v => cifrador.Cifrar(v),
             v => cifrador.Descifrar(v));

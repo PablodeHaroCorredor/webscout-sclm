@@ -32,8 +32,11 @@ builder.Services.AddScoutTenancy(builder.Configuration);
 // Registrar Identity, Roles y Cookies de Autenticación
 builder.Services.AddScoutIdentity();
 
-// Registrar Servicios de Seguridad y Cifrado RGPD (Art. 9)
-builder.Services.AddSingleton<IServicioCifrado, CifradorDatosSensibles>();
+// Registrar Servicios de Seguridad y Cifrado RGPD (Art. 9).
+// Se construye aquí, no de forma diferida, para que un entorno distinto de Development sin clave
+// propia (Seguridad:ClaveCifradoDatosSensibles) falle al arrancar en lugar de cifrar con la clave pública.
+builder.Services.AddSingleton<IServicioCifrado>(
+    CifradorDatosSensibles.DesdeConfiguracion(builder.Configuration, builder.Environment));
 builder.Services.AddScoutAudit();
 
 // Registrar Dominio de Educandos y Salud
